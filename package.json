@@ -1,0 +1,18 @@
+{
+  "name": "haredo",
+  "version": "1.0.0",
+  "description": "Wrapper around amqplib",
+  "main": "dist/index.js",
+  "author": "Kristjan Tammekivi",
+  "license": "MIT",
+  "dependencies": {
+    "amqplib": "^0.5.2",
+    "debug": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.5.8",
+    "@types/debug": "^0.0.30",
+    "source-map-support": "^0.5.6",
+    "typescript": "^2.9.2"
+  }
+}
