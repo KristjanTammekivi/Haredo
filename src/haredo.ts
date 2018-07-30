@@ -32,6 +32,10 @@ export class Haredo extends EventEmitter {
 
     async connect() {
         this.connection = await connect(this.connectionOptions, this.socketOpts);
+
+        this.connection.on('close', () => {
+            console.log('connection close');
+        });
     }
 
     async getChannel() {
@@ -43,7 +47,9 @@ export class Haredo extends EventEmitter {
         return new HaredoChain(this, { queue });
     }
 
-    exchange(exchange: Exchange, pattern: string) {
+    exchange(exchange: Exchange): HaredoChain;
+    exchange(exchange: Exchange, pattern: string): HaredoChain;
+    exchange(exchange: Exchange, pattern?: string) {
         return new HaredoChain(this, { exchanges: [{ exchange, pattern }]});
     }
 }

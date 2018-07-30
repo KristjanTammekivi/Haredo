@@ -1,4 +1,5 @@
 import { Options, Channel } from 'amqplib';
+import { keyValuePairs } from './utils';
 
 export enum ExchangeType {
     Direct = 'direct',
@@ -16,7 +17,6 @@ export class Exchange {
     public name: string;
     public type: ExchangeType;
     private opts: Options.AssertExchange;
-    public isAsserted: boolean = true;
 
     constructor(name: string, type: ExchangeType, opts: IExchangeOptions) {
         this.name = name;
@@ -29,7 +29,6 @@ export class Exchange {
 
     async assert(channel: Channel) {
         const exchange = await channel.assertExchange(this.name, this.type, this.opts);
-        this.isAsserted = true;
         return exchange;
     }
 
@@ -40,5 +39,9 @@ export class Exchange {
     async bind(channel: Channel, destination: Exchange, pattern: string, args?: any) {
         await this.assert(channel);
         return channel.bindExchange(this.name, destination.name, pattern, args);
+    }
+
+    toString() {
+        return `Exchange ${this.name} ${this.type} opts:${keyValuePairs(this.opts).join(',')}`;
     }
 }
