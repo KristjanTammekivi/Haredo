@@ -10,8 +10,8 @@ export class FailHandler {
     private span: number;
     private failCount: number = 0;
     private failUntil: number;
-    private spanTimeout: number;
-    private ready: boolean = true;
+    private spanTimeout: NodeJS.Timer;
+    public ready: boolean = true;
 
     constructor(opts: IFailHandlerOpts) {
         this.threshold = opts.failThreshold || Infinity;
@@ -34,13 +34,10 @@ export class FailHandler {
     }
 
     check() {
-        if (!this.ready) {
-            return false;
-        }
-        if (this.failCount > this.threshold) {
+        if (this.failCount >= this.threshold) {
             this.ready = false;
             this.failUntil = new Date().getTime() + this.timeout;
-            setTimeout(this.clear, Math.max(this.failUntil - new Date().getTime(), 0));
+            this.spanTimeout = setTimeout(this.clear, Math.max(this.failUntil - new Date().getTime(), 0));
             return false;
         }
         return true;
