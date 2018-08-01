@@ -20,7 +20,10 @@ interface IHaredoChainOpts {
     queue: Queue;
     exchanges: IAddExchange[];
     dlx: Exchange;
-    dlq: Queue
+    dlq: Queue;
+    failThreshold: number;
+    failSpan: number;
+    failTimeout: number;
 }
 
 export class HaredoChain {
@@ -90,6 +93,24 @@ export class HaredoChain {
         return this.clone({
             dlq: queue,
             dlx: exchange
+        });
+    }
+
+    failThreshold(amount: number) {
+        return this.clone({
+            failThreshold: amount
+        });
+    }
+
+    failSpan(ms: number) {
+        return this.clone({
+            failSpan: ms
+        });
+    }
+
+    failTimeout(ms: number) {
+        return this.clone({
+            failTimeout: ms
         });
     }
 
@@ -169,7 +190,17 @@ export class HaredoChain {
             this.setupPromise = this.setup();
             await this.setupPromise;
         }
-        return new Consumer(this, { autoAck: this.haredo.autoAck, prefetch: this.state.prefetch }, cb);
+        return new Consumer(
+            this,
+            {
+                autoAck: this.haredo.autoAck,
+                prefetch: this.state.prefetch,
+                fail: {
+                    failSpan: this.state.failSpan,
+                    failTimeout: this.state.failTimeout,
+                    failThreshold: this.state.failThreshold
+                }
+        }, cb);
     }
 
 }

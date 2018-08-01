@@ -2,12 +2,24 @@ import { EventEmitter } from 'events';
 import { HaredoChain } from './haredo-chain';
 import { Message, Channel } from 'amqplib';
 import { HaredoMessage } from './message';
+import { FailHandler, IFailHandlerOpts } from './fail-handler';
 
 export type messageCallback = (message: HaredoMessage) => any;
 
 export interface IConsumerOpts {
     prefetch: number;
     autoAck: boolean;
+    fail: IFailHandlerOpts;
+}
+
+const CONSUMER_DEFAULTS: IConsumerOpts = {
+    autoAck: true,
+    prefetch: 0,
+    fail: {
+        failSpan: 5000,
+        failThreshold: Infinity,
+        failTimeout: 5000
+    }
 }
 
 export class Consumer extends EventEmitter {
@@ -18,13 +30,16 @@ export class Consumer extends EventEmitter {
     private channel: Channel;
     public readonly autoAck: boolean;
     public readonly prefetch: number;
+    private failHandler: FailHandler;
 
     constructor(haredoChain: HaredoChain, opts: IConsumerOpts, cb: messageCallback) {
         super();
+        const defaultedOpts: IConsumerOpts = Object.assign({}, CONSUMER_DEFAULTS, opts);
         this.haredoChain = haredoChain;
         this.cb = cb;
-        this.autoAck = opts.autoAck;
-        this.prefetch = opts.prefetch;
+        this.autoAck = defaultedOpts.autoAck;
+        this.prefetch = defaultedOpts.prefetch;
+        this.failHandler = new FailHandler(defaultedOpts.fail);
         this.start();
     }
 
@@ -34,6 +49,7 @@ export class Consumer extends EventEmitter {
 
     async nack(message: Message, requeue: boolean = true) {
         this.channel.nack(message, false, requeue);
+        this.failHandler.fail();
     }
 
     async start() {
@@ -45,6 +61,7 @@ export class Consumer extends EventEmitter {
             .consume(
                 this.haredoChain.getQueue().name,
                 async (message) => {
+                    await this.failHandler.getTicket();
                     const messageInstance = new HaredoMessage(message, this);
                     try {
                         await this.cb(messageInstance);

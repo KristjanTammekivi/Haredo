@@ -1,4 +1,4 @@
-interface IFailHandlerOpts {
+export interface IFailHandlerOpts {
     failThreshold: number;
     failTimeout: number;
     failSpan: number;
@@ -21,7 +21,20 @@ export class FailHandler {
 
     fail() {
         this.failCount++;
-        return this.check();
+        if (this.failCount >= this.threshold) {
+            this.ready = false;
+            this.failUntil = new Date().getTime() + this.timeout;
+            clearTimeout(this.spanTimeout);
+            this.spanTimeout = setTimeout(
+                () => this.clear(),
+                Math.max(this.failUntil - new Date().getTime(), 0)
+            );
+            return false;
+        }
+        setTimeout(() => {
+            this.failCount = 0;
+        }, this.span);
+        return true;
     }
 
     getTicket() {
@@ -33,19 +46,10 @@ export class FailHandler {
         });
     }
 
-    check() {
-        if (this.failCount >= this.threshold) {
-            this.ready = false;
-            this.failUntil = new Date().getTime() + this.timeout;
-            this.spanTimeout = setTimeout(this.clear, Math.max(this.failUntil - new Date().getTime(), 0));
-            return false;
-        }
-        return true;
-    }
-
     clear() {
+        this.spanTimeout = undefined;
         this.failCount = 0;
-        this.failUntil = null;
+        this.failUntil = undefined;
         this.ready = true;
     }
 }
