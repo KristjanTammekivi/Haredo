@@ -48,38 +48,23 @@ export class Queue {
         console.log('getting new channel');
         const channel = await channelGetter();
         console.log('channel', channel);
-        try {
-            const reply = await channel.deleteQueue(this.name, opts);
-            await channel.close();
-            return reply;
-        } catch (e) {
-            console.error(e.message);
-            throw e;
-        }
+        const reply = await channel.deleteQueue(this.name, opts);
+        await channel.close();
+        return reply;
     }
 
     async purge(channelGetter: channelGetter): Promise<Replies.PurgeQueue> {
         const channel = await channelGetter();
-        try {
-            const reply = await channel.purgeQueue(this.name)
-            await channel.close();
-            return reply;
-        } catch (e) {
-            console.error(e.message);
-            throw e;
-        }
+        const reply = await channel.purgeQueue(this.name)
+        await channel.close();
+        return reply;
     }
 
     async bind(channelGetter: channelGetter, exchange: Exchange, pattern: string, args?: any): Promise<Replies.Empty> {
         const channel = await channelGetter();
-        try {
-            const reply = await channel.bindQueue(this.name, exchange.name, pattern, args);
-            await channel.close();
-            return reply;
-        } catch (e) {
-            console.error(e.message);
-            throw e;
-        }
+        const reply = await channel.bindQueue(this.name, exchange.name, pattern, args);
+        await channel.close();
+        return reply;
     }
 
     toString() {

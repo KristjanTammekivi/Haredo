@@ -24,6 +24,8 @@ export class Haredo extends EventEmitter {
     private socketOpts: any;
     public autoAck: boolean;
     public forceAssert: boolean;
+    private channels: Channel[] = [];
+    public closing: boolean = false;
 
     constructor(opts: Partial<IHaredoOptions>) {
         super();
@@ -46,6 +48,12 @@ export class Haredo extends EventEmitter {
         const channel = await this.connection.createChannel();
         // Without this channel errors will exit the program
         channel.on('error', () => {});
+        channel.on('close', () => {
+            this.channels = this.channels.filter((c) => {
+                return channel !== c;
+            });
+        });
+        this.channels.push(channel);
         return channel;
     }
 

@@ -30,18 +30,24 @@ export class Exchange {
 
     async assert(channelGetter: channelGetter) {
         const channel = await channelGetter();
-        return channel.assertExchange(this.name, this.type, this.opts).finally(() => channel.close());
+        const reply = channel.assertExchange(this.name, this.type, this.opts);
+        await channel.close();
+        return reply;
     }
 
     async delete(channelGetter: channelGetter, opts?: Options.DeleteExchange) {
         const channel = await channelGetter();
-        return channel.deleteExchange(this.name, opts).finally(() => channel.close());
+        const reply = channel.deleteExchange(this.name, opts);
+        await channel.close();
+        return reply;
     }
 
     async bind(channelGetter: channelGetter, destination: Exchange, pattern: string, args?: any) {
         const channel = await channelGetter();
         await this.assert(channelGetter);
-        return channel.bindExchange(this.name, destination.name, pattern, args).finally(() => channel.close());
+        const reply = await channel.bindExchange(this.name, destination.name, pattern, args);
+        await channel.close();
+        return reply;
     }
 
     toString() {
