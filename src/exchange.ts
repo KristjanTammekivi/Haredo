@@ -1,5 +1,6 @@
 import { Options, Channel } from 'amqplib';
 import { keyValuePairs } from './utils';
+import { channelGetter } from './queue';
 
 export enum ExchangeType {
     Direct = 'direct',
@@ -27,18 +28,20 @@ export class Exchange {
         }
     }
 
-    async assert(channel: Channel) {
-        const exchange = await channel.assertExchange(this.name, this.type, this.opts);
-        return exchange;
+    async assert(channelGetter: channelGetter) {
+        const channel = await channelGetter();
+        return channel.assertExchange(this.name, this.type, this.opts).finally(() => channel.close());
     }
 
-    async delete(channel: Channel, opts?: Options.DeleteExchange) {
-        return channel.deleteExchange(this.name, opts);
+    async delete(channelGetter: channelGetter, opts?: Options.DeleteExchange) {
+        const channel = await channelGetter();
+        return channel.deleteExchange(this.name, opts).finally(() => channel.close());
     }
 
-    async bind(channel: Channel, destination: Exchange, pattern: string, args?: any) {
-        await this.assert(channel);
-        return channel.bindExchange(this.name, destination.name, pattern, args);
+    async bind(channelGetter: channelGetter, destination: Exchange, pattern: string, args?: any) {
+        const channel = await channelGetter();
+        await this.assert(channelGetter);
+        return channel.bindExchange(this.name, destination.name, pattern, args).finally(() => channel.close());
     }
 
     toString() {

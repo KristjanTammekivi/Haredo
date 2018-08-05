@@ -1,13 +1,11 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "lib": [
-            "es2015"
-        ],
-        "target": "es6",
+        "target": "es2015",
         "noImplicitAny": true,
         "inlineSourceMap": true,
         "experimentalDecorators": true,
+        "declaration": true,
         "outDir": "./dist"
     },
     "include": [

@@ -10,7 +10,7 @@
     "@types/events" "*"
     "@types/node" "*"
 
-"@types/bluebird@*":
+"@types/bluebird@*", "@types/bluebird@^3.5.23":
   version "3.5.23"
   resolved "https://registry.yarnpkg.com/@types/bluebird/-/bluebird-3.5.23.tgz#e805da976b76892b2b2e50eec29e84914c730670"
 
@@ -62,7 +62,7 @@ bitsyntax@~0.0.4:
   dependencies:
     buffer-more-ints "0.0.2"
 
-bluebird@^3.4.6:
+bluebird@^3.4.6, bluebird@^3.5.1:
   version "3.5.1"
   resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.5.1.tgz#d9551f9de98f1fcda1e683d17ee91a0602ee2eb9"
 

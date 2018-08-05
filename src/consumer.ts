@@ -9,12 +9,14 @@ export type messageCallback = (message: HaredoMessage) => any;
 export interface IConsumerOpts {
     prefetch: number;
     autoAck: boolean;
+    reestablish: boolean;
     fail: IFailHandlerOpts;
 }
 
 const CONSUMER_DEFAULTS: IConsumerOpts = {
     autoAck: true,
     prefetch: 0,
+    reestablish: false,
     fail: {
         failSpan: 5000,
         failThreshold: Infinity,
@@ -30,6 +32,7 @@ export class Consumer extends EventEmitter {
     private channel: Channel;
     public readonly autoAck: boolean;
     public readonly prefetch: number;
+    public readonly reestablish: boolean;
     private failHandler: FailHandler;
 
     constructor(haredoChain: HaredoChain, opts: IConsumerOpts, cb: messageCallback) {
@@ -39,6 +42,7 @@ export class Consumer extends EventEmitter {
         this.cb = cb;
         this.autoAck = defaultedOpts.autoAck;
         this.prefetch = defaultedOpts.prefetch;
+        this.reestablish = defaultedOpts.reestablish;
         this.failHandler = new FailHandler(defaultedOpts.fail);
         this.start();
     }
@@ -54,6 +58,11 @@ export class Consumer extends EventEmitter {
 
     async start() {
         this.channel = await this.haredoChain.getChannel();
+        if (this.reestablish) {
+            // this.channel.once('close', () => {
+            //     this.haredoChain.reconnect();
+            // });
+        }
         if (this.prefetch) {
             await this.channel.prefetch(this.prefetch);
         }

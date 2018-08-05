@@ -1,5 +1,3 @@
-import 'source-map-support/register';
-
 import { FailHandler } from '../src/fail-handler';
 
 import { expect } from 'chai';

@@ -8,6 +8,7 @@ import { Haredo } from './haredo';
 import { Options } from 'amqplib';
 import { Consumer, messageCallback } from './consumer';
 import { stringify } from './utils';
+import { delay } from 'bluebird';
 
 interface IAddExchange {
     exchange: Exchange;
@@ -24,6 +25,7 @@ interface IHaredoChainOpts {
     failThreshold: number;
     failSpan: number;
     failTimeout: number;
+    reestablish: boolean;
 }
 
 export class HaredoChain {
@@ -39,9 +41,10 @@ export class HaredoChain {
         this.state.exchanges = [].concat(opts.exchanges || []);
         this.state.prefetch = opts.prefetch || 0;
         this.state.isSetup = opts.isSetup || false;
+        this.state.reestablish = false;
     }
 
-    getChannel() {
+    async getChannel() {
         return this.haredo.getChannel();
     }
 
@@ -89,6 +92,12 @@ export class HaredoChain {
         return this.state.queue;
     }
 
+    reestablish() {
+        return this.clone({
+            reestablish: true
+        });
+    }
+
     dead(exchange: Exchange, queue?: Queue) {
         return this.clone({
             dlq: queue,
@@ -134,21 +143,28 @@ export class HaredoChain {
     }
 
     async setup() {
-        const channel = await this.haredo.getChannel();
+        const channelGetter = () => this.getChannel();
         if (this.state.queue) {
-            debug('Asserting queue %s', this.state.queue);
-            await this.state.queue.assert(channel);
+            debug('Asserting %s', this.state.queue);
+            await this.state.queue.assert(channelGetter, this.haredo.forceAssert);
+            debug('Done asserting %s', this.state.queue);
         }
         if (this.state.exchanges.length) {
             for (const e of this.state.exchanges) {
-                debug('Asserting exchange %s', e.exchange);
-                await e.exchange.assert(channel);
+                debug('Asserting %s', e.exchange);
+                await delay(500);
+                await e.exchange.assert(channelGetter);
+                debug('Done asserting %s', e.exchange)
                 if (this.state.queue) {
                     if (!e.pattern) {
                         throw new Error('Exchange added without pattern for binding');
                     }
                     debug('Binding queue %s to exchange %s using pattern %s', this.state.queue.name, e.exchange.name, e.pattern);
-                    await this.state.queue.bind(channel, e.exchange, e.pattern);
+                    try {
+                        await this.state.queue.bind(channelGetter, e.exchange, e.pattern);
+                    } catch (e) {
+                        debug('Whooop');
+                    }
                 }
             }
         }
@@ -195,6 +211,7 @@ export class HaredoChain {
             {
                 autoAck: this.haredo.autoAck,
                 prefetch: this.state.prefetch,
+                reestablish: this.state.reestablish,
                 fail: {
                     failSpan: this.state.failSpan,
                     failTimeout: this.state.failTimeout,

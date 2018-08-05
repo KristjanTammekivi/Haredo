@@ -10,5 +10,6 @@ export const getConnection = async (connectOptions: string | amqplib.Options.Con
     connection.once('close', () => {
         connection = undefined;
     });
+    // connection.on('error', e => console.error('connectionerror', e));
     return connection;
 };
