@@ -1,4 +1,6 @@
-export const keyValuePairs = (obj: Object) => {
+import { Queue } from './queue';
+
+export const keyValuePairs = (obj: Object): string[] => {
     return Object.keys(obj).map(key => {
         return `${key}=${stringify((obj as any)[key])}`;
     });
@@ -15,3 +17,5 @@ export const stringify = (message: any): string => {
 
     return JSON.stringify(message);
 };
+
+export type UnpackQueueArgument<T> = T extends Queue<infer U> ? U : any;

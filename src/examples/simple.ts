@@ -7,14 +7,18 @@ const haredo = new Haredo({ connectionOptions: 'amqp://guest:guest@localhost:567
 (async () => {
     await haredo.connect();
 
-    const queue = new Queue('test');
+    interface SimpleMessage {
+        test: string;
+    }
+
+    const queue = new Queue<SimpleMessage>('test');
 
     const chain = haredo.queue(queue);
 
-    chain.prefetch(1).subscribe(async (message: HaredoMessage) => {
-        console.log('Received message', message.data);
+    chain.prefetch(1).subscribe(async message => {
+        console.log('Received message', message.data.test);
         await delay(1000);
-        console.log('Acking message', message.data);
+        console.log('Acking message', message.data.test);
     });
 
     chain.publish({ test: 'Hello, world 1' });

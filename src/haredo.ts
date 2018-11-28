@@ -4,6 +4,9 @@ import { Exchange } from './exchange';
 import { HaredoChain } from './haredo-chain';
 import { EventEmitter } from 'events';
 
+import * as Bluebird from 'bluebird';
+import { UnpackQueueArgument } from './utils';
+
 export interface IHaredoOptions {
     autoAck?: boolean;
     connectionOptions: string | Options.Connect;
@@ -26,6 +29,7 @@ export class Haredo extends EventEmitter {
     public forceAssert: boolean;
     private channels: Channel[] = [];
     public closing: boolean = false;
+    private connectionPromise: Bluebird<Connection>;
 
     constructor(opts: Partial<IHaredoOptions>) {
         super();
@@ -37,17 +41,24 @@ export class Haredo extends EventEmitter {
     }
 
     async connect() {
-        this.connection = await connect(this.connectionOptions, this.socketOpts);
+        if (this.connectionPromise) {
+            return this.connectionPromise;
+        }
+        this.connectionPromise = connect(this.connectionOptions, this.socketOpts);
+        this.connection = await this.connectionPromise;
+        this.connectionPromise = undefined;
 
         this.connection.once('close', () => {
             console.log('connection close');
         });
+
+        return this.connection;
     }
 
     async getChannel() {
         const channel = await this.connection.createChannel();
         // Without this channel errors will exit the program
-        channel.on('error', () => {});
+        channel.on('error', () => { });
         channel.on('close', () => {
             this.channels = this.channels.filter((c) => {
                 return channel !== c;
@@ -57,13 +68,13 @@ export class Haredo extends EventEmitter {
         return channel;
     }
 
-    queue(queue: Queue) {
-        return new HaredoChain(this, { queue });
+    queue<T extends Queue>(queue: T) {
+        return new HaredoChain<UnpackQueueArgument<T>>(this, { queue });
     }
 
     exchange(exchange: Exchange): HaredoChain;
     exchange(exchange: Exchange, pattern: string): HaredoChain;
     exchange(exchange: Exchange, pattern?: string) {
-        return new HaredoChain(this, { exchanges: [{ exchange, pattern }]});
+        return new HaredoChain(this, { exchanges: [{ exchange, pattern }] });
     }
 }

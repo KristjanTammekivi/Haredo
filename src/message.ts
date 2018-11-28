@@ -1,18 +1,24 @@
 import { Consumer } from './consumer';
 import { Message } from 'amqplib';
 
-export class HaredoMessage {
+export class HaredoMessage<T = any> {
 
     private consumer: Consumer;
 
-    public data: string;
+    public data: T;
+    public dataString: string;
     public readonly raw: Message;
 
     public isHandled: boolean;
 
-    constructor(raw: Message, consumer: Consumer) {
+    constructor(raw: Message, parseJson: boolean, consumer: Consumer) {
         this.raw = raw;
-        this.data = raw.content.toString();
+        this.dataString = raw.content.toString();
+        if (parseJson) {
+            this.data = JSON.parse(this.dataString);
+        } else {
+            this.data = this.dataString as any;
+        }
         this.consumer = consumer;
     }
 

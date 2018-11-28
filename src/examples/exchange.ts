@@ -13,7 +13,7 @@ const haredo = new Haredo({
 (async () => {
     await haredo.connect();
 
-    const queue = new Queue('test', {});
+    const queue = new Queue<{ test: string }>('test', {});
     const exchange1 = new Exchange('test1.exchange', ExchangeType.Direct, {});
     const exchange2 = new Exchange('test2.exchange', ExchangeType.Topic, {});
 
@@ -21,10 +21,10 @@ const haredo = new Haredo({
         .exchange(exchange1, 'routing.key')
         .exchange(exchange2, 'routing.#')
         .queue(queue)
-        .subscribe(async (message: HaredoMessage) => {
-            console.log('Received message', message.data);
+        .subscribe(async (message) => {
+            console.log('Received message', message.data.test);
             await delay(1000);
-            console.log('Acking message', message.data);
+            console.log('Acking message', message.data.test);
         })
         .catch(e => console.error);
 

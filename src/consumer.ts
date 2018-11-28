@@ -3,8 +3,9 @@ import { HaredoChain } from './haredo-chain';
 import { Message, Channel } from 'amqplib';
 import { HaredoMessage } from './message';
 import { FailHandler, IFailHandlerOpts } from './fail-handler';
+import { UnpackQueueArgument } from './utils';
 
-export type messageCallback = (message: HaredoMessage) => any;
+export type messageCallback<T = any> = (message: HaredoMessage<T>) => any;
 
 export interface IConsumerOpts {
     prefetch: number;
@@ -24,11 +25,11 @@ const CONSUMER_DEFAULTS: IConsumerOpts = {
     }
 }
 
-export class Consumer extends EventEmitter {
+export class Consumer<T = any> extends EventEmitter {
     public consumerTag: string;
 
     private haredoChain: HaredoChain;
-    private cb: messageCallback;
+    private cb: messageCallback<UnpackQueueArgument<T>>;
     private channel: Channel;
     public readonly autoAck: boolean;
     public readonly prefetch: number;
@@ -66,12 +67,14 @@ export class Consumer extends EventEmitter {
         if (this.prefetch) {
             await this.channel.prefetch(this.prefetch);
         }
+        const queue = this.haredoChain.getQueue();
+        type MessageType = UnpackQueueArgument<T>
         const consumerInfo = await this.channel
             .consume(
-                this.haredoChain.getQueue().name,
+                queue.name,
                 async (message) => {
                     await this.failHandler.getTicket();
-                    const messageInstance = new HaredoMessage(message, this);
+                    const messageInstance = new HaredoMessage<MessageType>(message, this);
                     try {
                         await this.cb(messageInstance);
                         if (this.autoAck) {
@@ -82,7 +85,7 @@ export class Consumer extends EventEmitter {
                             await messageInstance.nack();
                         }
                     }
-            });
+                });
         this.consumerTag = consumerInfo.consumerTag;
     }
 

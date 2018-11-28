@@ -16,7 +16,7 @@ const DEFAULT_QUEUE_OPTIONS: Options.AssertQueue = {
 
 export type channelGetter = () => Promise<amqplib.Channel> | amqplib.Channel;
 
-export class Queue {
+export class Queue<T = any> {
     public name: string;
     private opts: Options.AssertQueue;
 

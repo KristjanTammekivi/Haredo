@@ -7,7 +7,7 @@ import { Queue } from './queue';
 import { Haredo } from './haredo';
 import { Options } from 'amqplib';
 import { Consumer, messageCallback } from './consumer';
-import { stringify } from './utils';
+import { stringify, UnpackQueueArgument } from './utils';
 import { delay } from 'bluebird';
 
 interface IAddExchange {
@@ -28,12 +28,12 @@ interface IHaredoChainOpts {
     reestablish: boolean;
 }
 
-export class HaredoChain {
+export class HaredoChain<T = any> {
     private haredo: Haredo;
 
     private state: Partial<IHaredoChainOpts> = {};
 
-    private setupPromise:Promise<any>;
+    private setupPromise: Promise<any>;
 
     constructor(haredo: Haredo, opts: Partial<IHaredoChainOpts>) {
         this.haredo = haredo;
@@ -48,13 +48,13 @@ export class HaredoChain {
         return this.haredo.getChannel();
     }
 
-    queue(queue: Queue) {
+    queue<U extends Queue>(queue: U) {
         if (this.state.queue) {
             throw new Error('Can only set one queue');
         }
         this.state.queue = queue;
         this.state.isSetup = false;
-        return this.clone({
+        return this.clone<UnpackQueueArgument<U>>({
             isSetup: false,
             queue
         });
@@ -84,8 +84,8 @@ export class HaredoChain {
 
     }
 
-    clone(opts?: Partial<IHaredoChainOpts>) {
-        return new HaredoChain(this.haredo, Object.assign({}, this.state, opts));
+    clone<U = T>(opts?: Partial<IHaredoChainOpts>) {
+        return new HaredoChain<U>(this.haredo, Object.assign({}, this.state, opts));
     }
 
     getQueue() {
@@ -195,7 +195,7 @@ export class HaredoChain {
         return this.publishToExchange(message, args[0], args[1]);
     }
 
-    async subscribe(cb: messageCallback) {
+    async subscribe(cb: messageCallback<T>) {
         if (!this.state.queue) {
             throw new Error('Can\'t subscribe without queue');
         }
@@ -206,7 +206,7 @@ export class HaredoChain {
             this.setupPromise = this.setup();
             await this.setupPromise;
         }
-        return new Consumer(
+        return new Consumer<T>(
             this,
             {
                 autoAck: this.haredo.autoAck,
@@ -217,7 +217,7 @@ export class HaredoChain {
                     failTimeout: this.state.failTimeout,
                     failThreshold: this.state.failThreshold
                 }
-        }, cb);
+            }, cb);
     }
 
 }
