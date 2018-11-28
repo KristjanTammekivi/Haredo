@@ -7,7 +7,7 @@ import { Queue } from './queue';
 import { Haredo } from './haredo';
 import { Options } from 'amqplib';
 import { Consumer, messageCallback } from './consumer';
-import { stringify, UnpackQueueArgument } from './utils';
+import { stringify, UnpackQueueArgument, MergeTypes, UnpackExchangeArgument } from './utils';
 import { delay } from 'bluebird';
 
 interface IAddExchange {
@@ -28,7 +28,7 @@ interface IHaredoChainOpts {
     reestablish: boolean;
 }
 
-export class HaredoChain<T = any> {
+export class HaredoChain<T = unknown> {
     private haredo: Haredo;
 
     private state: Partial<IHaredoChainOpts> = {};
@@ -54,16 +54,16 @@ export class HaredoChain<T = any> {
         }
         this.state.queue = queue;
         this.state.isSetup = false;
-        return this.clone<UnpackQueueArgument<U>>({
+        return this.clone<MergeTypes<T, UnpackQueueArgument<U>>>({
             isSetup: false,
             queue
         });
     }
 
-    exchange(exchange: Exchange): HaredoChain;
-    exchange(exchange: Exchange, pattern: string): HaredoChain;
-    exchange(exchange: Exchange, pattern?: string) {
-        return this.clone({
+    exchange<U extends Exchange>(exchange: U): HaredoChain<MergeTypes<T, UnpackExchangeArgument<U>>>;
+    exchange<U extends Exchange>(exchange: U, pattern: string): HaredoChain<MergeTypes<T, UnpackExchangeArgument<U>>>;
+    exchange<U extends Exchange>(exchange: U, pattern?: string) {
+        return this.clone<MergeTypes<T, UnpackExchangeArgument<U>>>({
             isSetup: false,
             exchanges: this.state.exchanges.concat([{
                 exchange,
@@ -77,11 +77,11 @@ export class HaredoChain<T = any> {
     }
 
     delay() {
-
+        throw new Error('delay Not yet implemented');
     }
 
     json() {
-
+        throw new Error('json Not yet implemented');
     }
 
     clone<U = T>(opts?: Partial<IHaredoChainOpts>) {
@@ -123,7 +123,7 @@ export class HaredoChain<T = any> {
         });
     }
 
-    private async publishToQueue(message: any, opts: Options.Publish) {
+    private async publishToQueue(message: T, opts: Options.Publish) {
         if (!this.state.queue) {
             throw new Error('Queue not set for publishing');
         }
@@ -131,7 +131,7 @@ export class HaredoChain<T = any> {
         channel.sendToQueue(this.state.queue.name, Buffer.from(stringify(message)), opts);
     }
 
-    private async publishToExchange(message: any, routingKey: string, opts: Options.Publish) {
+    private async publishToExchange(message: T, routingKey: string, opts: Options.Publish) {
         if (this.state.exchanges.length === 0) {
             throw new Error('No exchanges set for publishing');
         }
@@ -172,9 +172,9 @@ export class HaredoChain<T = any> {
         this.setupPromise = undefined;
     }
 
-    publish(message: any, opts?: Options.Publish): void;
-    publish(message: any, routingKey: string, opts?: Options.Publish): void;
-    async publish(message: any, ...args: any[]) {
+    publish(message: T, opts?: Options.Publish): void;
+    publish(message: T, routingKey: string, opts?: Options.Publish): void;
+    async publish(message: T, ...args: [any, Options.Publish?]) {
         if (!this.state.queue && !this.state.exchanges.length) {
             throw new Error('Publishing requires a queue or an exchange');
         }

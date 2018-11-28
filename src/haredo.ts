@@ -5,7 +5,7 @@ import { HaredoChain } from './haredo-chain';
 import { EventEmitter } from 'events';
 
 import * as Bluebird from 'bluebird';
-import { UnpackQueueArgument } from './utils';
+import { UnpackQueueArgument, UnpackExchangeArgument } from './utils';
 
 export interface IHaredoOptions {
     autoAck?: boolean;
@@ -72,9 +72,9 @@ export class Haredo extends EventEmitter {
         return new HaredoChain<UnpackQueueArgument<T>>(this, { queue });
     }
 
-    exchange(exchange: Exchange): HaredoChain;
-    exchange(exchange: Exchange, pattern: string): HaredoChain;
-    exchange(exchange: Exchange, pattern?: string) {
-        return new HaredoChain(this, { exchanges: [{ exchange, pattern }] });
+    exchange<T extends Exchange>(exchange: T): HaredoChain<UnpackExchangeArgument<T>>;
+    exchange<T extends Exchange>(exchange: T, pattern: string): HaredoChain<UnpackExchangeArgument<T>>;
+    exchange<T extends Exchange>(exchange: T, pattern?: string) {
+        return new HaredoChain<UnpackExchangeArgument<T>>(this, { exchanges: [{ exchange, pattern }] });
     }
 }

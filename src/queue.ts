@@ -16,7 +16,7 @@ const DEFAULT_QUEUE_OPTIONS: Options.AssertQueue = {
 
 export type channelGetter = () => Promise<amqplib.Channel> | amqplib.Channel;
 
-export class Queue<T = any> {
+export class Queue<T = unknown> {
     public name: string;
     private opts: Options.AssertQueue;
 
@@ -68,6 +68,6 @@ export class Queue<T = any> {
     }
 
     toString() {
-        return `Queue ${ this.name } opts:${ keyValuePairs(this.opts).join(',') }`;
+        return `Queue ${this.name} opts:${keyValuePairs(this.opts).join(',')}`;
     }
 }

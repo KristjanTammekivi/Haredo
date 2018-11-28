@@ -14,7 +14,7 @@ export interface IExchangeOptions extends Options.AssertExchange {
     'x-delayed-type'?: 'direct' | 'fanout' | 'topic' | 'headers';
 }
 
-export class Exchange {
+export class Exchange<T = unknown> {
     public name: string;
     public type: ExchangeType;
     private opts: Options.AssertExchange;
