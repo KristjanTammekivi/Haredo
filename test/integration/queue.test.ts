@@ -51,7 +51,7 @@ describe('Queue', () => {
             await queue.purge(getChannel);
             expect(await purgeQueue(queue.name)).to.equal(0);
         });
-        it.only('should delete the queue', async () => {
+        it('should delete the queue', async () => {
             const queue = new Queue('simpleQueue');
             await queue.assert(getChannel);
             await queue.delete(getChannel);
