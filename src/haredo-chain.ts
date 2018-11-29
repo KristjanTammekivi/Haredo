@@ -131,7 +131,7 @@ export class HaredoChain<T = unknown> {
         channel.sendToQueue(this.state.queue.name, Buffer.from(stringify(message)), opts);
     }
 
-    private async publishToExchange(message: T, routingKey: string, opts: Options.Publish) {
+    private async publishToExchange(message: T, routingKey: string, opts: Options.Publish = {}) {
         if (this.state.exchanges.length === 0) {
             throw new Error('No exchanges set for publishing');
         }

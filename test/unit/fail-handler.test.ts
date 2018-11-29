@@ -1,7 +1,6 @@
 import { FailHandler } from '../src/fail-handler';
 
 import { expect } from 'chai';
-import { resolve } from 'dns';
 
 describe('FailHandler', () => {
     it('should get a ticket', async () => {
@@ -36,7 +35,7 @@ describe('FailHandler', () => {
     }).timeout(200);
 });
 
-class TimeoutError extends Error {}
+class TimeoutError extends Error { }
 
 function timeout(milliseconds: number) {
     return new Promise((resolve, reject) => {

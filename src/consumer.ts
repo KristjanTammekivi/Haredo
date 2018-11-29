@@ -74,7 +74,7 @@ export class Consumer<T = any> extends EventEmitter {
                 queue.name,
                 async (message) => {
                     await this.failHandler.getTicket();
-                    const messageInstance = new HaredoMessage<MessageType>(message, this);
+                    const messageInstance = new HaredoMessage<MessageType>(message, true, this);
                     try {
                         await this.cb(messageInstance);
                         if (this.autoAck) {
@@ -90,7 +90,7 @@ export class Consumer<T = any> extends EventEmitter {
     }
 
     async cancel() {
-        this.channel.cancel(this.consumerTag);
+        return this.channel.cancel(this.consumerTag);
     }
 
 }

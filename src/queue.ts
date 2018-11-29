@@ -45,9 +45,7 @@ export class Queue<T = unknown> {
     }
 
     async delete(channelGetter: channelGetter, opts?: Options.DeleteQueue): Promise<Replies.DeleteQueue> {
-        console.log('getting new channel');
         const channel = await channelGetter();
-        console.log('channel', channel);
         const reply = await channel.deleteQueue(this.name, opts);
         await channel.close();
         return reply;

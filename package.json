@@ -4,8 +4,11 @@
   "description": "Wrapper around amqplib",
   "main": "dist/index.js",
   "scripts": {
-    "test": "mocha --require ts-node/register test/**/*.test.ts",
-    "test:watch": "mocha --require ts-node/register --watch --watch-extensions ts test/**/*.test.ts"
+    "test": "npm run -s test:unit && npm run -s test:integration",
+    "test:integration": "mocha --require ts-node/register test/integration/**/*.test.ts",
+    "test:integration:watch": "mocha --require ts-node/register --watch --watch-extensions ts test/integration/**/*.test.ts",
+    "test:unit": "mocha --require ts-node/register test/unit/**/*.test.ts",
+    "test:unit:watch": "mocha --require ts-node/register --watch --watch-extensions ts test/unit/**/*.test.ts"
   },
   "author": "Kristjan Tammekivi",
   "license": "MIT",
@@ -17,13 +20,16 @@
   },
   "devDependencies": {
     "@types/amqplib": "^0.5.8",
-    "@types/chai": "^4.1.4",
+    "@types/chai": "^4.1.7",
+    "@types/chai-as-promised": "^7.1.0",
     "@types/debug": "^0.0.30",
     "@types/mocha": "^5.2.5",
     "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
     "mocha": "^5.2.0",
+    "rabbitmq-stats": "^1.2.0",
     "source-map-support": "^0.5.6",
     "ts-node": "^7.0.0",
-    "typescript": "^2.9.2"
+    "typescript": "3"
   }
 }

@@ -29,6 +29,7 @@ export class Haredo extends EventEmitter {
     public forceAssert: boolean;
     private channels: Channel[] = [];
     public closing: boolean = false;
+    private closingPromise: Bluebird<void>;
     private connectionPromise: Bluebird<Connection>;
 
     constructor(opts: Partial<IHaredoOptions>) {
@@ -48,11 +49,15 @@ export class Haredo extends EventEmitter {
         this.connection = await this.connectionPromise;
         this.connectionPromise = undefined;
 
-        this.connection.once('close', () => {
-            console.log('connection close');
-        });
-
         return this.connection;
+    }
+
+    async close() {
+        if (this.closing) {
+            return this.closingPromise;
+        }
+        this.closingPromise = this.connection.close();
+        return this.closingPromise;
     }
 
     async getChannel() {
