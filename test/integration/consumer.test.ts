@@ -28,7 +28,7 @@ describe('Queue', () => {
     });
     describe('cancel', () => {
         it('should close channel', async () => {
-            const queue = new Queue<{ test: number }>('simpleQueue', { durable: true });
+            const queue = new Queue<{ test: number }>('simpleQueue').durable();
             const consumer = await haredo.queue(queue).subscribe(async message => {
                 await message.ack();
             });
@@ -37,7 +37,7 @@ describe('Queue', () => {
             await expect(channelClosedPromise).to.eventually.eql(undefined);
         });
         it('should wait for messages to be acked before closing channel', async () => {
-            const queue = new Queue<{ test: number }>('simpleQueue', { durable: true });
+            const queue = new Queue<{ test: number }>('simpleQueue').durable();
             await haredo.queue(queue).publish({ test: 5 });
             let messageWasHandled = false;
             const consumer = await haredo.queue(queue).subscribe(async message => {

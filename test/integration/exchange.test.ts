@@ -34,7 +34,7 @@ describe('Exchange', () => {
 
     it('should bind exchange to queue', async () => {
         const exchange = new Exchange('testExchange', ExchangeType.Direct);
-        const queue = new Queue<SimpleMessage>('testQueue', { durable: true });
+        const queue = new Queue<SimpleMessage>('testQueue').durable();
         await haredo.exchange(exchange, '*').queue(queue).publish({ test: 1 });
         await getSingleMessage(queue.name);
     });

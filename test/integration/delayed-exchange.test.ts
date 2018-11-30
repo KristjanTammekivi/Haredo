@@ -29,15 +29,10 @@ describe('Delayed Exchange', () => {
     }
 
     it('should work with direct exchange', async () => {
-        const exchange = new Exchange(
-            'testExchange',
-            ExchangeType.Delayed,
-            {
-                durable: true,
-                arguments: { 'x-delayed-type': ExchangeType.Direct }
-            }
-        );
-        const queue = new Queue<SimpleMessage>('testQueue', { durable: true });
+        const exchange = new Exchange('testExchange', ExchangeType.Delayed)
+            .durable()
+            .delayed(ExchangeType.Direct);
+        const queue = new Queue<SimpleMessage>('testQueue').durable();
         await haredo
             .exchange(exchange, 'test')
             .queue(queue)

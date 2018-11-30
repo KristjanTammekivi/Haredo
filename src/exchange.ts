@@ -27,7 +27,7 @@ export class Exchange<T = unknown> {
     public type: ExchangeType;
     private opts: Options.AssertExchange;
 
-    constructor(name: string, type: ExchangeType, opts: IExchangeOptions = {}) {
+    constructor(name: string, type: ExchangeType, opts: IExchangeOptions = { arguments: {} }) {
         this.name = name;
         this.type = type;
         this.opts = opts;
@@ -59,7 +59,7 @@ export class Exchange<T = unknown> {
      * if true, the exchange will survive broker restarts.
      * Defaults to true
      */
-    durable(value: boolean) {
+    durable(value: boolean = true) {
         return this.clone(this.type, {
             durable: value
         })
@@ -70,7 +70,7 @@ export class Exchange<T = unknown> {
      * of bindings for which it is the source drop to zero.
      * Defaults to false.
      */
-    autoDelete(value: boolean) {
+    autoDelete(value: boolean = false) {
         return this.clone(this.type, {
             autoDelete: value
         });

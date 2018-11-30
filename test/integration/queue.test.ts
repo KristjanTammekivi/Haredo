@@ -31,7 +31,7 @@ describe('Queue', () => {
     });
     it('should declare a simple queue', async () => {
         const queueName = 'simplequeue';
-        const queue = new Queue(queueName).durable(true);
+        const queue = new Queue(queueName).durable();
         await haredo.queue(queue).setup();
         await verifyQueue(queueName, { durable: true });
     });
@@ -40,33 +40,33 @@ describe('Queue', () => {
         interface SimpleMessage {
             test: number;
         }
-        const queue = new Queue<SimpleMessage>(queueName, { durable: true });
+        const queue = new Queue<SimpleMessage>(queueName).durable();
         await haredo.queue(queue).publish({ test: 1 });
         await getSingleMessage(queue.name);
     });
     describe('methods', () => {
         it('should assert the queue', async () => {
-            const queue = new Queue('simpleQueue', { durable: true });
+            const queue = new Queue('simpleQueue').durable();
             await queue.assert(getChannel);
             await verifyQueue(queue.name, { durable: true });
         });
         it('should purge the queue', async () => {
-            const queue = new Queue('simpleQueue');
+            const queue = new Queue('simpleQueue').durable();
             await queue.assert(getChannel);
             await publishMessage(queue.name, { test: 1 }, {});
             await queue.purge(getChannel);
             expect(await purgeQueue(queue.name)).to.equal(0);
         });
         it('should delete the queue', async () => {
-            const queue = new Queue('simpleQueue');
+            const queue = new Queue('simpleQueue').durable();
             await queue.assert(getChannel);
             await queue.delete(getChannel);
             await expect(verifyQueue(queue.name)).to.eventually.rejectedWith(/NOT_FOUND/);
         });
         it('should force assert the queue', async () => {
-            const queue = new Queue('simpleQueue', { durable: true });
+            const queue = new Queue('simpleQueue').durable();
             await queue.assert(getChannel);
-            const newQueue = new Queue('simpleQueue', { durable: false });
+            const newQueue = queue.durable(false);
             await expect(newQueue.assert(getChannel)).to.eventually.be.rejectedWith(/PRECONDITION_FAILED/);
             await newQueue.assert(getChannel, true);
         });

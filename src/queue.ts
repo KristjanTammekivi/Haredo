@@ -29,7 +29,7 @@ export class Queue<T = unknown> {
      * modulo the effects of exclusive and autoDelete;
      * this defaults to true if not supplied, unlike the others.
      */
-    durable(value: boolean) {
+    durable(value: boolean = true) {
         return this.clone({ durable: value });
     }
 
@@ -44,7 +44,7 @@ export class Queue<T = unknown> {
     /**
      * if true, scopes the queue to the connection (defaults to false)
      */
-    exclusive(value: boolean) {
+    exclusive(value: boolean = false) {
         return this.clone({ exclusive: value });
     }
 
