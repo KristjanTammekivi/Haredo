@@ -1,6 +1,14 @@
 import 'mocha';
 import { Queue, Haredo } from '../../src/index'
-import { setup, teardown, checkQueue, getChannel, getSingleMessage, publishMessage, purgeQueue } from './helpers/amqp';
+import {
+    setup,
+    teardown,
+    verifyQueue,
+    getChannel,
+    getSingleMessage,
+    publishMessage,
+    purgeQueue
+} from './helpers/amqp';
 import { expect, use } from 'chai';
 
 import * as chaiAsPromised from 'chai-as-promised';
@@ -23,9 +31,9 @@ describe('Queue', () => {
     });
     it('should declare a simple queue', async () => {
         const queueName = 'simplequeue';
-        const queue = new Queue(queueName, { durable: true });
+        const queue = new Queue(queueName).durable(true);
         await haredo.queue(queue).setup();
-        await checkQueue(queueName, { durable: true });
+        await verifyQueue(queueName, { durable: true });
     });
     it('should publish to queue', async () => {
         const queueName = 'simplequeue';
@@ -40,7 +48,7 @@ describe('Queue', () => {
         it('should assert the queue', async () => {
             const queue = new Queue('simpleQueue', { durable: true });
             await queue.assert(getChannel);
-            await checkQueue(queue.name, { durable: true });
+            await verifyQueue(queue.name, { durable: true });
         });
         it('should purge the queue', async () => {
             const queue = new Queue('simpleQueue');
@@ -53,7 +61,14 @@ describe('Queue', () => {
             const queue = new Queue('simpleQueue');
             await queue.assert(getChannel);
             await queue.delete(getChannel);
-            await expect(checkQueue(queue.name)).to.eventually.rejectedWith(/NOT_FOUND/);
+            await expect(verifyQueue(queue.name)).to.eventually.rejectedWith(/NOT_FOUND/);
+        });
+        it('should force assert the queue', async () => {
+            const queue = new Queue('simpleQueue', { durable: true });
+            await queue.assert(getChannel);
+            const newQueue = new Queue('simpleQueue', { durable: false });
+            await expect(newQueue.assert(getChannel)).to.eventually.be.rejectedWith(/PRECONDITION_FAILED/);
+            await newQueue.assert(getChannel, true);
         });
     });
 

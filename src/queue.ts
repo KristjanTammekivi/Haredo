@@ -1,13 +1,8 @@
-import * as Debug from 'debug';
-
-const debug = Debug('haredo');
-
+import { debug } from './logger';
 import * as amqplib from 'amqplib';
 import { Replies, Options } from 'amqplib';
 import { Exchange } from './exchange';
 import { keyValuePairs } from './utils';
-
-export const queue = (name: string, opts?: Options.AssertQueue) => new Queue(name, opts);
 
 const DEFAULT_QUEUE_OPTIONS: Options.AssertQueue = {
     durable: true,
@@ -22,7 +17,64 @@ export class Queue<T = unknown> {
 
     constructor(name?: string, opts: amqplib.Options.AssertQueue = {}) {
         this.name = name;
-        this.opts = Object.assign({}, opts, DEFAULT_QUEUE_OPTIONS);
+        this.opts = Object.assign({}, DEFAULT_QUEUE_OPTIONS, opts);
+    }
+
+    clone(opts: Partial<amqplib.Options.AssertQueue>) {
+        return new Queue<T>(this.name, Object.assign({}, this.opts, opts));
+    }
+
+    /**
+     * if true, the queue will survive broker restarts,
+     * modulo the effects of exclusive and autoDelete;
+     * this defaults to true if not supplied, unlike the others.
+     */
+    durable(value: boolean) {
+        return this.clone({ durable: value });
+    }
+
+    /**
+     * if true, the queue will be deleted when the number
+     * of consumers drops to zero (defaults to false)
+     */
+    autoDelete(value: boolean) {
+        return this.clone({ autoDelete: value });
+    }
+
+    /**
+     * if true, scopes the queue to the connection (defaults to false)
+     */
+    exclusive(value: boolean) {
+        return this.clone({ exclusive: value });
+    }
+
+    /**
+     * expires messages arriving in the queue after n milliseconds
+     */
+    messageTtl(value: number) {
+        return this.clone({ messageTtl: value });
+    }
+
+    /**
+     * the queue will be destroyed after n milliseconds of disuse,
+     * where use means having consumers
+     */
+    expires(value: number) {
+        return this.clone({ expires: value });
+    }
+
+    /**
+     * an exchange to which messages discarded from the queue will be resent.
+     * if deadLetterRoutingKey is not sent the message’s routing key
+     * (and CC and BCC, if present) will be preserved.
+     * A message is discarded when it expires or is rejected or nacked,
+     * or the queue limit is reached.
+     */
+    deadLetterExchange(deadLetterExchange: Exchange, deadLetterRoutingKey?: string) {
+        return this.clone({
+            deadLetterExchange: deadLetterExchange.name,
+            deadLetterRoutingKey
+        });
     }
 
     async assert(channelGetter: channelGetter, force: boolean = false): Promise<Replies.AssertQueue> {
@@ -32,13 +84,11 @@ export class Queue<T = unknown> {
             await channel.close();
             return reply;
         } catch (e) {
-            console.error(e.message);
-            // channel.close();
             if (force) {
                 debug('Deleting %s', this);
                 await this.delete(channelGetter, {});
                 debug('Reasserting %s', this);
-                return await this.assert(channelGetter);
+                return this.assert(channelGetter);
             }
             throw e;
         }

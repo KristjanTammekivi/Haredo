@@ -1,9 +1,10 @@
 import { EventEmitter } from 'events';
 import { HaredoChain } from './haredo-chain';
 import { Message, Channel } from 'amqplib';
-import { HaredoMessage } from './message';
+import { HaredoMessage, MessageEvents } from './message';
 import { FailHandler, IFailHandlerOpts } from './fail-handler';
-import { UnpackQueueArgument } from './utils';
+import { UnpackQueueArgument, eventToPromise } from './utils';
+import { MessageList, MessageListEvents } from './message-list';
 
 export type messageCallback<T = any> = (message: HaredoMessage<T>) => any;
 
@@ -25,18 +26,25 @@ const CONSUMER_DEFAULTS: IConsumerOpts = {
     }
 }
 
+export enum ConsumerEvents {
+    MESSAGE_HANDLED = 'message_handled',
+    MESSAGE_ACKED = 'message_acked',
+    MESSAGE_NACKED = 'message_nacked'
+}
+
 export class Consumer<T = any> extends EventEmitter {
     public consumerTag: string;
 
-    private haredoChain: HaredoChain;
-    private cb: messageCallback<UnpackQueueArgument<T>>;
-    private channel: Channel;
+    public channel: Channel;
+
+    private messageList: MessageList = new MessageList();
+
     public readonly autoAck: boolean;
     public readonly prefetch: number;
-    public readonly reestablish: boolean;
+    public reestablish: boolean;
     private failHandler: FailHandler;
 
-    constructor(haredoChain: HaredoChain, opts: IConsumerOpts, cb: messageCallback) {
+    constructor(private haredoChain: HaredoChain, opts: IConsumerOpts, private cb: messageCallback<UnpackQueueArgument<T>>) {
         super();
         const defaultedOpts: IConsumerOpts = Object.assign({}, CONSUMER_DEFAULTS, opts);
         this.haredoChain = haredoChain;
@@ -45,7 +53,6 @@ export class Consumer<T = any> extends EventEmitter {
         this.prefetch = defaultedOpts.prefetch;
         this.reestablish = defaultedOpts.reestablish;
         this.failHandler = new FailHandler(defaultedOpts.fail);
-        this.start();
     }
 
     async ack(message: Message) {
@@ -59,11 +66,11 @@ export class Consumer<T = any> extends EventEmitter {
 
     async start() {
         this.channel = await this.haredoChain.getChannel();
-        if (this.reestablish) {
-            // this.channel.once('close', () => {
-            //     this.haredoChain.reconnect();
-            // });
-        }
+        this.channel.once('close', () => {
+            if (this.reestablish) {
+                this.start();
+            }
+        });
         if (this.prefetch) {
             await this.channel.prefetch(this.prefetch);
         }
@@ -75,6 +82,7 @@ export class Consumer<T = any> extends EventEmitter {
                 async (message) => {
                     await this.failHandler.getTicket();
                     const messageInstance = new HaredoMessage<MessageType>(message, true, this);
+                    this.messageList.add(messageInstance);
                     try {
                         await this.cb(messageInstance);
                         if (this.autoAck) {
@@ -90,7 +98,12 @@ export class Consumer<T = any> extends EventEmitter {
     }
 
     async cancel() {
-        return this.channel.cancel(this.consumerTag);
+        this.reestablish = false;
+        await this.channel.cancel(this.consumerTag);
+        if (this.messageList.length > 0) {
+            await eventToPromise(this.messageList, MessageListEvents.MESSAGE_LIST_DRAINED);
+        }
+        await this.channel.close();
     }
 
 }

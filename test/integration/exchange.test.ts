@@ -24,7 +24,7 @@ describe('Exchange', () => {
     });
 
     it('should create exchange', async () => {
-        const exchange = new Exchange('testExchange', ExchangeType.Direct, {});
+        const exchange = new Exchange('testExchange', ExchangeType.Direct);
         await haredo.exchange(exchange).setup();
     });
 
@@ -33,7 +33,7 @@ describe('Exchange', () => {
     }
 
     it('should bind exchange to queue', async () => {
-        const exchange = new Exchange('testExchange', ExchangeType.Direct, {});
+        const exchange = new Exchange('testExchange', ExchangeType.Direct);
         const queue = new Queue<SimpleMessage>('testQueue', { durable: true });
         await haredo.exchange(exchange, '*').queue(queue).publish({ test: 1 });
         await getSingleMessage(queue.name);
@@ -46,9 +46,16 @@ describe('Exchange', () => {
             await checkExchange(exchange.name, exchange.type, { durable: true });
         });
         it('should delete exchange', async () => {
-            const exchange = new Exchange('testExchange', ExchangeType.Direct, {});
+            const exchange = new Exchange('testExchange', ExchangeType.Direct);
             await exchange.delete(getChannel);
             await expect(checkExchange(exchange.name, exchange.type)).to.eventually.be.rejectedWith(/NOT_FOUND/);
+        });
+        it('should force assert exchange', async () => {
+            const exchange = new Exchange('testExchange', ExchangeType.Direct);
+            await exchange.assert(getChannel);
+            const newExchange = new Exchange('testExchange', ExchangeType.Topic);
+            await expect(newExchange.assert(getChannel)).to.eventually.be.rejectedWith(/PRECONDITION_FAILED/);
+            await newExchange.assert(getChannel, true);
         });
     });
 

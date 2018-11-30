@@ -89,18 +89,10 @@ export const deleteVhost = async () => {
     await statsInstance.deleteVhost('test');
 };
 
-export const listChannels = async () => {
-    console.log(await statsInstance.getChannels());
-};
-
 export const publishMessage = async (name: string, content: any, opts: Options.Publish) => {
     const channel = await getChannel();
     await channel.sendToQueue(name, Buffer.from(stringify(content)), opts);
     await channel.close();
-};
-
-export const checkQueueEmpty = async (name: string) => {
-    console.log(await listVhostQueues());
 };
 
 export const purgeQueue = async (name: string) => {

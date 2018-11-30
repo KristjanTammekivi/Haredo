@@ -1,6 +1,7 @@
 import { Queue } from './queue';
 import { Exchange } from './exchange';
 import { Options } from 'amqplib';
+import { EventEmitter } from 'events';
 
 export const keyValuePairs = (obj: Object): string[] => {
     return Object.keys(obj).map(key => {
@@ -34,4 +35,12 @@ export type ExtendedPublishType = Omit<Options.Publish, 'headers'> & {
         [header: string]: any;
         'x-delay'?: number;
     };
+}
+
+export const eventToPromise = (emitter: EventEmitter, event: string): Promise<any> => {
+    return new Promise(resolve => {
+        emitter.once(event, (...args: any[]) => {
+            resolve(args);
+        });
+    });
 }

@@ -1,6 +1,9 @@
-import { Options, Channel } from 'amqplib';
+import { Options, Channel, Replies } from 'amqplib';
 import { keyValuePairs } from './utils';
 import { channelGetter } from './queue';
+
+import { debug } from './logger';
+import { BadArgumentsError } from './errors';
 
 export enum ExchangeType {
     Direct = 'direct',
@@ -10,8 +13,13 @@ export enum ExchangeType {
     Delayed = 'x-delayed-message'
 }
 
+export type xDelayedType = ExchangeType.Direct |
+    ExchangeType.Fanout |
+    ExchangeType.Topic |
+    ExchangeType.Headers
+
 export interface IExchangeOptions extends Options.AssertExchange {
-    'x-delayed-type'?: 'direct' | 'fanout' | 'topic' | 'headers';
+    'x-delayed-type'?: xDelayedType;
 }
 
 export class Exchange<T = unknown> {
@@ -19,7 +27,7 @@ export class Exchange<T = unknown> {
     public type: ExchangeType;
     private opts: Options.AssertExchange;
 
-    constructor(name: string, type: ExchangeType, opts: IExchangeOptions) {
+    constructor(name: string, type: ExchangeType, opts: IExchangeOptions = {}) {
         this.name = name;
         this.type = type;
         this.opts = opts;
@@ -28,11 +36,70 @@ export class Exchange<T = unknown> {
         }
     }
 
-    async assert(channelGetter: channelGetter) {
-        const channel = await channelGetter();
-        const reply = await channel.assertExchange(this.name, this.type, this.opts);
-        await channel.close();
-        return reply;
+    clone(type: ExchangeType, opts: Partial<Options.AssertExchange>) {
+        return new Exchange<T>(this.name, type, Object.assign({}, this.opts, opts) as Options.AssertExchange);
+    }
+
+    /**
+     * sets the exchange type as delayed. If delayedType is not provided
+     * it sets x-delayed-type to the previous type this exchange had
+     */
+    delayed(delayedType?: xDelayedType) {
+        if (!delayedType && this.type === ExchangeType.Delayed) {
+            throw new BadArgumentsError(`Can't set delayedType`);
+        }
+        return this.clone(ExchangeType.Delayed, {
+            arguments: {
+                'x-delayed-type': delayedType || this.type
+            }
+        });
+    }
+
+    /**
+     * if true, the exchange will survive broker restarts.
+     * Defaults to true
+     */
+    durable(value: boolean) {
+        return this.clone(this.type, {
+            durable: value
+        })
+    }
+
+    /**
+     * if true, the exchange will be destroyed once the number
+     * of bindings for which it is the source drop to zero.
+     * Defaults to false.
+     */
+    autoDelete(value: boolean) {
+        return this.clone(this.type, {
+            autoDelete: value
+        });
+    }
+
+    /**
+     * sends all unrouted messages to this exchange
+     */
+    alternateExchange(exchange: Exchange) {
+        return this.clone(this.type, {
+            alternateExchange: exchange.name
+        });
+    }
+
+    async assert(channelGetter: channelGetter, force: boolean = false): Promise<Replies.AssertExchange> {
+        try {
+            const channel = await channelGetter();
+            const reply = await channel.assertExchange(this.name, this.type, this.opts);
+            await channel.close();
+            return reply;
+        } catch (e) {
+            if (force) {
+                debug('Deleting %s', this);
+                await this.delete(channelGetter);
+                debug('Reasserting %s', this);
+                return this.assert(channelGetter);
+            }
+            throw e;
+        }
     }
 
     async delete(channelGetter: channelGetter, opts?: Options.DeleteExchange) {
