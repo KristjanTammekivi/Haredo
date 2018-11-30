@@ -7,8 +7,9 @@ import { Queue } from './queue';
 import { Haredo } from './haredo';
 import { Options } from 'amqplib';
 import { Consumer, messageCallback } from './consumer';
-import { stringify, UnpackQueueArgument, MergeTypes, UnpackExchangeArgument } from './utils';
+import { stringify, UnpackQueueArgument, MergeTypes, UnpackExchangeArgument, ExtendedPublishType } from './utils';
 import { delay } from 'bluebird';
+import { HaredoError, BadArgumentsError } from './errors';
 
 interface IAddExchange {
     exchange: Exchange;
@@ -128,7 +129,9 @@ export class HaredoChain<T = unknown> {
             throw new Error('Queue not set for publishing');
         }
         const channel = await this.haredo.connection.createChannel();
-        channel.sendToQueue(this.state.queue.name, Buffer.from(stringify(message)), opts);
+        const response = await channel.sendToQueue(this.state.queue.name, Buffer.from(stringify(message)), opts);
+        await channel.close();
+        return response;
     }
 
     private async publishToExchange(message: T, routingKey: string, opts: Options.Publish = {}) {
@@ -139,7 +142,9 @@ export class HaredoChain<T = unknown> {
             throw new Error('Can\'t publish to more than 1 exchange')
         }
         const channel = await this.haredo.connection.createChannel();
-        channel.publish(this.state.exchanges[0].exchange.name, routingKey, Buffer.from(stringify(message)), opts);
+        const response = await channel.publish(this.state.exchanges[0].exchange.name, routingKey, Buffer.from(stringify(message)), opts);
+        await channel.close();
+        return response;
     }
 
     async setup() {
@@ -152,7 +157,6 @@ export class HaredoChain<T = unknown> {
         if (this.state.exchanges.length) {
             for (const e of this.state.exchanges) {
                 debug('Asserting %s', e.exchange);
-                await delay(500);
                 await e.exchange.assert(channelGetter);
                 debug('Done asserting %s', e.exchange)
                 if (this.state.queue) {
@@ -172,9 +176,9 @@ export class HaredoChain<T = unknown> {
         this.setupPromise = undefined;
     }
 
-    publish(message: T, opts?: Options.Publish): void;
-    publish(message: T, routingKey: string, opts?: Options.Publish): void;
-    async publish(message: T, ...args: [any, Options.Publish?]) {
+    publish(message: T, opts?: ExtendedPublishType): Promise<boolean>;
+    publish(message: T, routingKey: string, opts?: ExtendedPublishType): Promise<boolean>;
+    async publish(message: T, ...args: [any, ExtendedPublishType?]): Promise<boolean> {
         if (!this.state.queue && !this.state.exchanges.length) {
             throw new Error('Publishing requires a queue or an exchange');
         }
@@ -191,6 +195,9 @@ export class HaredoChain<T = unknown> {
         }
         if (this.state.queue) {
             return this.publishToQueue(message, args[0]);
+        }
+        if (typeof args[0] !== 'string') {
+            throw new BadArgumentsError('routingKey must be string when publishing to an exchange');
         }
         return this.publishToExchange(message, args[0], args[1]);
     }

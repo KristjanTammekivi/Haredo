@@ -23,21 +23,21 @@ export class Exchange<T = unknown> {
         this.name = name;
         this.type = type;
         this.opts = opts;
-        if (type === ExchangeType.Delayed && !opts['x-delayed-type']) {
+        if (type === ExchangeType.Delayed && !opts.arguments && opts.arguments['x-delayed-type']) {
             throw new Error('Exchange type delayed requires x-delayed-type option')
         }
     }
 
     async assert(channelGetter: channelGetter) {
         const channel = await channelGetter();
-        const reply = channel.assertExchange(this.name, this.type, this.opts);
+        const reply = await channel.assertExchange(this.name, this.type, this.opts);
         await channel.close();
         return reply;
     }
 
     async delete(channelGetter: channelGetter, opts?: Options.DeleteExchange) {
         const channel = await channelGetter();
-        const reply = channel.deleteExchange(this.name, opts);
+        const reply = await channel.deleteExchange(this.name, opts);
         await channel.close();
         return reply;
     }

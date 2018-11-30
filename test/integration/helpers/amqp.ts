@@ -1,5 +1,6 @@
 import { connect, Connection, Options } from 'amqplib';
 import { stringify } from '../../../src/utils';
+import { ExchangeType } from '../../../src/exchange';
 
 let connection: Connection;
 
@@ -22,7 +23,49 @@ export const createVhost = async () => {
     });
 };
 
-export const checkQueue = async (name: string, opts?: Options.AssertQueue) => {
+export const checkExchange = async (name: string, type: ExchangeType, opts?: Options.AssertExchange) => {
+    const channel = await getChannel();
+    await channel.checkExchange(name);
+    if (opts) {
+        await channel.assertExchange(name, type, opts);
+    }
+    return channel.close();
+};
+
+interface GetVhostQueue {
+    garbage_collection:
+    {
+        max_heap_size: number,
+        min_bin_vheap_size: number,
+        min_heap_size: number,
+        fullsweep_after: number,
+        minor_gcs: number
+    },
+    consumer_details: any[],
+    incoming: any[],
+    deliveries: any[],
+    node: string,
+    arguments: any,
+    exclusive: boolean,
+    auto_delete: boolean,
+    durable: boolean,
+    vhost: string,
+    name: string
+}
+
+
+export const getVhostQueue = async (name: string): Promise<GetVhostQueue> => {
+    return statsInstance.getVhostQueue('test', name);
+};
+
+export const checkQueue = async (name: string) => {
+    const channel = await getChannel();
+    const stats = await channel.checkQueue(name);
+    await channel.close();
+    return stats;
+};
+
+export const verifyQueue = async (name: string, opts?: Options.AssertQueue) => {
     const channel = await getChannel();
     await channel.checkQueue(name);
     if (opts) {

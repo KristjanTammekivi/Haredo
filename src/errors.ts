@@ -1,1 +1,5 @@
-export abstract class HaredoError extends Error {}
+export abstract class HaredoError extends Error {
+    name: 'HaredoError'
+}
+
+export class BadArgumentsError extends HaredoError { }

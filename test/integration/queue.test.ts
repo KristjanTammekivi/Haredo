@@ -1,8 +1,6 @@
 import 'mocha';
-import { Queue, Haredo, queue } from '../../src/index'
-import { setup, teardown, checkQueue, listChannels, getChannel, getSingleMessage, publishMessage, checkQueueEmpty, purgeQueue } from './helpers/amqp';
-import { Consumer } from '../../src/consumer';
-import { delay } from 'bluebird';
+import { Queue, Haredo } from '../../src/index'
+import { setup, teardown, checkQueue, getChannel, getSingleMessage, publishMessage, purgeQueue } from './helpers/amqp';
 import { expect, use } from 'chai';
 
 import * as chaiAsPromised from 'chai-as-promised';
@@ -59,15 +57,4 @@ describe('Queue', () => {
         });
     });
 
-    async function haredoGetSingleMessage(queue: Queue) {
-        let consumer: Consumer;
-        await new Promise(async (resolve, reject) => {
-            consumer = await haredo.queue(queue).subscribe(async (message) => {
-                await message.ack();
-                resolve();
-            });
-        });
-
-        await consumer.cancel();
-    }
 });
