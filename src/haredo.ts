@@ -1,11 +1,15 @@
-import { Options, Connection, connect, Channel } from 'amqplib';
+import { Options, Connection, connect } from 'amqplib';
 import { Queue } from './queue';
 import { Exchange } from './exchange';
 import { HaredoChain } from './haredo-chain';
-import { EventEmitter } from 'events';
 
 import * as Bluebird from 'bluebird';
-import { UnpackQueueArgument, UnpackExchangeArgument } from './utils';
+import { UnpackQueueArgument, UnpackExchangeArgument, eventToPromise } from './utils';
+import { TypedEventEmitter } from './events';
+import { EventEmitter } from 'events';
+import { ConsumerManager } from './consumer-manager';
+import { Consumer } from './consumer';
+import { HaredoClosedError } from './errors';
 
 export interface IHaredoOptions {
     autoAck?: boolean;
@@ -21,19 +25,25 @@ const DEFAULT_OPTIONS: IHaredoOptions = {
     forceAssert: false
 }
 
-export class Haredo extends EventEmitter {
-    public connection: Connection;
+interface Events {
+    closing: void;
+}
+
+export class Haredo {
+    private connection: Connection;
     private connectionOptions: string | Options.Connect;
     private socketOpts: any;
     public autoAck: boolean;
     public forceAssert: boolean;
-    private channels: Channel[] = [];
     public closing: boolean = false;
     private closingPromise: Bluebird<void>;
     private connectionPromise: Bluebird<Connection>;
 
+    private consumerManager = new ConsumerManager();
+
+    public emitter: TypedEventEmitter<Events> = new EventEmitter() as TypedEventEmitter<Events>
+
     constructor(opts: Partial<IHaredoOptions>) {
-        super();
         const defaultedOpts: IHaredoOptions = Object.assign({}, DEFAULT_OPTIONS, opts);
         this.connectionOptions = defaultedOpts.connectionOptions;
         this.socketOpts = defaultedOpts.socketOpts;
@@ -52,25 +62,30 @@ export class Haredo extends EventEmitter {
         return this.connection;
     }
 
-    async close() {
+    async close(force: boolean = false) {
         if (this.closing) {
             return this.closingPromise;
+        }
+        this.closing = true;
+        if (this.consumerManager.length) {
+            await this.consumerManager.drain();
         }
         this.closingPromise = this.connection.close();
         return this.closingPromise;
     }
 
     async getChannel() {
+        if (this.closing) {
+            throw new HaredoClosedError();
+        }
         const channel = await this.connection.createChannel();
         // Without this channel errors will exit the program
         channel.on('error', () => { });
-        channel.on('close', () => {
-            this.channels = this.channels.filter((c) => {
-                return channel !== c;
-            });
-        });
-        this.channels.push(channel);
         return channel;
+    }
+
+    addConsumer(consumer: Consumer) {
+        this.consumerManager.add(consumer);
     }
 
     queue<T extends Queue>(queue: T) {

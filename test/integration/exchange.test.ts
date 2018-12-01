@@ -41,7 +41,7 @@ describe('Exchange', () => {
 
     describe('methods', () => {
         it('should assert exchange', async () => {
-            const exchange = new Exchange('testExchange', ExchangeType.Direct, { durable: true });
+            const exchange = new Exchange('testExchange', ExchangeType.Direct).durable();
             await exchange.assert(getChannel);
             await checkExchange(exchange.name, exchange.type, { durable: true });
         });

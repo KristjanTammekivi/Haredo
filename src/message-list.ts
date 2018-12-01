@@ -1,21 +1,27 @@
 import { EventEmitter } from 'events';
-import { HaredoMessage, MessageEvents } from './message';
+import { HaredoMessage, HaredoMessageEvents } from './message';
+import { TypedEventEmitter } from './events';
 
 export enum MessageListEvents {
     MESSAGE_LIST_DRAINED = 'drained'
 }
 
-export class MessageList extends EventEmitter {
+interface Events {
+    'drained': void
+}
+
+export class MessageList {
     private messages: HaredoMessage[] = [];
+    public readonly emitter = new EventEmitter() as TypedEventEmitter<Events>;
     get length() {
         return this.messages.length;
     }
     add(message: HaredoMessage) {
         this.messages = this.messages.concat([message]);
-        message.once(MessageEvents.MESSAGE_HANDLED, () => {
+        message.emitter.once(HaredoMessageEvents.MESSAGE_HANDLED, () => {
             this.remove(message);
             if (this.messages.length === 0) {
-                this.emit(MessageListEvents.MESSAGE_LIST_DRAINED);
+                this.emitter.emit(MessageListEvents.MESSAGE_LIST_DRAINED);
             }
         });
     }

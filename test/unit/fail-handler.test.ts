@@ -1,6 +1,5 @@
-import { FailHandler } from '../src/fail-handler';
-
 import { expect } from 'chai';
+import { FailHandler } from '../../src/fail-handler';
 
 describe('FailHandler', () => {
     it('should get a ticket', async () => {

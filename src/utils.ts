@@ -2,6 +2,7 @@ import { Queue } from './queue';
 import { Exchange } from './exchange';
 import { Options } from 'amqplib';
 import { EventEmitter } from 'events';
+import { TypedEventEmitter } from './events';
 
 export const keyValuePairs = (obj: Object): string[] => {
     return Object.keys(obj).map(key => {
@@ -23,6 +24,7 @@ export const stringify = (message: any): string => {
 
 export type UnpackQueueArgument<T> = T extends Queue<infer U> ? U : any;
 export type UnpackExchangeArgument<T> = T extends Exchange<infer U> ? U : any;
+export type UnpackTypedEventEmitterArgument<T> = T extends TypedEventEmitter<infer U> ? U : any;
 
 type notany = Object | string | number | undefined | null;
 
@@ -37,7 +39,10 @@ export type ExtendedPublishType = Omit<Options.Publish, 'headers'> & {
     };
 }
 
-export const eventToPromise = (emitter: EventEmitter, event: string): Promise<any> => {
+export const eventToPromise = <T extends TypedEventEmitter<any>>(
+    emitter: T,
+    event: keyof UnpackTypedEventEmitterArgument<T>
+): Promise<any> => {
     return new Promise(resolve => {
         emitter.once(event, (...args: any[]) => {
             resolve(args);

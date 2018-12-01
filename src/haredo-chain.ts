@@ -117,7 +117,7 @@ export class HaredoChain<T = unknown> {
         if (!this.state.queue) {
             throw new Error('Queue not set for publishing');
         }
-        const channel = await this.haredo.connection.createChannel();
+        const channel = await this.haredo.getChannel();
         const response = await channel.sendToQueue(this.state.queue.name, Buffer.from(stringify(message)), opts);
         await channel.close();
         return response;
@@ -130,7 +130,7 @@ export class HaredoChain<T = unknown> {
         if (this.state.exchanges.length > 1) {
             throw new Error('Can\'t publish to more than 1 exchange')
         }
-        const channel = await this.haredo.connection.createChannel();
+        const channel = await this.haredo.getChannel();
         const response = await channel.publish(this.state.exchanges[0].exchange.name, routingKey, Buffer.from(stringify(message)), opts);
         await channel.close();
         return response;
@@ -220,6 +220,7 @@ export class HaredoChain<T = unknown> {
                     failThreshold: this.state.failThreshold
                 }
             }, cb);
+        this.haredo.addConsumer(consumer);
         await consumer.start();
         return consumer;
     }

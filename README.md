@@ -17,6 +17,7 @@ For a long time I've been using [tortoise](https://www.npmjs.com/package/tortois
     - Dead Letter
     - Delayed exchanges
     - RPC
+    - Graceful shutdown
 
 ## TODOS
 
