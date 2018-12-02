@@ -13,4 +13,5 @@ before_install:
   - docker-compose up -d
 
 script:
-  - npm run coverage
+  - yarn
+  - yarn run coverage
