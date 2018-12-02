@@ -37,14 +37,14 @@ export class Queue<T = unknown> {
      * if true, the queue will be deleted when the number
      * of consumers drops to zero (defaults to false)
      */
-    autoDelete(value: boolean) {
+    autoDelete(value: boolean = true) {
         return this.clone({ autoDelete: value });
     }
 
     /**
      * if true, scopes the queue to the connection (defaults to false)
      */
-    exclusive(value: boolean = false) {
+    exclusive(value: boolean = true) {
         return this.clone({ exclusive: value });
     }
 

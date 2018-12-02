@@ -87,7 +87,7 @@ export class Consumer<T = any> {
             }
         });
         if (this.prefetch) {
-            await this.channel.prefetch(this.prefetch);
+            await this.setPrefetch(this.prefetch);
         }
         const queue = this.haredoChain.getQueue();
         type MessageType = UnpackQueueArgument<T>
@@ -96,7 +96,7 @@ export class Consumer<T = any> {
                 queue.name,
                 async (message) => {
                     await this.failHandler.getTicket();
-                    const messageInstance = new HaredoMessage<MessageType>(message, true, this.channel);
+                    const messageInstance = new HaredoMessage<MessageType>(message, true, this);
                     this.messageList.add(messageInstance);
                     try {
                         await this.cb(messageInstance);

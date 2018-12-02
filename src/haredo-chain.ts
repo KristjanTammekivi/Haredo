@@ -27,7 +27,7 @@ interface IHaredoChainOpts {
 export class HaredoChain<T = unknown> {
     private haredo: Haredo;
 
-    private state: Partial<IHaredoChainOpts> = {};
+    public readonly state: Partial<IHaredoChainOpts> = {};
 
     private setupPromise: Promise<any>;
 
@@ -37,7 +37,10 @@ export class HaredoChain<T = unknown> {
         this.state.exchanges = [].concat(opts.exchanges || []);
         this.state.prefetch = opts.prefetch || 0;
         this.state.isSetup = opts.isSetup || false;
-        this.state.reestablish = false;
+        this.state.reestablish = opts.reestablish || false;
+        this.state.failSpan = opts.failSpan;
+        this.state.failThreshold = opts.failThreshold;
+        this.state.failTimeout = opts.failTimeout;
     }
 
     async getChannel() {

@@ -1,6 +1,7 @@
 import { Message, Channel } from 'amqplib';
 import { EventEmitter } from 'events';
 import { TypedEventEmitter } from './events';
+import { Consumer } from './consumer';
 
 export enum HaredoMessageEvents {
     MESSAGE_ACKED = 'ack',
@@ -16,7 +17,7 @@ interface Events {
 
 export class HaredoMessage<T = unknown> {
 
-    private channel: Channel;
+    private consumer: Consumer;
 
     public data: T;
     public dataString: string;
@@ -25,7 +26,7 @@ export class HaredoMessage<T = unknown> {
 
     public isHandled: boolean;
 
-    constructor(raw: Message, parseJson: boolean, channel: Channel) {
+    constructor(raw: Message, parseJson: boolean, consumer: Consumer) {
         this.raw = raw;
         this.dataString = raw.content.toString();
         if (parseJson) {
@@ -33,7 +34,7 @@ export class HaredoMessage<T = unknown> {
         } else {
             this.data = this.dataString as any;
         }
-        this.channel = channel;
+        this.consumer = consumer;
     }
 
     ack() {
@@ -43,7 +44,7 @@ export class HaredoMessage<T = unknown> {
         this.isHandled = true;
         this.emitter.emit(HaredoMessageEvents.MESSAGE_ACKED);
         this.emitter.emit(HaredoMessageEvents.MESSAGE_HANDLED, 'ACK');
-        return this.channel.ack(this.raw);
+        return this.consumer.ack(this.raw);
     }
 
     nack(requeue: boolean = true) {
@@ -53,6 +54,6 @@ export class HaredoMessage<T = unknown> {
         this.isHandled = true;
         this.emitter.emit(HaredoMessageEvents.MESSAGE_NACKED);
         this.emitter.emit(HaredoMessageEvents.MESSAGE_HANDLED, 'NACK');
-        return this.channel.nack(this.raw, false, requeue);
+        return this.consumer.nack(this.raw, requeue);
     }
 }

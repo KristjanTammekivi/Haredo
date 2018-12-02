@@ -2,7 +2,8 @@ import 'mocha';
 import { Queue, Haredo } from '../../src/index'
 import {
     setup,
-    teardown
+    teardown,
+    getSingleMessage
 } from './helpers/amqp';
 import { expect, use } from 'chai';
 
@@ -25,6 +26,36 @@ describe('Queue', () => {
     afterEach(async () => {
         await haredo.close();
         await teardown();
+    });
+    describe('autoAck', () => {
+        it('should ack a message when callback is resolved', async () => {
+            const haredo = new Haredo({
+                connectionOptions: 'amqp://guest:guest@localhost:5672/test',
+                autoAck: true
+            });
+            await haredo.connect();
+            const queue = new Queue<{ test: number }>('simpleQueue').durable();
+            await haredo.queue(queue).publish({ test: 1 });
+            const consumer = await haredo.queue(queue).subscribe(async message => { });
+            await delay(50);
+            await consumer.cancel();
+            await expect(getSingleMessage(queue.name)).to.eventually.be.rejectedWith(/No message/);
+        });
+        it('should nack a message when callback throws', async () => {
+            const haredo = new Haredo({
+                connectionOptions: 'amqp://guest:guest@localhost:5672/test',
+                autoAck: true
+            });
+            await haredo.connect();
+            const queue = new Queue<{ test: number }>('simpleQueue').durable();
+            await haredo.queue(queue).publish({ test: 1 });
+            const consumer = await haredo.queue(queue).subscribe(async message => {
+                throw new Error('test');
+            });
+            await delay(50);
+            await consumer.cancel();
+            await getSingleMessage(queue.name);
+        });
     });
     describe('cancel', () => {
         it('should close channel', async () => {
