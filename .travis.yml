@@ -11,7 +11,10 @@ services:
 before_install:
   - cd test/docker
   - docker-compose up -d
+  - cd ../..
 
 script:
+  - pwd
   - yarn
+  - sed -i s/this\.muxer\.unpipeFrom\(buffer\)/buffer\.end\(\)/ node_modules/amqplib/lib/connection.js
   - yarn run coverage
