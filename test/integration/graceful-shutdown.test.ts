@@ -10,7 +10,7 @@ import { HaredoClosedError } from '../../src/errors';
 
 use(chaiAsPromised);
 
-describe.only('Graceful Shutdown', () => {
+describe('Graceful Shutdown', () => {
     let haredo: Haredo;
     beforeEach(async () => {
         await setup();
@@ -25,13 +25,13 @@ describe.only('Graceful Shutdown', () => {
         await teardown();
     });
 
-    it.only('should not allow any more channels to be opened after close is called', async () => {
+    it('should not allow any more channels to be opened after close is called', async () => {
         const shutdownPromise = haredo.close();
         expect(haredo.getChannel()).to.eventually.be.rejectedWith(HaredoClosedError);
         await expect(shutdownPromise).to.eventually.eql(undefined);
     });
 
-    it.only('should shut down consumers', async () => {
+    it('should shut down consumers', async () => {
         const queue = new Queue('testQueue')
         const consumer = await haredo.queue(queue).subscribe(async message => {
             await delay(200);

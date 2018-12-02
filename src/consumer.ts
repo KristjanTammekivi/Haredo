@@ -54,6 +54,8 @@ export class Consumer<T = any> {
     public reestablish: boolean;
     private failHandler: FailHandler;
 
+    private closingPromise: Promise<void>;
+
     constructor(
         private haredoChain: HaredoChain,
         opts: IConsumerOpts,
@@ -110,15 +112,31 @@ export class Consumer<T = any> {
         this.consumerTag = consumerInfo.consumerTag;
     }
 
-    async cancel() {
+    async cancel(force: boolean = false) {
+        if (force) {
+            throw new Error('force closing consumer is not yet implemented');
+        }
+        if (this.closing) {
+            return this.closingPromise;
+        }
         this.closing = true;
         this.reestablish = false;
-        await this.channel.cancel(this.consumerTag);
-        this.emitter.emit('cancel')
-        if (this.messageList.length > 0) {
-            await eventToPromise(this.messageList.emitter, 'drained');
-        }
-        await this.channel.close();
+        this.closingPromise = new Promise(async (resolve, reject) => {
+            try {
+                await this.channel.cancel(this.consumerTag);
+                this.emitter.emit('cancel')
+                if (this.messageList.length > 0) {
+                    await eventToPromise(this.messageList.emitter, 'drained');
+                }
+                await this.channel.close();
+                resolve();
+            } catch (e) {
+                // TODO: log to error logger
+                reject();
+            }
+
+        });
+        await this.closingPromise;
         this.closed = true;
         this.emitter.emit('close');
     }
