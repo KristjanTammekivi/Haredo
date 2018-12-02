@@ -1,6 +1,6 @@
 {
   "name": "haredo",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Wrapper around amqplib",
   "main": "dist/index.js",
   "scripts": {
@@ -8,13 +8,36 @@
     "build-ts": "tsc",
     "watch-ts": "tsc -w",
     "test": "npm run -s test:unit && npm run -s test:integration",
-    "test:integration": "mocha --require ts-node/register test/integration/**/*.test.ts",
-    "test:integration:watch": "mocha --require ts-node/register --watch --watch-extensions ts test/integration/**/*.test.ts",
-    "test:unit": "mocha --require ts-node/register test/unit/**/*.test.ts",
-    "test:unit:watch": "mocha --require ts-node/register --watch --watch-extensions ts test/unit/**/*.test.ts"
+    "test:integration": "mocha --require source-map-support/register --require ts-node/register test/integration/**/*.test.ts",
+    "test:integration:watch": "mocha --require source-map-support/register --require ts-node/register --watch --watch-extensions ts test/integration/**/*.test.ts",
+    "test:unit": "mocha --require source-map-support/register --require ts-node/register test/unit/**/*.test.ts",
+    "test:unit:watch": "mocha --require source-map-support/register --require ts-node/register --watch --watch-extensions ts test/unit/**/*.test.ts",
+    "coverage": "nyc mocha"
+  },
+  "nyc": {
+    "include": [
+      "src/**/*.ts",
+      "test/**/*.test.ts"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "text-summary",
+      "html"
+    ],
+    "sourceMap": true,
+    "instrument": true
   },
   "author": "Kristjan Tammekivi",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KristjanTammekivi/haredo.git"
+  },
   "dependencies": {
     "amqplib": "^0.5.2",
     "bluebird": "^3.5.1",
@@ -30,6 +53,7 @@
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "mocha": "^5.2.0",
+    "nyc": "^13.1.0",
     "rabbitmq-stats": "^1.2.0",
     "source-map-support": "^0.5.6",
     "ts-node": "^7.0.0",
