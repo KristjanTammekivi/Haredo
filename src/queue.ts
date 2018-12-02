@@ -13,7 +13,7 @@ export type channelGetter = () => Promise<amqplib.Channel> | amqplib.Channel;
 
 export class Queue<T = unknown> {
     public name: string;
-    private opts: Options.AssertQueue;
+    public readonly opts: Options.AssertQueue;
 
     constructor(name?: string, opts: amqplib.Options.AssertQueue = {}) {
         this.name = name;

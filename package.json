@@ -7,7 +7,7 @@
     "build": "npm run build-ts",
     "build-ts": "tsc",
     "watch-ts": "tsc -w",
-    "test": "npm run -s test:unit && npm run -s test:integration",
+    "test": "mocha",
     "test:integration": "mocha --require source-map-support/register --require ts-node/register test/integration/**/*.test.ts",
     "test:integration:watch": "mocha --require source-map-support/register --require ts-node/register --watch --watch-extensions ts test/integration/**/*.test.ts",
     "test:unit": "mocha --require source-map-support/register --require ts-node/register test/unit/**/*.test.ts",
@@ -26,6 +26,7 @@
       "ts-node/register"
     ],
     "reporter": [
+      "lcov",
       "text-summary",
       "html"
     ],

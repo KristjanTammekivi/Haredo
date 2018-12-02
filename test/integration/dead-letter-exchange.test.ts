@@ -31,7 +31,7 @@ describe('Dead Letter Exchange', () => {
         const queue = new Queue<{ test: number }>('testQueue').deadLetterExchange(dlx);
         const exchange = new Exchange('testExchange', ExchangeType.Direct, {});
 
-        haredo
+        await haredo
             .exchange(dlx, '*')
             .queue(dlq)
             .setup();
@@ -51,7 +51,7 @@ describe('Dead Letter Exchange', () => {
 
         await consumer.cancel();
 
-        const message = await getSingleMessage(dlq.name);
+        await getSingleMessage(dlq.name);
     });
 
 });

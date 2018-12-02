@@ -39,6 +39,15 @@ describe('Exchange', () => {
         await getSingleMessage(queue.name);
     });
 
+    it('should bind one exchange to another', async () => {
+        const exchange1 = new Exchange('testExchange', ExchangeType.Direct);
+        const exchange2 = new Exchange('testExchange', ExchangeType.Direct);
+        const queue = new Queue('testQueue').durable();
+        await haredo.queue(queue).exchange(exchange2, '*').setup();
+        await exchange1.bind(getChannel, exchange2, '*');
+        await haredo.exchange(exchange1).publish({ test: 1 }, 'testroutingkey');
+    });
+
     describe('methods', () => {
         it('should assert exchange', async () => {
             const exchange = new Exchange('testExchange', ExchangeType.Direct).durable();
@@ -56,6 +65,15 @@ describe('Exchange', () => {
             const newExchange = new Exchange('testExchange', ExchangeType.Topic);
             await expect(newExchange.assert(getChannel)).to.eventually.be.rejectedWith(/PRECONDITION_FAILED/);
             await newExchange.assert(getChannel, true);
+        });
+        it('should set autodelete', () => {
+            const exchange = new Exchange('testExchange', ExchangeType.Direct).autoDelete(true);
+            expect(exchange.opts.autoDelete).to.be.true;
+        });
+        it('should set alternateechange', () => {
+            const exchange2 = new Exchange('testExchange2', ExchangeType.Direct);
+            const exchange = new Exchange('testExchange', ExchangeType.Direct).alternateExchange(exchange2);
+            expect(exchange.opts.alternateExchange).to.eql(exchange2.name);
         });
     });
 

@@ -28,10 +28,25 @@ describe('Delayed Exchange', () => {
         test: number;
     }
 
+    it('should require x-delayed-type', () => {
+        expect(() => new Exchange('testExchange', ExchangeType.Delayed)).to.throw();
+        expect(() => {
+            new Exchange(
+                'testExchange',
+                ExchangeType.Delayed,
+                {
+                    arguments: {
+                        'x-delayed-type': ExchangeType.Direct
+                    }
+                }
+            ).delayed();
+        }).to.throw();
+    });
+
     it('should work with direct exchange', async () => {
-        const exchange = new Exchange('testExchange', ExchangeType.Delayed)
+        const exchange = new Exchange('testExchange', ExchangeType.Direct)
             .durable()
-            .delayed(ExchangeType.Direct);
+            .delayed();
         const queue = new Queue<SimpleMessage>('testQueue').durable();
         await haredo
             .exchange(exchange, 'test')

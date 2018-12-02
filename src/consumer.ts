@@ -112,6 +112,10 @@ export class Consumer<T = any> {
         this.consumerTag = consumerInfo.consumerTag;
     }
 
+    async setPrefetch(count: number) {
+        await this.channel.prefetch(count);
+    }
+
     async cancel(force: boolean = false) {
         if (force) {
             throw new Error('force closing consumer is not yet implemented');

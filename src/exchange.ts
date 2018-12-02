@@ -25,13 +25,13 @@ export interface IExchangeOptions extends Options.AssertExchange {
 export class Exchange<T = unknown> {
     public name: string;
     public type: ExchangeType;
-    private opts: Options.AssertExchange;
+    public readonly opts: Options.AssertExchange;
 
     constructor(name: string, type: ExchangeType, opts: IExchangeOptions = { arguments: {} }) {
         this.name = name;
         this.type = type;
         this.opts = opts;
-        if (type === ExchangeType.Delayed && !opts.arguments && opts.arguments['x-delayed-type']) {
+        if (type === ExchangeType.Delayed && (!opts.arguments || !opts.arguments['x-delayed-type'])) {
             throw new Error('Exchange type delayed requires x-delayed-type option')
         }
     }

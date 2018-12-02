@@ -70,6 +70,22 @@ describe('Queue', () => {
             await expect(newQueue.assert(getChannel)).to.eventually.be.rejectedWith(/PRECONDITION_FAILED/);
             await newQueue.assert(getChannel, true);
         });
+        it('should set autodelete', () => {
+            const queue = new Queue().autoDelete(true);
+            expect(queue.opts.autoDelete).to.be.true;
+        });
+        it('should set exclusive', () => {
+            const queue = new Queue().exclusive(true);
+            expect(queue.opts.exclusive).to.be.true;
+        });
+        it('should set messageTtl', () => {
+            const queue = new Queue().messageTtl(100);
+            expect(queue.opts.messageTtl).to.eql(100);
+        });
+        it('should set expires', () => {
+            const queue = new Queue().expires(100);
+            expect(queue.opts.expires).to.eql(100);
+        })
     });
 
 });
