@@ -1,5 +1,7 @@
 # Haredo
 
+[![Build Status](https://travis-ci.com/KristjanTammekivi/Haredo.svg?token=5sH57fp4gyjYbXpM9ZY9&branch=master)](https://travis-ci.com/KristjanTammekivi/Haredo)
+
 Yet another Rabbit library
 
 ## Motivation
