@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { HaredoChain } from './haredo-chain';
 import { Message, Channel } from 'amqplib';
-import { HaredoMessage } from './message';
+import { HaredoMessage } from './haredo-message';
 import { FailHandler, IFailHandlerOpts } from './fail-handler';
 import { UnpackQueueArgument, eventToPromise } from './utils';
 import { MessageList } from './message-list';

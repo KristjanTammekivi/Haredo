@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { HaredoMessage, HaredoMessageEvents } from './message';
+import { HaredoMessage, HaredoMessageEvents } from './haredo-message';
 import { TypedEventEmitter } from './events';
 
 export enum MessageListEvents {

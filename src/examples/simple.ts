@@ -1,7 +1,7 @@
 import 'source-map-support/register';
 import { Haredo } from '../haredo';
 import { Queue } from '../queue';
-import { HaredoMessage } from '../message';
+import { HaredoMessage } from '../haredo-message';
 
 const haredo = new Haredo({ connectionOptions: 'amqp://guest:guest@localhost:5672/', autoAck: true });
 (async () => {
