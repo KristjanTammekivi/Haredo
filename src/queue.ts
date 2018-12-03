@@ -81,6 +81,7 @@ export class Queue<T = unknown> {
         const channel = await channelGetter();
         try {
             const reply = await channel.assertQueue(this.name, this.opts);
+            this.name = reply.queue;
             await channel.close();
             return reply;
         } catch (e) {

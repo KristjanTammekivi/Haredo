@@ -4,7 +4,7 @@ import { Exchange } from './exchange';
 import { HaredoChain } from './haredo-chain';
 
 import * as Bluebird from 'bluebird';
-import { UnpackQueueArgument, UnpackExchangeArgument, eventToPromise } from './utils';
+import { UnpackQueueArgument, UnpackExchangeArgument } from './utils';
 import { TypedEventEmitter } from './events';
 import { EventEmitter } from 'events';
 import { ConsumerManager } from './consumer-manager';

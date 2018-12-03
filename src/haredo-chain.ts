@@ -22,6 +22,7 @@ interface IHaredoChainOpts {
     failSpan: number;
     failTimeout: number;
     reestablish: boolean;
+    json: boolean;
 }
 
 export class HaredoChain<T = unknown> {
@@ -41,6 +42,7 @@ export class HaredoChain<T = unknown> {
         this.state.failSpan = opts.failSpan;
         this.state.failThreshold = opts.failThreshold;
         this.state.failTimeout = opts.failTimeout;
+        this.state.json = opts.json || false;
     }
 
     async getChannel() {
@@ -75,12 +77,8 @@ export class HaredoChain<T = unknown> {
         return this.clone({ prefetch: amount });
     }
 
-    delay() {
-        throw new Error('delay Not yet implemented');
-    }
-
     json() {
-        throw new Error('json Not yet implemented');
+        return this.clone({ json: true });
     }
 
     clone<U = T>(opts?: Partial<IHaredoChainOpts>) {
@@ -117,9 +115,6 @@ export class HaredoChain<T = unknown> {
     }
 
     private async publishToQueue(message: T, opts: Options.Publish) {
-        if (!this.state.queue) {
-            throw new Error('Queue not set for publishing');
-        }
         const channel = await this.haredo.getChannel();
         const response = await channel.sendToQueue(this.state.queue.name, Buffer.from(stringify(message)), opts);
         await channel.close();
@@ -127,12 +122,6 @@ export class HaredoChain<T = unknown> {
     }
 
     private async publishToExchange(message: T, routingKey: string, opts: Options.Publish = {}) {
-        if (this.state.exchanges.length === 0) {
-            throw new Error('No exchanges set for publishing');
-        }
-        if (this.state.exchanges.length > 1) {
-            throw new Error('Can\'t publish to more than 1 exchange')
-        }
         const channel = await this.haredo.getChannel();
         const response = await channel.publish(this.state.exchanges[0].exchange.name, routingKey, Buffer.from(stringify(message)), opts);
         await channel.close();
@@ -202,7 +191,7 @@ export class HaredoChain<T = unknown> {
 
     async subscribe(cb: messageCallback<T>) {
         if (!this.state.queue) {
-            throw new Error('Can\'t subscribe without queue');
+            throw new Error(`Can't subscribe without queue`);
         }
         if (this.setupPromise) {
             await this.setupPromise;

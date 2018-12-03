@@ -1,14 +1,12 @@
 import 'mocha';
-import { Queue, Haredo } from '../../src/index'
+import { Queue, Haredo, Exchange, ExchangeType } from '../../src/index'
 import {
     setup,
-    teardown,
-    getSingleMessage
+    teardown
 } from './helpers/amqp';
 import { expect, use } from 'chai';
 
 import * as chaiAsPromised from 'chai-as-promised';
-import { delay } from 'bluebird';
 
 use(chaiAsPromised);
 
@@ -41,5 +39,28 @@ describe('Queue', () => {
     it('should set failTimeout', () => {
         const queue = new Queue();
         expect(haredo.queue(queue).failTimeout(5).state.failTimeout).to.equal(5);
+    });
+    it('should set prefetch', () => {
+        const queue = new Queue();
+        expect(haredo.queue(queue).prefetch(5).state.prefetch).to.equal(5);
+    });
+    it('should set json', () => {
+        const queue = new Queue();
+        expect(haredo.queue(queue).json().state.json).to.be.true;
+    });
+    it('should throw when attempting to set a queue twice', () => {
+        const queue = new Queue();
+        expect(() => haredo.queue(queue).queue(queue)).to.throw();
+    });
+    it('should throw when subscribing without setting a queue', async () => {
+        const exchange = new Exchange('testExchange', ExchangeType.Direct);
+        await expect(haredo.exchange(exchange).subscribe(() => { }))
+            .to.eventually.be.rejectedWith(`Can't subscribe without queue`);
+    });
+    it('should reject when a queue and exchange are added without a pattern', async () => {
+        const exchange = new Exchange('test', ExchangeType.Direct);
+        const queue = new Queue();
+        await expect(haredo.queue(queue).exchange(exchange).setup())
+            .to.be.rejectedWith('Exchange added without pattern for binding');
     });
 });

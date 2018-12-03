@@ -45,12 +45,14 @@ export class Consumer<T = any> {
     public channel: Channel;
     public closing = false;
     public closed = false;
+    public consumerCancelled = false;
+    private messageListDrained = false;
 
     private messageList: MessageList = new MessageList();
     public emitter = new EventEmitter() as TypedEventEmitter<Events>;
 
-    public readonly autoAck: boolean;
-    public readonly prefetch: number;
+    public autoAck: boolean;
+    public prefetch: number;
     public reestablish: boolean;
     private failHandler: FailHandler;
 
@@ -113,36 +115,46 @@ export class Consumer<T = any> {
     }
 
     async setPrefetch(count: number) {
+        this.prefetch = count;
         await this.channel.prefetch(count);
     }
 
     async cancel(force: boolean = false) {
         if (force) {
-            throw new Error('force closing consumer is not yet implemented');
+        }
+        if (this.closed) {
+            return;
+        }
+        if (force && !this.messageListDrained) {
+            this.closingPromise = Promise.resolve(this.channel.close());
+
+            this.closing = true;
+            await this.closingPromise;
+            this.closed = true;
+            this.emitter.emit('close');
         }
         if (this.closing) {
             return this.closingPromise;
         }
         this.closing = true;
         this.reestablish = false;
-        this.closingPromise = new Promise(async (resolve, reject) => {
-            try {
-                await this.channel.cancel(this.consumerTag);
-                this.emitter.emit('cancel')
-                if (this.messageList.length > 0) {
-                    await eventToPromise(this.messageList.emitter, 'drained');
-                }
-                await this.channel.close();
-                resolve();
-            } catch (e) {
-                // TODO: log to error logger
-                reject();
-            }
-
-        });
+        this.closingPromise = this.gracefulCancel();
         await this.closingPromise;
-        this.closed = true;
-        this.emitter.emit('close');
+    }
+
+    private async gracefulCancel() {
+        await this.channel.cancel(this.consumerTag);
+        this.consumerCancelled = true;
+        this.emitter.emit('cancel');
+        if (this.messageList.length > 0 && !this.closed) {
+            await eventToPromise(this.messageList.emitter, 'drained');
+        }
+        this.messageListDrained = true;
+        if (!this.closed) {
+            await this.channel.close();
+            this.closed = true;
+            this.emitter.emit('close');
+        }
     }
 
 }
