@@ -16,5 +16,4 @@ before_install:
 script:
   - pwd
   - yarn
-  - sed -i s/this\.muxer\.unpipeFrom\(buffer\)/buffer\.end\(\)/ node_modules/amqplib/lib/connection.js
   - yarn run coverage
