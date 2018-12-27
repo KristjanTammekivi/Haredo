@@ -11,6 +11,10 @@ const DEFAULT_QUEUE_OPTIONS: Options.AssertQueue = {
 
 export type channelGetter = () => Promise<amqplib.Channel> | amqplib.Channel;
 
+// TODO: store exchange bindings here
+// TODO: store isAsserted state here
+// TODO: lazy queue
+
 export class Queue<T = unknown> {
     public name: string;
     public readonly opts: Options.AssertQueue;
@@ -20,7 +24,7 @@ export class Queue<T = unknown> {
         this.opts = Object.assign({}, DEFAULT_QUEUE_OPTIONS, opts);
     }
 
-    clone(opts: Partial<amqplib.Options.AssertQueue>) {
+    clone(opts: Partial<amqplib.Options.AssertQueue> = {}) {
         return new Queue<T>(this.name, Object.assign({}, this.opts, opts));
     }
 

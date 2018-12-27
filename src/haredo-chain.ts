@@ -173,6 +173,7 @@ export class HaredoChain<T = unknown> {
         if (this.state.exchanges.length > 1) {
             throw new Error('Can\'t publish to more than one exchange');
         }
+        /* istanbul ignore if */
         if (this.setupPromise) {
             debug('Awaiting on previous setup promise');
             await this.setupPromise;
@@ -200,6 +201,7 @@ export class HaredoChain<T = unknown> {
         if (!this.state.queue) {
             throw new Error(`Can't subscribe without queue`);
         }
+        /* istanbul ignore if */
         if (this.setupPromise) {
             await this.setupPromise;
         }

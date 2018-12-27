@@ -27,6 +27,7 @@ export class ConsumerManager {
     }
     remove(consumer: Consumer) {
         this.consumerList = this.consumerList.filter(x => x !== consumer);
+        /* istanbul ignore else */
         if (this.length === 0) {
             this.emitter.emit('drained');
         }

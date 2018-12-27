@@ -71,11 +71,11 @@ describe('Queue', () => {
             await newQueue.assert(getChannel, true);
         });
         it('should set autodelete', () => {
-            const queue = new Queue().autoDelete(true);
+            const queue = new Queue().autoDelete();
             expect(queue.opts.autoDelete).to.be.true;
         });
         it('should set exclusive', () => {
-            const queue = new Queue().exclusive(true);
+            const queue = new Queue().exclusive();
             expect(queue.opts.exclusive).to.be.true;
         });
         it('should set messageTtl', () => {
@@ -89,6 +89,11 @@ describe('Queue', () => {
         it('should stringify', () => {
             const queue = new Queue();
             expect(queue.toString()).to.eqls('Queue opts:durable=true,exclusive=false');
+        });
+        it('should clone', () => {
+            const queue = new Queue();
+            const queue2 = queue.clone();
+            expect(queue).to.not.equal(queue2);
         });
     });
 

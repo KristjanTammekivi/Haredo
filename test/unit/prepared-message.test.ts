@@ -22,7 +22,7 @@ describe('PreparedMessage Unit', () => {
         expect(new PreparedMessage().expiration(1000).settings).to.have.property('expiration', 1000);
     });
     it('should set mandatory', () => {
-        expect(new PreparedMessage().mandatory(true).settings).to.have.property('mandatory', true);
+        expect(new PreparedMessage().mandatory().settings).to.have.property('mandatory', true);
     });
     it('should set messageId', () => {
         expect(new PreparedMessage().messageId('test').settings).to.have.property('messageId', 'test');

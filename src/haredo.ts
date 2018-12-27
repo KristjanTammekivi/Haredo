@@ -52,6 +52,7 @@ export class Haredo {
     }
 
     async connect() {
+        /* istanbul ignore if */
         if (this.connectionPromise) {
             return this.connectionPromise;
         }

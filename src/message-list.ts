@@ -20,6 +20,7 @@ export class MessageList {
         this.messages = this.messages.concat([message]);
         message.emitter.once(HaredoMessageEvents.MESSAGE_HANDLED, () => {
             this.remove(message);
+            /* istanbul ignore else */
             if (this.messages.length === 0) {
                 this.emitter.emit(MessageListEvents.MESSAGE_LIST_DRAINED);
             }

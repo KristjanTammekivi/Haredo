@@ -26,9 +26,18 @@ For a long time I've been using [tortoise](https://www.npmjs.com/package/tortois
 
 - [x] Message types for queues and exchanges
 - [ ] Queue and exchange shorthands
-- [ ] Message chainable wrapper that you can prepare
-- [ ] Emit events from haredo
+- [x] Message chainable wrapper that you can prepare
+- [x] Emit events from haredo
 - [ ] Specific error types
 - [ ] More examples
-- [ ] Travis / npm badges
+- [x] Travis / npm badges
 - [ ] High test coverage
+- [ ] Reestablish connections/consumers
+
+### What I'm not happy with right now / thoughts
+
+- Queues / Exchanges are reasserted for every new chain
+- Storing bindings on a queue doesn't make sense
+- Maybe store all asserted states on haredo object itself (would require adding isEqual methods)?
+- Duplicating methods from HaredoChain to Haredo sucks, maybe just add .chain() on Haredo
+- Not quite satisfied with the channelGetter pattern.
