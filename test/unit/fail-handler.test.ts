@@ -24,7 +24,7 @@ describe('FailHandler', () => {
         failHandler.fail();
         expect(failHandler.ready).to.be.false;
         try {
-            await Promise.race([failHandler.getTicket(), timeout(70)]);
+            await Promise.race([failHandler.getTicket(), timeout(90)]);
             throw new Error('Timeout was not reached');
         } catch (e) {
             expect(e).to.be.instanceof(TimeoutError);

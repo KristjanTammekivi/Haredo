@@ -57,10 +57,27 @@ describe('Queue', () => {
         await expect(haredo.exchange(exchange).subscribe(() => { }))
             .to.eventually.be.rejectedWith(`Can't subscribe without queue`);
     });
+    it('should reject when attempting to publish without queue or exchange', () => {
+        expect(haredo.json().publish('test'))
+            .to.eventually.be.rejectedWith('Publishing requires a queue or an exchange');
+    });
     it('should reject when a queue and exchange are added without a pattern', async () => {
         const exchange = new Exchange('test', ExchangeType.Direct);
         const queue = new Queue();
         await expect(haredo.queue(queue).exchange(exchange).setup())
             .to.be.rejectedWith('Exchange added without pattern for binding');
+    });
+    it('should reject when attempting to publish to multiple exchanges', async () => {
+        const exchange = new Exchange('test', ExchangeType.Direct);
+        const exchange2 = new Exchange('test', ExchangeType.Direct);
+        await expect(haredo.exchange(exchange).exchange(exchange2).publish({ test: 1 }))
+            .to.be.rejectedWith(`Can't publish to more than one exchange`);
+    });
+    it('should not remove queue from old chain when setting exchange', async () => {
+        const queue = new Queue('test');
+        const exchange = new Exchange('test', ExchangeType.Direct);
+        const originalChain = haredo.queue(queue);
+        const newChain = await originalChain.exchange(exchange, 'test').setup();
+        expect(originalChain.state.queue).to.equals(queue);
     });
 });

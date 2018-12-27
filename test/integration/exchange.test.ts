@@ -77,4 +77,9 @@ describe('Exchange', () => {
         });
     });
 
+    it('should stringify', () => {
+        const exchange = new Exchange('test', ExchangeType.Direct);
+        expect(exchange.toString()).to.eql('Exchange test direct opts:arguments={}');
+    });
+
 });

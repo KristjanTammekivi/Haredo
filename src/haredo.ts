@@ -92,6 +92,10 @@ export class Haredo {
         return new HaredoChain<UnpackQueueArgument<T>>(this, { queue });
     }
 
+    json(useJson = true) {
+        return new HaredoChain(this, { json: useJson });
+    }
+
     exchange<T extends Exchange>(exchange: T): HaredoChain<UnpackExchangeArgument<T>>;
     exchange<T extends Exchange>(exchange: T, pattern: string): HaredoChain<UnpackExchangeArgument<T>>;
     exchange<T extends Exchange>(exchange: T, pattern?: string) {

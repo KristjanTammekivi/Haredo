@@ -117,6 +117,6 @@ export class Queue<T = unknown> {
     }
 
     toString() {
-        return `Queue ${this.name} opts:${keyValuePairs(this.opts).join(',')}`;
+        return `Queue${this.name ? ` ${this.name} ` : ' '}opts:${keyValuePairs(this.opts).join(',')}`;
     }
 }

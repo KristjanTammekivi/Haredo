@@ -7,6 +7,7 @@ import { stringify, UnpackQueueArgument, MergeTypes, UnpackExchangeArgument, Ext
 import { BadArgumentsError } from './errors';
 
 import { debug } from './logger';
+import { PreparedMessage } from './prepared-message';
 
 interface IAddExchange {
     exchange: Exchange;
@@ -53,8 +54,6 @@ export class HaredoChain<T = unknown> {
         if (this.state.queue) {
             throw new Error('Can only set one queue');
         }
-        this.state.queue = queue;
-        this.state.isSetup = false;
         return this.clone<MergeTypes<T, UnpackQueueArgument<U>>>({
             isSetup: false,
             queue
@@ -161,11 +160,13 @@ export class HaredoChain<T = unknown> {
         }
         this.state.isSetup = true;
         this.setupPromise = undefined;
+        return this;
     }
 
+    publish(message: PreparedMessage<T>): Promise<boolean>;
     publish(message: T, opts?: ExtendedPublishType): Promise<boolean>;
     publish(message: T, routingKey: string, opts?: ExtendedPublishType): Promise<boolean>;
-    async publish(message: T, ...args: [any, ExtendedPublishType?]): Promise<boolean> {
+    async publish(message: T | PreparedMessage<T>, ...args: [any?, ExtendedPublishType?]): Promise<boolean> {
         if (!this.state.queue && !this.state.exchanges.length) {
             throw new Error('Publishing requires a queue or an exchange');
         }
@@ -180,13 +181,19 @@ export class HaredoChain<T = unknown> {
             this.setupPromise = this.setup();
             await this.setupPromise;
         }
+        if (!(message instanceof PreparedMessage)) {
+            if (this.state.queue) {
+                return this.publishToQueue(message, args[0]);
+            }
+            if (typeof args[0] !== 'string') {
+                throw new BadArgumentsError('routingKey must be string when publishing to an exchange');
+            }
+            return this.publishToExchange(message, args[0], args[1]);
+        }
         if (this.state.queue) {
-            return this.publishToQueue(message, args[0]);
+            return this.publishToQueue(message.getContent(true), message.getOptions());
         }
-        if (typeof args[0] !== 'string') {
-            throw new BadArgumentsError('routingKey must be string when publishing to an exchange');
-        }
-        return this.publishToExchange(message, args[0], args[1]);
+        return this.publishToExchange(message.getContent(true), message.getRoutingKey(true), message.getOptions());
     }
 
     async subscribe(cb: messageCallback<T>) {

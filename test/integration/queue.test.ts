@@ -85,7 +85,11 @@ describe('Queue', () => {
         it('should set expires', () => {
             const queue = new Queue().expires(100);
             expect(queue.opts.expires).to.eql(100);
-        })
+        });
+        it('should stringify', () => {
+            const queue = new Queue();
+            expect(queue.toString()).to.eqls('Queue opts:durable=true,exclusive=false');
+        });
     });
 
 });

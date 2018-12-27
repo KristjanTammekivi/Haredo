@@ -20,6 +20,7 @@ For a long time I've been using [tortoise](https://www.npmjs.com/package/tortois
     - Delayed exchanges
     - RPC
     - Graceful shutdown
+    - Mock
 
 ## TODOS
 

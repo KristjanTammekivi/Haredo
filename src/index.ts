@@ -4,3 +4,4 @@ export { Queue } from './queue';
 export { Exchange, ExchangeType } from './exchange';
 export { Consumer, ConsumerEvents } from './consumer';
 export { HaredoMessage, HaredoMessageEvents } from './haredo-message'
+export { PreparedMessage } from './prepared-message';

@@ -30,7 +30,7 @@ type notany = Object | string | number | undefined | null;
 
 export type MergeTypes<T, U> = T extends notany ? U extends notany ? T | U : T : U;
 
-export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+export type Omit<T extends {}, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 export type ExtendedPublishType = Omit<Options.Publish, 'headers'> & {
     headers: {
@@ -48,4 +48,15 @@ export const eventToPromise = <T extends TypedEventEmitter<any>>(
             resolve(args);
         });
     });
+}
+
+export const omit = <T extends {}, K extends keyof T>(obj: T, ...keys: K[]): Omit<T, K> => {
+    return Object.keys(obj).reduce((acc: Partial<T>, key: any) => {
+        if (keys.indexOf(key) === -1) {
+            return Object.assign(acc, {
+                [key]: (obj as any)[key]
+            } as Partial<T>);
+        }
+        return acc;
+    }, {}) as any;
 }
