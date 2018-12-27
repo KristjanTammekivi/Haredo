@@ -14,7 +14,10 @@ export class ConsumerManager {
         return this.consumerList.length;
     }
     drain() {
-        return Bluebird.map(this.consumerList, consumer => consumer.cancel());
+        return Bluebird.map(this.consumerList, async (consumer) => {
+            await consumer.cancel();
+            this.remove(consumer);
+        });
     }
     add(consumer: Consumer) {
         this.consumerList = this.consumerList.concat(consumer);
@@ -23,7 +26,7 @@ export class ConsumerManager {
         });
     }
     remove(consumer: Consumer) {
-        this.consumerList = this.consumerList.filter(x => x === consumer);
+        this.consumerList = this.consumerList.filter(x => x !== consumer);
         if (this.length === 0) {
             this.emitter.emit('drained');
         }
