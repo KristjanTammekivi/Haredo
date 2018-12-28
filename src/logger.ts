@@ -4,6 +4,7 @@ const debugLog = Debug('haredo');
 
 let debugLogFn: (message: any) => void = debugLog;
 
+/* istanbul ignore next */
 export const setLogging = (fn: (message: any) => void) => {
     debugLogFn = fn;
 };
