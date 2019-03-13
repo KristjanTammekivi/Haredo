@@ -60,3 +60,31 @@ export const omit = <T extends {}, K extends keyof T>(obj: T, ...keys: K[]): Omi
         return acc;
     }, {}) as any;
 }
+
+class TimeoutError extends Error { };
+
+export const timeoutPromise = (timeout: number) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(reject, timeout, new TimeoutError())
+    });
+}
+
+export const delayPromise = (timeout: number) => {
+    return new Promise((resolve) => {
+        setTimeout(resolve, timeout);
+    });
+};
+
+export const promiseMap = async <T, U>(
+    items: T[],
+    callback: (item?: T, index?: number, array?: T[]) => Promise<U>
+): Promise<U[]> => {
+    return Promise.all(items.map(item => callback(item)));
+};
+
+
+const arr = [1, 2, 3];
+
+promiseMap(arr, async () => {
+    return 5;
+});

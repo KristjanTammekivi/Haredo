@@ -1,12 +1,11 @@
 import 'mocha';
-import { Haredo, Queue, Exchange } from '../../src/index'
-import { setup, teardown, checkQueue, checkExchange, getSingleMessage } from './helpers/amqp';
+import { Haredo, Queue } from '../../src/index'
+import { setup, teardown } from './helpers/amqp';
 import { use, expect } from 'chai';
 
 import * as chaiAsPromised from 'chai-as-promised';
-import { ExchangeType } from '../../src/exchange';
-import { delay } from 'bluebird';
 import { HaredoClosedError } from '../../src/errors';
+import { delayPromise } from '../../src/utils';
 
 use(chaiAsPromised);
 
@@ -34,7 +33,7 @@ describe('Graceful Shutdown', () => {
     it('should shut down consumers', async () => {
         const queue = new Queue('testQueue')
         const consumer = await haredo.queue(queue).subscribe(async message => {
-            await delay(200);
+            await delayPromise(200);
             await message.ack();
         });
         await haredo.queue(queue).publish({ test: 1 });

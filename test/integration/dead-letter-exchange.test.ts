@@ -5,7 +5,7 @@ import { use, expect } from 'chai';
 
 import * as chaiAsPromised from 'chai-as-promised';
 import { ExchangeType } from '../../src/exchange';
-import { delay } from 'bluebird';
+import { delayPromise } from '../../src/utils';
 
 use(chaiAsPromised);
 
@@ -47,7 +47,7 @@ describe('Dead Letter Exchange', () => {
                 await message.nack(false);
             });
 
-        delay(50);
+        delayPromise(50);
 
         await consumer.cancel();
 

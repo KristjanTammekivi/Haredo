@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { TypedEventEmitter } from './events';
 import { Consumer } from './consumer';
-import * as Bluebird from 'bluebird';
+import { promiseMap } from './utils';
 
 interface Events {
     drained: void;
@@ -14,7 +14,7 @@ export class ConsumerManager {
         return this.consumerList.length;
     }
     drain() {
-        return Bluebird.map(this.consumerList, async (consumer) => {
+        return promiseMap(this.consumerList, async (consumer) => {
             await consumer.cancel();
             this.remove(consumer);
         });

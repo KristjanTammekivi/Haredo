@@ -3,7 +3,7 @@ import { Queue } from './queue';
 import { Haredo } from './haredo';
 import { Options } from 'amqplib';
 import { Consumer, messageCallback } from './consumer';
-import { stringify, UnpackQueueArgument, MergeTypes, UnpackExchangeArgument, ExtendedPublishType } from './utils';
+import { stringify, UnpackQueueArgument, MergeTypes, UnpackExchangeArgument, ExtendedPublishType, delayPromise } from './utils';
 import { BadArgumentsError } from './errors';
 
 import { debug } from './logger';
@@ -114,7 +114,7 @@ export class HaredoChain<T = unknown> {
     }
 
     private async publishToQueue(message: T, opts: Options.Publish) {
-        const channel = await this.haredo.getChannel();
+        const channel = await this.getChannel();
         const response = await channel.sendToQueue(this.state.queue.name, Buffer.from(stringify(message)), opts);
         await channel.close();
         return response;

@@ -88,7 +88,7 @@
     "@types/events" "*"
     "@types/node" "*"
 
-"@types/bluebird@*", "@types/bluebird@^3.5.23":
+"@types/bluebird@*":
   version "3.5.23"
   resolved "https://registry.yarnpkg.com/@types/bluebird/-/bluebird-3.5.23.tgz#e805da976b76892b2b2e50eec29e84914c730670"
 
@@ -219,10 +219,6 @@ bitsyntax@~0.1.0:
 bluebird@^3.5.0, bluebird@^3.5.2:
   version "3.5.3"
   resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.5.3.tgz#7d01c6f9616c9a51ab0f8c549a79dfe6ec33efa7"
-
-bluebird@^3.5.1:
-  version "3.5.1"
-  resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.5.1.tgz#d9551f9de98f1fcda1e683d17ee91a0602ee2eb9"
 
 boom@4.x.x:
   version "4.3.1"

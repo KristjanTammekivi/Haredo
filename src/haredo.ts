@@ -3,7 +3,6 @@ import { Queue } from './queue';
 import { Exchange } from './exchange';
 import { HaredoChain } from './haredo-chain';
 
-import * as Bluebird from 'bluebird';
 import { UnpackQueueArgument, UnpackExchangeArgument } from './utils';
 import { TypedEventEmitter } from './events';
 import { EventEmitter } from 'events';
@@ -27,17 +26,18 @@ const DEFAULT_OPTIONS: IHaredoOptions = {
 
 interface Events {
     closing: void;
+    connection_closed: void;
 }
 
 export class Haredo {
-    private connection: Connection;
+    public connection: Connection;
     private connectionOptions: string | Options.Connect;
     private socketOpts: any;
     public autoAck: boolean;
     public forceAssert: boolean;
     public closing: boolean = false;
-    private closingPromise: Bluebird<void>;
-    private connectionPromise: Bluebird<Connection>;
+    private closingPromise: Promise<void>;
+    private connectionPromise: Promise<Connection>;
 
     private consumerManager = new ConsumerManager();
 
@@ -56,8 +56,15 @@ export class Haredo {
         if (this.connectionPromise) {
             return this.connectionPromise;
         }
-        this.connectionPromise = connect(this.connectionOptions, this.socketOpts);
+        this.connectionPromise = Promise.resolve(connect(this.connectionOptions, this.socketOpts));
         this.connection = await this.connectionPromise;
+        this.connection.once('close', () => {
+            this.emitter.emit('connection_closed');
+            if (!this.closing) {
+                console.log('clooosing');
+                this.connect();
+            }
+        });
         this.connectionPromise = undefined;
 
         return this.connection;
@@ -71,7 +78,7 @@ export class Haredo {
         if (this.consumerManager.length) {
             await this.consumerManager.drain();
         }
-        this.closingPromise = this.connection.close();
+        this.closingPromise = Promise.resolve(this.connection.close());
         return this.closingPromise;
     }
 
@@ -79,6 +86,7 @@ export class Haredo {
         if (this.closing) {
             throw new HaredoClosedError();
         }
+        // await this.connectionPromise;
         const channel = await this.connection.createChannel();
         // Without this channel errors will exit the program
         channel.on('error', () => { });

@@ -3,7 +3,7 @@ import { HaredoChain } from './haredo-chain';
 import { Message, Channel } from 'amqplib';
 import { HaredoMessage } from './haredo-message';
 import { FailHandler, IFailHandlerOpts } from './fail-handler';
-import { UnpackQueueArgument, eventToPromise } from './utils';
+import { UnpackQueueArgument, eventToPromise, delayPromise } from './utils';
 import { MessageList } from './message-list';
 import { TypedEventEmitter } from './events';
 
@@ -83,9 +83,10 @@ export class Consumer<T = any> {
 
     async start() {
         this.channel = await this.haredoChain.getChannel();
-        this.channel.once('close', () => {
-            if (this.reestablish) {
-                this.start();
+        this.channel.once('close', async () => {
+            if (this.reestablish && !this.closing) {
+                await delayPromise(500);
+                await this.start();
             }
         });
         if (this.prefetch) {
@@ -97,6 +98,7 @@ export class Consumer<T = any> {
             .consume(
                 queue.name,
                 async (message) => {
+                    console.log(',,,,,', message);
                     await this.failHandler.getTicket();
                     const messageInstance = new HaredoMessage<MessageType>(message, true, this);
                     this.messageList.add(messageInstance);
@@ -120,23 +122,20 @@ export class Consumer<T = any> {
     }
 
     async cancel(force: boolean = false) {
-        if (force) {
-        }
+        this.closing = true;
         if (this.closed) {
             return;
         }
         if (force && !this.messageListDrained) {
             this.closingPromise = Promise.resolve(this.channel.close());
-
-            this.closing = true;
             await this.closingPromise;
             this.closed = true;
             this.emitter.emit('close');
+            return;
         }
         if (this.closing) {
             return this.closingPromise;
         }
-        this.closing = true;
         this.reestablish = false;
         this.closingPromise = this.gracefulCancel();
         await this.closingPromise;

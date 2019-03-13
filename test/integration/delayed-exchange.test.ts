@@ -1,11 +1,11 @@
 import 'mocha';
 import { Queue, Haredo, Exchange } from '../../src/index'
 import { setup, teardown, checkQueue } from './helpers/amqp';
-import { delay } from 'bluebird';
 import { expect, use } from 'chai';
 
 import * as chaiAsPromised from 'chai-as-promised';
 import { ExchangeType } from '../../src/exchange';
+import { delayPromise } from '../../src/utils';
 
 use(chaiAsPromised);
 
@@ -62,7 +62,7 @@ describe('Delayed Exchange', () => {
 
         await expect(checkQueue(queue.name))
             .to.eventually.have.property('messageCount', 0);
-        await delay(50);
+        await delayPromise(50);
         await expect(checkQueue(queue.name))
             .to.eventually.have.property('messageCount', 1);
     });
