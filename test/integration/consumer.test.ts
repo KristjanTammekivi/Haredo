@@ -27,8 +27,8 @@ describe('Consumer', () => {
         await haredo.close();
         await teardown();
     });
-    describe.only('autoAck', () => {
-        it.only('should ack a message when callback is resolved', async () => {
+    describe('autoAck', () => {
+        it('should ack a message when callback is resolved', async () => {
             const haredo = new Haredo({
                 connectionOptions: 'amqp://guest:guest@localhost:5672/test',
                 autoAck: true
@@ -42,6 +42,7 @@ describe('Consumer', () => {
             // await expect(getSingleMessage(queue.name)).to.eventually.be.rejectedWith(/No message/);
         });
         it('should nack a message when callback throws', async () => {
+            // TODO: this doesn't actually test it
             const haredo = new Haredo({
                 connectionOptions: 'amqp://guest:guest@localhost:5672/test',
                 autoAck: true
@@ -53,7 +54,8 @@ describe('Consumer', () => {
                 throw new Error('test');
             });
             await delayPromise(50);
-            await consumer.cancel();
+            // TODO: Figure out why there's an error when you cancel consumer but haredo reconnects
+            await haredo.close();
             await getSingleMessage(queue.name);
         });
     });

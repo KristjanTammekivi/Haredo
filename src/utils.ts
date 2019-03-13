@@ -1,7 +1,6 @@
 import { Queue } from './queue';
 import { Exchange } from './exchange';
 import { Options } from 'amqplib';
-import { EventEmitter } from 'events';
 import { TypedEventEmitter } from './events';
 
 export const keyValuePairs = (obj: Object): string[] => {
@@ -84,7 +83,3 @@ export const promiseMap = async <T, U>(
 
 
 const arr = [1, 2, 3];
-
-promiseMap(arr, async () => {
-    return 5;
-});

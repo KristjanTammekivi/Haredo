@@ -27,6 +27,7 @@ const DEFAULT_OPTIONS: IHaredoOptions = {
 interface Events {
     closing: void;
     connection_closed: void;
+    reestablishing: void;
 }
 
 export class Haredo {
@@ -61,7 +62,7 @@ export class Haredo {
         this.connection.once('close', () => {
             this.emitter.emit('connection_closed');
             if (!this.closing) {
-                console.log('clooosing');
+                this.emitter.emit('reestablishing');
                 this.connect();
             }
         });

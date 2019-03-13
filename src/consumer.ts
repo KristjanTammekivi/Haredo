@@ -7,7 +7,9 @@ import { UnpackQueueArgument, eventToPromise, delayPromise } from './utils';
 import { MessageList } from './message-list';
 import { TypedEventEmitter } from './events';
 
-export type messageCallback<T = any> = (message: HaredoMessage<T>) => any;
+import { debug } from './logger';
+
+export type messageCallback<T = unknown> = (message: HaredoMessage<T>) => unknown;
 
 export interface IConsumerOpts {
     prefetch: number;
@@ -98,9 +100,9 @@ export class Consumer<T = any> {
             .consume(
                 queue.name,
                 async (message) => {
-                    console.log(',,,,,', message);
                     await this.failHandler.getTicket();
-                    const messageInstance = new HaredoMessage<MessageType>(message, true, this);
+                    let messageInstance;
+                    messageInstance = new HaredoMessage<MessageType>(message, true, this);
                     this.messageList.add(messageInstance);
                     try {
                         await this.cb(messageInstance);
@@ -110,6 +112,8 @@ export class Consumer<T = any> {
                     } catch (e) {
                         if (this.autoAck) {
                             await messageInstance.nack();
+                        } else {
+                            debug(`Warning: consumer callback for queue ${queue.name} threw an error, but autoAck is disabled`);
                         }
                     }
                 });
@@ -129,8 +133,11 @@ export class Consumer<T = any> {
         if (force && !this.messageListDrained) {
             this.closingPromise = Promise.resolve(this.channel.close());
             await this.closingPromise;
-            this.closed = true;
-            this.emitter.emit('close');
+            if (!this.closed) {
+                await this.channel.close();
+                this.closed = true;
+                this.emitter.emit('close');
+            }
             return;
         }
         if (this.closing) {

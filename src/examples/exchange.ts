@@ -2,6 +2,7 @@ import 'source-map-support/register';
 import { Haredo } from '../haredo';
 import { Queue } from '../queue';
 import { Exchange, ExchangeType } from '../exchange';
+import { delay } from 'bluebird';
 
 const haredo = new Haredo({
     connectionOptions: 'amqp://guest:guest@localhost:5672/',
