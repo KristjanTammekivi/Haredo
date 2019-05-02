@@ -15,7 +15,7 @@ const haredo = new Haredo({ connectionOptions: 'amqp://guest:guest@localhost:567
 
     const chain = haredo.queue(queue);
 
-    chain.prefetch(1).subscribe(async message => {
+    const consumer = await chain.prefetch(1).subscribe(async message => {
         console.log('Received message', message.data.test);
         await delay(1000);
         console.log('Acking message', message.data.test);
@@ -23,6 +23,10 @@ const haredo = new Haredo({ connectionOptions: 'amqp://guest:guest@localhost:567
 
     chain.publish({ test: 'Hello, world 1' });
     chain.publish({ test: 'Hello, world 2' });
+
+    await delay(1500);
+
+    consumer.cancel();
 })();
 
 function delay(milliseconds: number) {

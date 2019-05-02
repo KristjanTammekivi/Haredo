@@ -209,7 +209,7 @@ export class HaredoChain<T = unknown> {
             this.setupPromise = this.setup();
             await this.setupPromise;
         }
-        const consumer = new Consumer<T>(
+        const consumer: Consumer<T> = new Consumer<T>(
             this,
             {
                 autoAck: this.haredo.autoAck,

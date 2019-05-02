@@ -63,7 +63,7 @@ export class Consumer<T = any> {
     constructor(
         private haredoChain: HaredoChain,
         opts: IConsumerOpts,
-        private cb: messageCallback<UnpackQueueArgument<T>>
+        private cb: messageCallback<T>
     ) {
         const defaultedOpts = Object.assign({}, CONSUMER_DEFAULTS, opts);
         this.haredoChain = haredoChain;
@@ -95,7 +95,7 @@ export class Consumer<T = any> {
             await this.setPrefetch(this.prefetch);
         }
         const queue = this.haredoChain.getQueue();
-        type MessageType = UnpackQueueArgument<T>
+        type MessageType = T
         const consumerInfo = await this.channel
             .consume(
                 queue.name,
@@ -133,14 +133,11 @@ export class Consumer<T = any> {
         if (force && !this.messageListDrained) {
             this.closingPromise = Promise.resolve(this.channel.close());
             await this.closingPromise;
-            if (!this.closed) {
-                await this.channel.close();
-                this.closed = true;
-                this.emitter.emit('close');
-            }
+            this.emitter.emit('close');
+            this.closed = true;
             return;
         }
-        if (this.closing) {
+        if (this.closingPromise) {
             return this.closingPromise;
         }
         this.reestablish = false;
