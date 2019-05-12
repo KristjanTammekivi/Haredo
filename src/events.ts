@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
-import { Omit } from './utils';
+
+export type Omit<T extends {}, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 interface TypedEE<T> {
     addListener<K extends keyof T>(event: K, listener: (arg?: T[K]) => any): this;

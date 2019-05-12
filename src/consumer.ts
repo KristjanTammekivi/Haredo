@@ -1,27 +1,14 @@
-import { EventEmitter } from 'events';
-import { HaredoChain } from './haredo-chain';
-import { Message, Channel } from 'amqplib';
+import { ConnectionManager } from './connection-manager';
 import { HaredoMessage } from './haredo-message';
-import { FailHandler, IFailHandlerOpts } from './fail-handler';
-import { UnpackQueueArgument, eventToPromise, delayPromise } from './utils';
-import { MessageList } from './message-list';
-import { TypedEventEmitter } from './events';
+import { Message, Channel } from 'amqplib';
+import { MessageManager } from './message-manager';
 
-import { debug } from './logger';
-
-export type messageCallback<T = unknown> = (message: HaredoMessage<T>) => unknown;
-
-export interface IConsumerOpts {
-    prefetch: number;
-    autoAck: boolean;
-    reestablish: boolean;
-    fail: IFailHandlerOpts;
-}
-
-const CONSUMER_DEFAULTS: IConsumerOpts = {
+const CONSUMER_DEFAULTS: ConsumerOpts = {
     autoAck: true,
     prefetch: 0,
     reestablish: false,
+    json: false,
+    queueName: '',
     fail: {
         failSpan: 5000,
         failThreshold: Infinity,
@@ -29,135 +16,80 @@ const CONSUMER_DEFAULTS: IConsumerOpts = {
     }
 }
 
-export enum ConsumerEvents {
-    MESSAGE_HANDLED = 'message_handled',
-    MESSAGE_ACKED = 'message_acked',
-    MESSAGE_NACKED = 'message_nacked'
+export interface MessageCallback<T = unknown> {
+    (message: HaredoMessage<T>): any;
 }
 
-interface Events {
-    cancel: void;
-    close: void;
-    reestablished: void;
+export interface FailHandlerOpts {
+    failSpan: number;
+    failThreshold: number;
+    failTimeout: number;
+}
+
+export interface ConsumerOpts {
+    prefetch: number;
+    autoAck: boolean;
+    json: boolean;
+    queueName: string;
+    reestablish: boolean;
+    fail: FailHandlerOpts;
 }
 
 export class Consumer<T = any> {
+    private channel: Channel;
+    private prefetch: number;
+    private messageManager = new MessageManager<T>();
     public consumerTag: string;
-
-    public channel: Channel;
-    public closing = false;
-    public closed = false;
-    public consumerCancelled = false;
-    private messageListDrained = false;
-
-    private messageList: MessageList = new MessageList();
-    public emitter = new EventEmitter() as TypedEventEmitter<Events>;
-
-    public autoAck: boolean;
-    public prefetch: number;
-    public reestablish: boolean;
-    private failHandler: FailHandler;
-
-    private closingPromise: Promise<void>;
-
     constructor(
-        private haredoChain: HaredoChain,
-        opts: IConsumerOpts,
-        private cb: messageCallback<T>
+        private opts: ConsumerOpts,
+        private connectionManager: ConnectionManager,
+        private cb: MessageCallback<T>
     ) {
-        const defaultedOpts = Object.assign({}, CONSUMER_DEFAULTS, opts);
-        this.haredoChain = haredoChain;
-        this.cb = cb;
-        this.autoAck = defaultedOpts.autoAck;
-        this.prefetch = defaultedOpts.prefetch;
-        this.reestablish = defaultedOpts.reestablish;
-        this.failHandler = new FailHandler(defaultedOpts.fail);
+        this.prefetch = this.opts.prefetch;
     }
-
-    async ack(message: Message) {
-        this.channel.ack(message, false);
-    }
-
-    async nack(message: Message, requeue: boolean = true) {
-        this.channel.nack(message, false, requeue);
-        this.failHandler.fail();
-    }
-
     async start() {
-        this.channel = await this.haredoChain.getChannel();
+        this.channel = await this.connectionManager.getChannel();
         this.channel.once('close', async () => {
-            if (this.reestablish && !this.closing) {
-                await delayPromise(500);
-                await this.start();
-            }
+            // TODO: reestablish
         });
-        if (this.prefetch) {
-            await this.setPrefetch(this.prefetch);
+        if (this.opts.prefetch) {
+            await this.setPrefetch(this.opts.prefetch);
         }
-        const queue = this.haredoChain.getQueue();
-        type MessageType = T
         const consumerInfo = await this.channel
             .consume(
-                queue.name,
+                this.opts.queueName,
                 async (message) => {
-                    await this.failHandler.getTicket();
-                    let messageInstance;
-                    messageInstance = new HaredoMessage<MessageType>(message, true, this);
-                    this.messageList.add(messageInstance);
+                    if (message === null) {
+                        // TODO: consumer got cancelled
+                        // should I do something extra here
+                        return;
+                    }
+                    const messageInstance = new HaredoMessage<T>(message, this.opts.json, this);
+                    this.messageManager.add(messageInstance);
                     try {
                         await this.cb(messageInstance);
-                        if (this.autoAck) {
+                        if (this.opts.autoAck) {
                             await messageInstance.ack();
                         }
                     } catch (e) {
-                        if (this.autoAck) {
+                        if (this.opts.autoAck) {
                             await messageInstance.nack();
-                        } else {
-                            debug(`Warning: consumer callback for queue ${queue.name} threw an error, but autoAck is disabled`);
                         }
                     }
-                });
+                }
+            );
         this.consumerTag = consumerInfo.consumerTag;
     }
-
     async setPrefetch(count: number) {
+        // TODO: make sure you can actually change prefetch during consuming
         this.prefetch = count;
         await this.channel.prefetch(count);
-    }
 
-    async cancel(force: boolean = false) {
-        this.closing = true;
-        if (this.closed) {
-            return;
-        }
-        if (force && !this.messageListDrained) {
-            this.closingPromise = Promise.resolve(this.channel.close());
-            await this.closingPromise;
-            this.emitter.emit('close');
-            this.closed = true;
-            return;
-        }
-        if (this.closingPromise) {
-            return this.closingPromise;
-        }
-        this.reestablish = false;
-        this.closingPromise = this.gracefulCancel();
-        await this.closingPromise;
     }
-
-    private async gracefulCancel() {
-        await this.channel.cancel(this.consumerTag);
-        this.consumerCancelled = true;
-        this.emitter.emit('cancel');
-        if (this.messageList.length > 0 && !this.closed) {
-            await eventToPromise(this.messageList.emitter, 'drained');
-        }
-        this.messageListDrained = true;
-        if (!this.closed) {
-            await this.channel.close();
-            this.closed = true;
-            this.emitter.emit('close');
-        }
+    async ack(message: Message) {
+        await this.channel.ack(message, false);
     }
-
+    async nack(message: Message, requeue = true) {
+        await this.channel.nack(message, false, requeue);
+    }
 }

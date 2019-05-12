@@ -1,14 +1,16 @@
 import * as Debug from 'debug';
-import { format } from 'util';
+import { format, inspect } from 'util';
+
 const debugLog = Debug('haredo');
 
-let debugLogFn: (message: any) => void = debugLog;
+let logFn: (message: any) => void = debugLog;
 
-/* istanbul ignore next */
-export const setLogging = (fn: (message: any) => void) => {
-    debugLogFn = fn;
-};
+export const debug = (...messages: any[]) => {
+    logFn(messages.map(message => {
+        return inspect(message);
+    }).join(' '));
+}
 
-export const debug = (formatter: any, ...args: any[]) => {
-    debugLogFn(format(formatter, ...args));
+export const makeDebug = (prefix?: string) => {
+    return (...messages: any[]) => debug((prefix ? [prefix] : []).concat(messages));
 }
