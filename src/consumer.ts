@@ -69,11 +69,11 @@ export class Consumer<T = any> {
                     try {
                         await this.cb(messageInstance);
                         if (this.opts.autoAck) {
-                            await messageInstance.ack();
+                            await messageInstance.ack(true);
                         }
                     } catch (e) {
                         if (this.opts.autoAck) {
-                            await messageInstance.nack();
+                            await messageInstance.nack(true, true);
                         }
                     }
                 }

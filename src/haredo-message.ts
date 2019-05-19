@@ -14,18 +14,24 @@ export class HaredoMessage<T = unknown> {
             this.data = this.dataString as any;
         }
     }
-    ack() {
+    async ack(suppressHandledError = false) {
         if (this.isHandled) {
+            if (suppressHandledError) {
+                return;
+            }
             throw new HaredoError('A message can only be acked/nacked once');
         }
         this.isHandled = true;
         return this.consumer.ack(this.raw);
     }
-    nack(requeue = true) {
+    async nack(requeue = true, suppressHandledError = false) {
         if (this.isHandled) {
+            if (suppressHandledError) {
+                return;
+            }
             throw new HaredoError('A message can only be acked/nacked once');
         }
         this.isHandled = true;
-        return this.consumer.nack(this.raw);
+        return this.consumer.nack(this.raw, requeue);
     }
 }
