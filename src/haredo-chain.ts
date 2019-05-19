@@ -1,5 +1,5 @@
 import { Haredo } from './haredo';
-import { Queue } from './queue';
+import { Queue, queue } from './queue';
 import { Exchange } from './exchange';
 import { MergeTypes, stringify } from './utils';
 import { BadArgumentsError, HaredoError } from './errors';
@@ -161,7 +161,8 @@ export class HaredoChain<T = unknown> {
         if (this.state.queue) {
             log(`Asserting ${this.state.queue}`);
             const { name, opts } = this.state.queue;
-            await channel.assertQueue(name, opts);
+            const data = await channel.assertQueue(name, opts);
+            this.state.queue.name = data.queue;
             log(`Done asserting ${this.state.queue}`);
         }
         for (const exchangery of this.state.exchanges) {

@@ -37,7 +37,8 @@ export class ConnectionManager {
         this.connectionPromise = connect(this.connectionOpts, this.socketOpts);
         this.connection = await this.connectionPromise;
         log('connection established');
-        this.connection.on('close', this.reconnect);
+        this.connection.on('close', () => this.reconnect());
+        return this.connection;
     }
 
     async getChannel() {

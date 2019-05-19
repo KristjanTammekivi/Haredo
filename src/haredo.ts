@@ -24,6 +24,8 @@ export class Haredo {
         if (this.closed) {
             return;
         }
+        this.closing = true;
+        await this.connectionManager.close();
         // TODO: implement
     }
     queue<T>(queue: Queue<T>) {

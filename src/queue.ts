@@ -11,7 +11,7 @@ const DEFAULT_QUEUE_OPTIONS: Options.AssertQueue = {
 
 export class Queue<T = unknown> {
     opts: AssertQueue;
-    constructor(public readonly name?: string, opts: Partial<AssertQueue> = {}) {
+    constructor(public name?: string, opts: Partial<AssertQueue> = {}) {
         this.opts = Object.assign({}, DEFAULT_QUEUE_OPTIONS, opts);
     }
     private clone(opts: Partial<AssertQueue> = {}) {
