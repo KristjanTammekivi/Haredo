@@ -1,9 +1,10 @@
 import { ConnectionManager } from './connection-manager';
 import { HaredoMessage } from './haredo-message';
-import { Message, Channel } from 'amqplib';
+import { Channel } from 'amqplib';
 import { MessageManager } from './message-manager';
 import { TypedEventEmitter } from './events';
 import { EventEmitter } from 'events';
+import { ChannelBrokenError, MessageAlreadyHandledError } from './errors';
 
 const CONSUMER_DEFAULTS: ConsumerOpts = {
     autoAck: true,
@@ -38,7 +39,7 @@ export interface ConsumerOpts {
 }
 
 export interface ConsumerEvents {
-    cancel: void;
+    cancel: never;
 }
 
 export class Consumer<T = any> {
@@ -60,8 +61,14 @@ export class Consumer<T = any> {
     async start() {
         this.channel = await this.connectionManager.getChannel();
         this.channel.once('close', async () => {
-            // TODO: reestablish
             this.channel = null;
+            this.messageManager.channelBorked();
+            if (this.opts.reestablish && !this.cancelling) {
+                this.messageManager = new MessageManager();
+                this.start();
+            } else {
+                this.cancel();
+            }
         });
         if (this.opts.prefetch) {
             await this.setPrefetch(this.opts.prefetch);
@@ -75,19 +82,19 @@ export class Consumer<T = any> {
                         // should I do something extra here
                         return;
                     }
-                    if (this.cancelled) {
-                        return this.nack(message);
-                    }
                     const messageInstance = new HaredoMessage<T>(message, this.opts.json, this);
+                    if (this.cancelled) {
+                        return this.nack(messageInstance);
+                    }
                     this.messageManager.add(messageInstance);
                     try {
                         await this.cb(messageInstance);
                         if (this.opts.autoAck) {
-                            await messageInstance.ack(true);
+                            await swallowError(MessageAlreadyHandledError, messageInstance.ack(true));
                         }
                     } catch (e) {
                         if (this.opts.autoAck) {
-                            await messageInstance.nack(true, true);
+                            await swallowError(MessageAlreadyHandledError, messageInstance.nack(true, true));
                         }
                     }
                 }
@@ -100,11 +107,17 @@ export class Consumer<T = any> {
         await this.channel.prefetch(this.prefetch);
 
     }
-    async ack(message: Message) {
-        await this.channel.ack(message, false);
+    async ack(message: HaredoMessage<T>) {
+        if (!this.channel) {
+            throw new ChannelBrokenError(message);
+        }
+        await this.channel.ack(message.raw, false);
     }
-    async nack(message: Message, requeue = true) {
-        await this.channel.nack(message, false, requeue);
+    async nack(message: HaredoMessage<T>, requeue = true) {
+        if (!this.channel) {
+            throw new ChannelBrokenError(message);
+        }
+        await this.channel.nack(message.raw, false, requeue);
     }
     cancel() {
         if (this.cancelPromise) {
@@ -115,9 +128,24 @@ export class Consumer<T = any> {
         return this.cancelPromise;
     }
     private async internalCancel() {
-        await this.channel.cancel(this.consumerTag);
-        await this.messageManager.drain();
-        this.emitter.emit('cancel');
-        await this.channel.close();
+        if (this.channel) {
+            await this.channel.cancel(this.consumerTag);
+            this.emitter.emit('cancel');
+            await this.messageManager.drain();
+            await this.channel.close();
+        } else {
+            this.emitter.emit('cancel');
+        }
+        this.cancelled = true;
     }
 }
+
+const swallowError = async <T>(error: { new(): Error }, promise: Promise<T>): Promise<T | undefined> => {
+    try {
+        return await promise;
+    } catch (e) {
+        if (!(e instanceof error)) {
+            throw e;
+        }
+    }
+};

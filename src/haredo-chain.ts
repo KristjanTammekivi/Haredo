@@ -31,7 +31,7 @@ export interface HaredoChainState<T> {
 export class HaredoChain<T = unknown> {
     state: Partial<HaredoChainState<T>> = {};
     constructor(public connectionManager: ConnectionManager, state: Partial<HaredoChainState<T>>) {
-        this.state.autoAck = !!state.autoAck;
+        this.state.autoAck = state.autoAck === undefined ? true : !!state.autoAck;
         this.state.queue = state.queue;
         this.state.exchanges = [].concat(state.exchanges || []);
         this.state.prefetch = state.prefetch || 0;

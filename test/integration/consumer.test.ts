@@ -45,6 +45,35 @@ describe('Consumer', () => {
             expect(messageWasHandled).to.be.true;
         });
     });
+    describe('reestablish', () => {
+        it('should reestablish on channel close when reestablish is set', async () => {
+            let messageWasHandled = false;
+            const consumer = await haredo
+                .queue('test')
+                .reestablish()
+                .subscribe(() => {
+                    messageWasHandled = true;
+                });
+            await consumer.channel.close();
+            await haredo.queue('test').publish({});
+            await delay(50);
+            await consumer.cancel();
+            expect(messageWasHandled).to.be.true;
+        });
+        it('should not reestablish on channel close when reestablish is not set', async () => {
+            let messageWasHandled = false;
+            const consumer = await haredo
+                .queue('test')
+                .subscribe(() => {
+                    messageWasHandled = true;
+                });
+            await consumer.channel.close();
+            await haredo.queue('test').publish({});
+            await delay(50);
+            await consumer.cancel();
+            expect(messageWasHandled).to.be.false;
+        });
+    });
 });
 
 export const eventToPromise = (emitter: EventEmitter, event: string) => {

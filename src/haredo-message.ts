@@ -25,9 +25,6 @@ export class HaredoMessage<T = unknown> {
         }
     }
     async ack(suppressHandledError = false) {
-        if (this.channelBorked) {
-            throw new ChannelBrokenError('Channel was closed, cannot ack message', this);
-        }
         if (this.isHandled) {
             if (suppressHandledError) {
                 return;
@@ -36,7 +33,7 @@ export class HaredoMessage<T = unknown> {
         }
         this.isHandled = true;
         this.isAcked = true;
-        await this.consumer.ack(this.raw);
+        await this.consumer.ack(this);
         this.emitter.emit('handled');
     }
     async nack(requeue = true, suppressHandledError = false) {
@@ -47,7 +44,7 @@ export class HaredoMessage<T = unknown> {
             throw new MessageAlreadyHandledError('A message can only be acked/nacked once');
         }
         this.isHandled = true;
-        await this.consumer.nack(this.raw, requeue);
+        await this.consumer.nack(this, requeue);
         this.emitter.emit('handled');
     }
 }

@@ -1,5 +1,5 @@
 import { HaredoMessage } from './haredo-message';
-import { TypedEventEmitter, eventToPromise } from './events';
+import { TypedEventEmitter, typedEventToPromise } from './events';
 import { EventEmitter } from 'events';
 import { map } from 'bluebird';
 
@@ -33,7 +33,7 @@ export class MessageManager<T = unknown> {
         if (this.messages.length === 0) {
             return;
         }
-        await map(this.messages, message => eventToPromise(message.emitter, 'handled'));
+        await map(this.messages, message => typedEventToPromise(message.emitter, 'handled'));
     }
     channelBorked() {
         this.messages.forEach(message => {

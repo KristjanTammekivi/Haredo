@@ -5,8 +5,8 @@ export class HaredoError extends Error {
 }
 
 export class ChannelBrokenError extends HaredoError {
-    constructor(message: string, public haredoMessage: HaredoMessage) {
-        super();
+    constructor(public haredoMessage: HaredoMessage) {
+        super('Cannot ack/nack message, channel is already closed');
     }
 }
 

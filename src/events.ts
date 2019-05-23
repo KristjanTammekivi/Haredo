@@ -22,7 +22,7 @@ export type TypedEventEmitter<T> = TypedEE<T> & Omit<
     'listenerCount' | 'prependListener' | 'prependOnceListener'>;
 
 
-export const eventToPromise = <T>(
+export const typedEventToPromise = <T>(
     emitter: TypedEventEmitter<T>,
     event: keyof T
 ): Promise<any> => {
@@ -32,3 +32,11 @@ export const eventToPromise = <T>(
         });
     });
 }
+
+export const eventToPromise = (emitter: EventEmitter, event: string) => {
+    return new Promise((resolve) => {
+        emitter.once(event, () => {
+            resolve();
+        });
+    });
+};

@@ -10,6 +10,7 @@ const log = makeDebug('connectionmanager:');
 export class ConnectionManager {
     closing = false;
     closed = false;
+    private closePromise: Promise<void>;
     connection: Connection;
     connectionPromise: Bluebird<Connection>;
     connectionOpts: string | Options.Connect;
@@ -94,11 +95,17 @@ export class ConnectionManager {
     }
 
     async close() {
+        this.closePromise = this.closePromise || this.internalClose();
+        return this.closePromise;
+    }
+
+    private async internalClose() {
         log('closing');
         await this.consumerManager.close();
         this.closing = true;
         if (this.connection) {
             await this.connection.close();
         }
+        this.closed = true;
     }
 }
