@@ -2,19 +2,19 @@ import { Options } from 'amqplib';
 import { Exchange } from './exchange';
 import { keyValuePairs } from './utils';
 
-type AssertQueue = Options.AssertQueue;
+export type QueueOptions = Options.AssertQueue;
 
-const DEFAULT_QUEUE_OPTIONS: Options.AssertQueue = {
+export const DEFAULT_QUEUE_OPTIONS: Options.AssertQueue = Object.freeze({
     durable: true,
     exclusive: false
-}
+});
 
 export class Queue<T = unknown> {
-    opts: AssertQueue;
-    constructor(public name?: string, opts: Partial<AssertQueue> = {}) {
+    opts: QueueOptions;
+    constructor(public name?: string, opts: Partial<QueueOptions> = {}) {
         this.opts = Object.assign({}, DEFAULT_QUEUE_OPTIONS, opts);
     }
-    private clone(opts: Partial<AssertQueue> = {}) {
+    private clone(opts: Partial<QueueOptions> = {}) {
         return new Queue<T>(this.name, Object.assign({}, this.opts, opts));
     }
     /**
@@ -51,17 +51,20 @@ export class Queue<T = unknown> {
     expires(expires: number) {
         return this.clone({ expires });
     }
-
-    dead(deadLetterExchange: Exchange, deadLetterRoutingKey?: string) {
+    // TODO: dead letter queue
+    dead(deadLetterExchange: Exchange | string, deadLetterRoutingKey?: string) {
+        if (deadLetterExchange instanceof Exchange) {
+            deadLetterExchange = deadLetterExchange.name;
+        }
         return this.clone({
             deadLetterRoutingKey,
-            deadLetterExchange: deadLetterExchange.name,
+            deadLetterExchange
         });
     }
     toString() {
         return `Queue${this.name ? ` ${this.name} ` : ' '}opts:${keyValuePairs(this.opts).join(',')}`;
     }
 }
-export const queue = <T = unknown>(name?: string, opts: Partial<AssertQueue> = {}) => {
+export const queue = <T = unknown>(name?: string, opts: Partial<QueueOptions> = {}) => {
     return new Queue<T>(name, opts);
 }

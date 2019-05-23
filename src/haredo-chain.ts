@@ -11,12 +11,12 @@ import { Buffer } from 'buffer';
 
 const log = makeDebug('connectionmanager:');
 
-interface AddExchange {
+export interface AddExchange {
     exchange: Exchange;
     pattern: string;
 }
 
-interface HaredoChainState<T> {
+export interface HaredoChainState<T> {
     autoAck: boolean;
     prefetch: number;
     queue: Queue<T>;
@@ -44,7 +44,10 @@ export class HaredoChain<T = unknown> {
     private clone<U = T>(state: Partial<HaredoChainState<U>>) {
         return new HaredoChain<U>(this.connectionManager, Object.assign({}, this.state, state))
     }
-    queue<U>(queue: Queue<U>) {
+    queue<U = unknown>(queue: Queue<U> | string) {
+        if (!(queue instanceof Queue)) {
+            queue = new Queue<U>(queue);
+        }
         if (this.state.queue) {
             throw new BadArgumentsError(`Chain can only contain one queue`);
         }

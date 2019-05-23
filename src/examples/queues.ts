@@ -6,7 +6,7 @@ export const main = async () => {
     await haredo.connect();
     const queue = new Queue<{ test: boolean }>('test').durable(false);
     const queue2 = new Queue('test').durable(false);
-    await haredo.assertQueue(queue);
+    await haredo.connectionManager.assertQueue(queue);
     haredo.queue(queue2).publish({ test: true });
     haredo.queue(queue).subscribe((message) => { });
 };

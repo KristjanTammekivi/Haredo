@@ -20,3 +20,15 @@ export type TypedEventEmitter<T> = TypedEE<T> & Omit<
     'addListener' | 'on' | 'once' | 'removeListener' |
     'removeAllListeners' | 'listeners' | 'emit' |
     'listenerCount' | 'prependListener' | 'prependOnceListener'>;
+
+
+export const eventToPromise = <T>(
+    emitter: TypedEventEmitter<T>,
+    event: keyof T
+): Promise<any> => {
+    return new Promise(resolve => {
+        emitter.once(event, (...args: any[]) => {
+            resolve(args);
+        });
+    });
+}

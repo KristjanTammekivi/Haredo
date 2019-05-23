@@ -1,6 +1,7 @@
 import { HaredoMessage } from './haredo-message';
-import { TypedEventEmitter } from './events';
+import { TypedEventEmitter, eventToPromise } from './events';
 import { EventEmitter } from 'events';
+import { map } from 'bluebird';
 
 export enum MessageManagerEvents {
     MESSAGE_MANAGER_DRAINED = 'drained'
@@ -21,8 +22,22 @@ export class MessageManager<T = unknown> {
     }
     add(message: HaredoMessage<T>) {
         this.messages = this.messages.concat(message);
+        message.emitter.once('handled', () => {
+            this.remove(message);
+        });
     }
     remove(message: HaredoMessage) {
         this.messages = this.messages.filter(x => x !== message);
+    }
+    async drain() {
+        if (this.messages.length === 0) {
+            return;
+        }
+        await map(this.messages, message => eventToPromise(message.emitter, 'handled'));
+    }
+    channelBorked() {
+        this.messages.forEach(message => {
+            message.channelBorked = true;
+        });
     }
 }

@@ -1,0 +1,32 @@
+import { Consumer } from './consumer';
+import { map } from 'bluebird';
+import { HaredoError } from './errors';
+import { EventEmitter } from 'events';
+import { TypedEventEmitter } from './events';
+
+export enum ConsumerManagerEvents {
+    drain = 'drain'
+}
+
+interface Events {
+    drain: void;
+}
+
+export class ConsumerManager {
+    private consumers: Consumer[] = [];
+    public closed = false;
+    public readonly emitter = new EventEmitter() as TypedEventEmitter<Events>;
+    add(consumer: Consumer) {
+        if (this.closed) {
+            throw new HaredoError(`Can't add new Consumer, shutting down in progress`);
+        }
+        this.consumers = this.consumers.concat(consumer);
+    }
+    remove(consumer: Consumer) {
+        this.consumers = this.consumers.filter(x => x !== consumer);
+    }
+    async close() {
+        await map(this.consumers, (consumer) => consumer.cancel());
+        this.emitter.emit('drain');
+    }
+}

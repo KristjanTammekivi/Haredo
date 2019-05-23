@@ -3,7 +3,7 @@ import { expect, use } from 'chai';
 
 import * as chaiAsPromised from 'chai-as-promised';
 import { Haredo, Queue } from '../../src/index';
-import { setup, teardown, verifyQueue } from './helpers/amqp';
+import { setup, teardown, verifyQueue, getSingleMessage } from './helpers/amqp';
 use(chaiAsPromised);
 
 describe('Queue', () => {
@@ -29,5 +29,20 @@ describe('Queue', () => {
         const queue = new Queue('');
         await haredo.queue(queue).setup();
         expect(queue.name).length.greaterThan(0);
+    });
+    interface SimpleMessage {
+        test: number;
+    }
+    it('should publish to queue', async () => {
+        const queue = new Queue<SimpleMessage>();
+        await haredo.queue(queue).publish({
+            test: 5
+        });
+        await getSingleMessage(queue.name)
+    });
+    it('should assert as a shorthand queue', async () => {
+        const queueName = 'test';
+        await haredo.queue(queueName).setup();
+        await verifyQueue(queueName, { durable: true });
     });
 });

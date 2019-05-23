@@ -4,7 +4,7 @@ import { Queue } from './queue';
 import { HaredoChain } from './haredo-chain';
 import { Exchange } from './exchange';
 
-export interface HaredoOpts {
+export interface HaredoOptions {
     connection?: Options.Connect | string;
     socketOpts?: any
 }
@@ -13,7 +13,7 @@ export class Haredo {
     connectionManager: ConnectionManager;
     closing = false;
     closed = false;
-    constructor(private opts: HaredoOpts = {}) {
+    constructor(private opts: HaredoOptions = {}) {
         this.connectionManager = new ConnectionManager(this.opts.connection, this.opts.socketOpts);
     }
     async connect() {
@@ -28,7 +28,7 @@ export class Haredo {
         await this.connectionManager.close();
         // TODO: implement
     }
-    queue<T>(queue: Queue<T>) {
+    queue<T>(queue: Queue<T> | string) {
         return new HaredoChain<T>(this.connectionManager, {})
             .queue(queue);
     }
@@ -36,14 +36,5 @@ export class Haredo {
         return new HaredoChain<T>(this.connectionManager, {})
             .exchange(exchange);
     }
-    async assertQueue(queue: Queue) {
-        const channel = await this.connectionManager.getChannel();
-        await channel.assertQueue(queue.name, queue.opts);
-        await channel.close();
-    }
-    async assertExchange(exchange: Exchange) {
-        const channel = await this.connectionManager.getChannel();
-        await channel.assertExchange(exchange.name, exchange.type, exchange.opts);
-        await channel.close();
-    }
+
 }

@@ -22,7 +22,7 @@ const xDelayedTypesArray = [
     ExchangeType.Headers
 ];
 
-export interface IExchangeOptions extends Options.AssertExchange {
+export interface ExchangeOptions extends Options.AssertExchange {
     arguments: {
         'x-delayed-type'?: xDelayedType;
     }
@@ -32,7 +32,7 @@ export class Exchange<T = unknown> {
     constructor(
         public readonly name: string,
         public readonly type: ExchangeType,
-        public readonly opts: IExchangeOptions = { arguments: {} }) {
+        public readonly opts: ExchangeOptions = { arguments: {} }) {
         if (type === ExchangeType.Delayed && !xDelayedTypesArray.includes(get(opts, obj => obj.arguments['x-delayed-type']))) {
             throw new BadArgumentsError(`Exchange ${name}: exchange type type "delayed" requires a set x-delayed-type in arguments`);
         }

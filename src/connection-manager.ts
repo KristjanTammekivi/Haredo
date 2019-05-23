@@ -1,6 +1,9 @@
 import { Options, Connection, connect } from 'amqplib';
 import * as Bluebird from 'bluebird';
 import { makeDebug } from './logger';
+import { Queue } from './queue';
+import { Exchange } from './exchange';
+import { ConsumerManager } from './consumer-manager';
 
 const log = makeDebug('connectionmanager:');
 
@@ -10,6 +13,7 @@ export class ConnectionManager {
     connection: Connection;
     connectionPromise: Bluebird<Connection>;
     connectionOpts: string | Options.Connect;
+    consumerManager = new ConsumerManager();
     socketOpts: any;
     constructor(opts: string | Options.Connect = 'amqp://localhost:5672', socketOpts: any = {}) {
         this.connectionOpts = opts;
@@ -48,12 +52,53 @@ export class ConnectionManager {
         log('creating channel');
         const channel = await this.connection.createChannel();
         // Without this channel errors will crash the application
-        channel.on('error', () => { });
+        // channel.on('error', () => { });
         return channel;
     }
 
-    close() {
+    async assertQueue(queue: Queue) {
+        const channel = await this.getChannel();
+        const reply = await channel.assertQueue(queue.name, queue.opts);
+        queue.name = reply.queue;
+        await channel.close();
+        return reply;
+    }
+
+    async assertExchange(exchange: Exchange) {
+        const channel = await this.getChannel();
+        const reply = await channel.assertExchange(exchange.name, exchange.type, exchange.opts);
+        await channel.close();
+        return reply;
+    }
+
+    async bindExchange(source: Exchange, destination: Exchange, pattern: string, args?: any) {
+        const channel = await this.getChannel();
+        await Promise.all([
+            this.assertExchange(source),
+            this.assertExchange(destination)
+        ]);
+        const reply = await channel.bindExchange(source.name, destination.name, pattern, args);
+        await channel.close();
+        return reply;
+    }
+
+    async bindQueue(exchange: Exchange, queue: Queue, pattern: string, args?: any) {
+        const channel = await this.getChannel();
+        await Promise.all([
+            this.assertQueue(queue),
+            this.assertExchange(exchange)
+        ]);
+        const reply = await channel.bindQueue(queue.name, exchange.name, pattern, args);
+        await channel.close();
+        return reply;
+    }
+
+    async close() {
         log('closing');
+        await this.consumerManager.close();
         this.closing = true;
+        if (this.connection) {
+            await this.connection.close();
+        }
     }
 }
