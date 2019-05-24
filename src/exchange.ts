@@ -2,7 +2,7 @@ import { Options } from 'amqplib';
 import { get, keyValuePairs } from './utils';
 import { BadArgumentsError } from './errors';
 
-export enum ExchangeType {
+export const enum ExchangeType {
     Direct = 'direct',
     Fanout = 'fanout',
     Topic = 'topic',
@@ -10,7 +10,11 @@ export enum ExchangeType {
     Delayed = 'x-delayed-message'
 }
 
-export type xDelayedType = ExchangeType.Direct |
+type xDelayedTypeStrings = 'direct' | 'fanout' | 'topic' | 'headers';
+
+type exchangeTypeStrings = 'direct' | 'fanout' | 'topic' | 'headers' | 'x-delayed-message';
+
+export type XDelayedType = ExchangeType.Direct |
     ExchangeType.Fanout |
     ExchangeType.Topic |
     ExchangeType.Headers;
@@ -22,23 +26,26 @@ const xDelayedTypesArray = [
     ExchangeType.Headers
 ];
 
+type x = keyof typeof xDelayedTypesArray
+
 export interface ExchangeOptions extends Options.AssertExchange {
     arguments: {
-        'x-delayed-type'?: xDelayedType;
+        'x-delayed-type'?: XDelayedType;
     }
 }
 
 export class Exchange<T = unknown> {
     constructor(
         public readonly name: string,
-        public readonly type: ExchangeType,
+        public readonly type: ExchangeType | exchangeTypeStrings = 'direct',
         public readonly opts: ExchangeOptions = { arguments: {} }) {
-        if (type === ExchangeType.Delayed && !xDelayedTypesArray.includes(get(opts, obj => obj.arguments['x-delayed-type']))) {
+        if (type === ExchangeType.Delayed && !xDelayedTypesArray.includes(get(opts, obj => obj.arguments['x-delayed-type'] as XDelayedType))) {
             throw new BadArgumentsError(`Exchange ${name}: exchange type type "delayed" requires a set x-delayed-type in arguments`);
         }
     }
-    private clone(opts: Partial<Options.AssertExchange>) {
-        return new Exchange<T>(this.name, this.type, Object.assign({}, this.opts, opts));
+    private clone(opts: Partial<ExchangeOptions> = {}, type: ExchangeType = this.type as ExchangeType) {
+        const newOpts = Object.assign({}, this.opts, { ...opts, arguments: Object.assign({}, this.opts.arguments, opts.arguments) });
+        return new Exchange<T>(this.name, type, newOpts);
     }
     /**
      * if true, the exchange will survive broker restarts.
@@ -60,6 +67,21 @@ export class Exchange<T = unknown> {
      */
     alternateExchange(alternateExchange: Exchange) {
         return this.clone({ alternateExchange: alternateExchange.name });
+    }
+    direct() {
+        return this.clone({}, ExchangeType.Direct);
+    }
+    topic() {
+        return this.clone({}, ExchangeType.Topic);
+    }
+    headers() {
+        return this.clone({}, ExchangeType.Headers);
+    }
+    fanout() {
+        return this.clone({}, ExchangeType.Fanout);
+    }
+    delayed(xDelayedType: XDelayedType | xDelayedTypeStrings) {
+        return this.clone({ arguments: { 'x-delayed-type': xDelayedType as XDelayedType } }, ExchangeType.Delayed);
     }
     toString() {
         return `Exchange ${this.name} ${this.type} opts:${keyValuePairs(this.opts).join(',')}`;
