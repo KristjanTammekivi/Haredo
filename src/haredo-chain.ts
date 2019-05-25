@@ -25,6 +25,10 @@ export interface HaredoChainState<T> {
     failTimeout: number;
     reestablish: boolean;
     json: boolean;
+    dlx: Exchange;
+    dlq: Queue;
+    dlqPattern: string;
+    dlRoutingKey: string;
 }
 
 export class HaredoChain<T = unknown> {
@@ -80,7 +84,7 @@ export class HaredoChain<T = unknown> {
     prefetch(prefetch: number) {
         return this.clone({ prefetch });
     }
-    json() {
+    strictJson() {
         return this.clone({ json: true });
     }
     reestablish() {
@@ -98,6 +102,15 @@ export class HaredoChain<T = unknown> {
     autoAck(autoAck = true) {
         return this.clone({ autoAck });
     }
+    dead(deadLetterExchange: Exchange<T>, deadLetterQueue?: Queue<T>, pattern?: string): this;
+    dead(deadLetterExchange: Exchange<T>, deadLetterRoutingKey: string, deadLetterQueue?: Queue<T>, pattern?: string): this;
+    dead(deadLetterExchange: Exchange<T>, deadLetterRoutingKeyOrQueue?: string | Queue<T>, deadLetterQueueOrPattern?: string | Queue<T>, pattern?: string) {
+        if (deadLetterRoutingKeyOrQueue instanceof Queue) {
+            pattern = deadLetterQueueOrPattern as string;
+            deadLetterQueueOrPattern = deadLetterRoutingKeyOrQueue;
+        }
+        return this.clone({ dlx: deadLetterExchange, dlq: deadLetterQueueOrPattern as Queue, dlRoutingKey: deadLetterRoutingKeyOrQueue as string, dlqPattern: pattern });
+    }
     async subscribe(cb: MessageCallback<T>) {
         await this.setup();
         const consumer = new Consumer({
@@ -112,6 +125,7 @@ export class HaredoChain<T = unknown> {
             queueName: this.state.queue.name,
             reestablish: this.state.reestablish
         }, this.connectionManager, cb);
+        this.connectionManager.consumerManager.add(consumer);
         await consumer.start();
         return consumer;
     }
@@ -172,23 +186,28 @@ export class HaredoChain<T = unknown> {
 
     async setup() {
         // TODO: put this into a promise, don't let 2 calls
-        const channel = await this.connectionManager.getChannel();
         if (this.state.queue) {
+            if (this.state.dlx) {
+                let deadChain = new HaredoChain(this.connectionManager, {}).exchange(this.state.dlx);
+                if (this.state.dlq) {
+                    deadChain = deadChain.queue(this.state.dlq);
+                }
+                await deadChain.setup();
+                this.state.queue = this.state.queue.dead(this.state.dlx, this.state.dlRoutingKey)
+            }
             log(`Asserting ${this.state.queue}`);
-            const { name, opts } = this.state.queue;
-            const data = await channel.assertQueue(name, opts);
-            this.state.queue.name = data.queue;
+            await this.connectionManager.assertQueue(this.state.queue)
             log(`Done asserting ${this.state.queue}`);
         }
         for (const exchangery of this.state.exchanges) {
             log(`Asserting ${exchangery.exchange}`);
-            const { name, type, opts } = exchangery.exchange;
-            await channel.assertExchange(name, type, opts);
+            await this.connectionManager.assertExchange(exchangery.exchange);
             if (this.state.queue) {
                 const queue = this.state.queue;
                 log(`Binding ${queue} to ${exchangery.exchange} using pattern ${exchangery.pattern}`);
-                await channel.bindQueue(queue.name, name, exchangery.pattern);
+                await this.connectionManager.bindQueue(exchangery.exchange, this.state.queue, exchangery.pattern);
             }
+            log(`Done asserting ${exchangery.exchange}`);
         }
     }
 }

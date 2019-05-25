@@ -4,16 +4,16 @@ export const keyValuePairs = (obj: Object): string[] => {
     });
 };
 
-export const stringify = (message: any): string => {
-    if (typeof message === 'string' || typeof message === 'number') {
-        return message.toString();
+export const stringify = (item: any): string => {
+    if (typeof item === 'string' || typeof item === 'number') {
+        return item.toString();
     }
 
-    if (message === undefined || message === null) {
+    if (item === undefined || item === null) {
         return '';
     }
 
-    return JSON.stringify(message);
+    return JSON.stringify(item);
 };
 
 export const get = <T extends object, U>(obj: T, cb: (obj: T) => U): U | undefined => {

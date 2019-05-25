@@ -20,12 +20,14 @@ export class ConsumerManager {
         if (this.closed) {
             throw new HaredoError(`Can't add new Consumer, shutting down in progress`);
         }
+        consumer.emitter.on('cancel', () => this.remove(consumer));
         this.consumers = this.consumers.concat(consumer);
     }
     remove(consumer: Consumer) {
         this.consumers = this.consumers.filter(x => x !== consumer);
     }
     async close() {
+        this.closed = true;
         await map(this.consumers, (consumer) => consumer.cancel());
         this.emitter.emit('drain');
     }

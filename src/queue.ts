@@ -65,6 +65,3 @@ export class Queue<T = unknown> {
         return `Queue${this.name ? ` ${this.name} ` : ' '}opts:${keyValuePairs(this.opts).join(',')}`;
     }
 }
-export const queue = <T = unknown>(name?: string, opts: Partial<QueueOptions> = {}) => {
-    return new Queue<T>(name, opts);
-}
