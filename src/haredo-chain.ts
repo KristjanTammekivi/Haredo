@@ -1,6 +1,5 @@
-import { Haredo } from './haredo';
-import { Queue, queue } from './queue';
-import { Exchange } from './exchange';
+import { Queue } from './queue';
+import { Exchange, ExchangeType, xDelayedTypeStrings, xDelayedTypesArray } from './exchange';
 import { MergeTypes, stringify } from './utils';
 import { BadArgumentsError, HaredoError } from './errors';
 import { makeDebug } from './logger';
@@ -56,8 +55,21 @@ export class HaredoChain<T = unknown> {
         });
     }
     exchange<U>(exchange: Exchange<U>): HaredoChain<MergeTypes<T, U>>
-    exchange<U>(exchange: Exchange<U>, pattern: string): HaredoChain<MergeTypes<T, U>>
-    exchange<U>(exchange: Exchange<U>, pattern: string = '#') {
+    exchange<U>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string): HaredoChain<MergeTypes<T, U>>
+    exchange<U>(exchange: Exchange<U>, pattern?: ExchangeType | xDelayedTypeStrings | string): HaredoChain<MergeTypes<T, U>>
+    exchange<U>(
+        exchange: Exchange<U> | string,
+        typeOrPattern: ExchangeType | xDelayedTypeStrings = ExchangeType.Direct,
+        pattern: string = '#'
+    ) {
+        if (typeof exchange === 'string') {
+            if (typeOrPattern !== undefined && !xDelayedTypesArray.includes(typeOrPattern as ExchangeType)) {
+                throw new BadArgumentsError(`When .exchange is called with a string as first argument, the second argument must be a valid exchange type, received ${typeOrPattern}, expected one of ${xDelayedTypesArray.join(' | ')}`);
+            }
+            exchange = new Exchange(exchange, typeOrPattern);
+        } else {
+            pattern = typeOrPattern
+        }
         return this.clone<MergeTypes<T, U>>({
             exchanges: this.state.exchanges.concat({
                 exchange,
@@ -132,10 +144,10 @@ export class HaredoChain<T = unknown> {
         } else {
             message = message.clone({ routingKey, options });
         }
-        if (this.state.queue) {
-            return this.publishToQueue(message, this.state.queue);
-        } else {
+        if (this.state.exchanges.length) {
             return this.publishToExchange(message, this.state.exchanges[0].exchange)
+        } else {
+            return this.publishToQueue(message, this.state.queue);
         }
     }
 

@@ -1,6 +1,6 @@
 import { Omit } from './events';
 import { Options } from 'amqplib';
-import { keyValuePairs } from './utils';
+import { keyValuePairs, get } from './utils';
 
 export interface ExtendedPublishType extends Omit<Options.Publish, 'headers'> {
     headers: {
@@ -25,9 +25,22 @@ export class PreparedMessage<T = unknown> {
         this.options = settings.options;
     }
     clone(newData: Partial<PreparedMessageOptions<T>> = {}) {
+        const newOpts = Object.assign(
+            {},
+            this.options,
+            {
+                ...newData.options,
+                headers: Object.assign(
+                    {},
+                    get(this.options, opts => opts.headers) || {},
+                    get(newData.options, opts => opts.headers) || {}
+                )
+            }
+        );
         return new PreparedMessage<T>({
             routingKey: newData.routingKey || this.routingKey,
             content: newData.content || this.content,
+            options: newOpts
         });
     }
     setContent(content: T) {
@@ -89,7 +102,7 @@ export class PreparedMessage<T = unknown> {
     setHeader(header: string, value: string | number) {
         return this.clone({
             options: {
-                headers: Object.assign({}, this.options.headers || {}, {
+                headers: Object.assign({}, this.options && this.options.headers || {}, {
                     [header]: value
                 })
             }

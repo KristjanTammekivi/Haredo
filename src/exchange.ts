@@ -10,7 +10,7 @@ export const enum ExchangeType {
     Delayed = 'x-delayed-message'
 }
 
-type xDelayedTypeStrings = 'direct' | 'fanout' | 'topic' | 'headers';
+export type xDelayedTypeStrings = 'direct' | 'fanout' | 'topic' | 'headers';
 
 type exchangeTypeStrings = 'direct' | 'fanout' | 'topic' | 'headers' | 'x-delayed-message';
 
@@ -19,7 +19,7 @@ export type XDelayedType = ExchangeType.Direct |
     ExchangeType.Topic |
     ExchangeType.Headers;
 
-const xDelayedTypesArray = [
+export const xDelayedTypesArray = [
     ExchangeType.Direct,
     ExchangeType.Fanout,
     ExchangeType.Topic,

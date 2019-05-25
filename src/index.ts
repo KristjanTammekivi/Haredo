@@ -1,7 +1,7 @@
 import 'source-map-support/register';
 
 export { Queue, QueueOptions } from './queue';
-export { Exchange, ExchangeType, xDelayedType, ExchangeOptions } from './exchange';
+export { Exchange, ExchangeType, XDelayedType, ExchangeOptions } from './exchange';
 export { Haredo, HaredoOptions } from './haredo';
 export { HaredoChain, AddExchange, HaredoChainState } from './haredo-chain';
 export { HaredoError, BadArgumentsError, ChannelBrokenError } from './errors';

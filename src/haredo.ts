@@ -2,9 +2,10 @@ import { Options } from 'amqplib';
 import { ConnectionManager } from './connection-manager';
 import { Queue } from './queue';
 import { HaredoChain } from './haredo-chain';
-import { Exchange } from './exchange';
+import { Exchange, ExchangeType, xDelayedTypeStrings } from './exchange';
 import { EventEmitter } from 'events';
 import { TypedEventEmitter } from './events';
+import { MergeTypes } from './utils';
 
 export interface HaredoOptions {
     connection?: Options.Connect | string;
@@ -52,9 +53,16 @@ export class Haredo {
         return new HaredoChain<T>(this.connectionManager, {})
             .queue(queue);
     }
-    exchange<T>(exchange: Exchange<T>) {
+    exchange<T>(exchange: Exchange<T>): HaredoChain<MergeTypes<T, T>>
+    exchange<T>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string): HaredoChain<MergeTypes<T, T>>
+    exchange<T>(exchange: Exchange<T>, pattern?: ExchangeType | xDelayedTypeStrings | string): HaredoChain<MergeTypes<T, T>>
+    exchange<T>(
+        exchange: Exchange<T> | string,
+        typeOrPattern: ExchangeType | xDelayedTypeStrings = ExchangeType.Direct,
+        pattern: string = '#'
+    ) {
         return new HaredoChain<T>(this.connectionManager, {})
-            .exchange(exchange);
+            .exchange(exchange as string, typeOrPattern, pattern);
     }
 
 }

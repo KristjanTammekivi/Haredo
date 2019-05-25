@@ -24,6 +24,9 @@ export class HaredoMessage<T = unknown> {
             this.data = this.dataString as any;
         }
     }
+    getHeaders() {
+        return this.raw.properties.headers;
+    }
     async ack(suppressHandledError = false) {
         if (this.isHandled) {
             if (suppressHandledError) {
