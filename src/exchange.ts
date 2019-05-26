@@ -1,5 +1,5 @@
 import { Options } from 'amqplib';
-import { get, keyValuePairs } from './utils';
+import { get, keyValuePairs, flatObjectIsEqual } from './utils';
 import { BadArgumentsError } from './errors';
 
 export const enum ExchangeType {
@@ -65,8 +65,8 @@ export class Exchange<T = unknown> {
     /**
      * send all unrouted messages to this exchange
      */
-    alternateExchange(alternateExchange: Exchange) {
-        return this.clone({ alternateExchange: alternateExchange.name });
+    alternateExchange(alternateExchange: Exchange | string) {
+        return this.clone({ alternateExchange: typeof alternateExchange === 'string' ? alternateExchange : alternateExchange.name });
     }
     direct() {
         return this.clone({}, ExchangeType.Direct);
@@ -85,5 +85,14 @@ export class Exchange<T = unknown> {
     }
     toString() {
         return `Exchange ${this.name} ${this.type} opts:${keyValuePairs(this.opts).join(',')}`;
+    }
+    isEqual(exchange: Exchange) {
+        return this.name === exchange.name &&
+            this.type === exchange.type &&
+            this.opts.alternateExchange === exchange.opts.alternateExchange &&
+            this.opts.autoDelete === exchange.opts.autoDelete &&
+            this.opts.durable === exchange.opts.durable &&
+            this.opts.internal === exchange.opts.internal &&
+            flatObjectIsEqual(this.opts.arguments, exchange.opts.arguments);
     }
 }

@@ -4,7 +4,8 @@ import { expect, use } from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import { Haredo, Queue, Exchange, ExchangeType, PreparedMessage } from '../../src/index';
 import { setup, teardown, verifyQueue, getSingleMessage, checkExchange } from './helpers/amqp';
-import { delay } from 'bluebird';
+import { delay } from '../../src/utils';
+
 use(chaiAsPromised);
 
 describe('Exchange', () => {
@@ -73,8 +74,10 @@ describe('Exchange', () => {
         const exchange = new Exchange('test', 'fanout');
         const chain = haredo.exchange(exchange, '#').exchange('test2', 'topic', '#').queue('test');
         await chain.setup();
-        await haredo.exchange(exchange, '#').publish(1, 'test');
-        await haredo.exchange('test2', 'topic').publish(2, 'test2');
+        await Promise.all([
+            await haredo.exchange(exchange, '#').publish(1, 'test'),
+            await haredo.exchange('test2', 'topic').publish(2, 'test2')
+        ]);
         let messagesHandled = 0;
         await chain.subscribe((msg) => {
             messagesHandled++;

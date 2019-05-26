@@ -1,6 +1,6 @@
 import { Queue } from './queue';
 import { Exchange, ExchangeType, xDelayedTypeStrings, xDelayedTypesArray } from './exchange';
-import { MergeTypes, stringify } from './utils';
+import { MergeTypes, stringify, promiseMap } from './utils';
 import { BadArgumentsError, HaredoError } from './errors';
 import { makeDebug } from './logger';
 import { ConnectionManager } from './connection-manager';
@@ -25,10 +25,7 @@ export interface HaredoChainState<T> {
     failTimeout: number;
     reestablish: boolean;
     json: boolean;
-    dlx: Exchange;
-    dlq: Queue;
-    dlqPattern: string;
-    dlRoutingKey: string;
+    confirm: boolean;
 }
 
 export class HaredoChain<T = unknown> {
@@ -43,6 +40,7 @@ export class HaredoChain<T = unknown> {
         this.state.failThreshold = state.failThreshold;
         this.state.failTimeout = state.failTimeout;
         this.state.json = !!state.json || false;
+        this.state.confirm = state.confirm;
     }
     private clone<U = T>(state: Partial<HaredoChainState<U>>) {
         return new HaredoChain<U>(this.connectionManager, Object.assign({}, this.state, state))
@@ -102,15 +100,6 @@ export class HaredoChain<T = unknown> {
     autoAck(autoAck = true) {
         return this.clone({ autoAck });
     }
-    dead(deadLetterExchange: Exchange<T>, deadLetterQueue?: Queue<T>, pattern?: string): this;
-    dead(deadLetterExchange: Exchange<T>, deadLetterRoutingKey: string, deadLetterQueue?: Queue<T>, pattern?: string): this;
-    dead(deadLetterExchange: Exchange<T>, deadLetterRoutingKeyOrQueue?: string | Queue<T>, deadLetterQueueOrPattern?: string | Queue<T>, pattern?: string) {
-        if (deadLetterRoutingKeyOrQueue instanceof Queue) {
-            pattern = deadLetterQueueOrPattern as string;
-            deadLetterQueueOrPattern = deadLetterRoutingKeyOrQueue;
-        }
-        return this.clone({ dlx: deadLetterExchange, dlq: deadLetterQueueOrPattern as Queue, dlRoutingKey: deadLetterRoutingKeyOrQueue as string, dlqPattern: pattern });
-    }
     async subscribe(cb: MessageCallback<T>) {
         await this.setup();
         const consumer = new Consumer({
@@ -128,6 +117,10 @@ export class HaredoChain<T = unknown> {
         this.connectionManager.consumerManager.add(consumer);
         await consumer.start();
         return consumer;
+    }
+
+    confirm(confirm = true) {
+        return this.clone({ confirm });
     }
 
     publish(message: T | PreparedMessage<T>): Promise<boolean>;
@@ -166,6 +159,28 @@ export class HaredoChain<T = unknown> {
     }
 
     private async publishToExchange(message: PreparedMessage<T>, exchange: Exchange<T>) {
+        if (this.state.confirm) {
+            return new Promise<boolean>(async (resolve, reject) => {
+                try {
+                    const confirmChannel = await this.connectionManager.getConfirmChannel();
+                    const response = await confirmChannel.publish(
+                        exchange.name,
+                        message.routingKey,
+                        Buffer.from(stringify(message.content)),
+                        message.options,
+                        (err) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(response);
+                            }
+                        }
+                    );
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
         const channel = await this.connectionManager.getChannel();
         const response = await channel.publish(
             exchange.name,
@@ -178,6 +193,28 @@ export class HaredoChain<T = unknown> {
     }
 
     private async publishToQueue(message: PreparedMessage<T>, queue: Queue<T>) {
+        if (this.state.confirm) {
+            return new Promise<boolean>(async (resolve, reject) => {
+                try {
+                    const channel = await this.connectionManager.getConfirmChannel();
+                    const response = channel.sendToQueue(
+                        queue.name,
+                        Buffer.from(stringify(message.content)),
+                        message.options,
+                        (err) => {
+                            // TODO: wrap this error with HaredoError
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(response);
+                            }
+                        }
+                    );
+                } catch (e) {
+
+                }
+            });
+        }
         const channel = await this.connectionManager.getChannel();
         const response = await channel.sendToQueue(queue.name, Buffer.from(stringify(message.content)), message.options);
         await channel.close();
@@ -187,19 +224,11 @@ export class HaredoChain<T = unknown> {
     async setup() {
         // TODO: put this into a promise, don't let 2 calls
         if (this.state.queue) {
-            if (this.state.dlx) {
-                let deadChain = new HaredoChain(this.connectionManager, {}).exchange(this.state.dlx);
-                if (this.state.dlq) {
-                    deadChain = deadChain.queue(this.state.dlq);
-                }
-                await deadChain.setup();
-                this.state.queue = this.state.queue.dead(this.state.dlx, this.state.dlRoutingKey)
-            }
             log(`Asserting ${this.state.queue}`);
             await this.connectionManager.assertQueue(this.state.queue)
             log(`Done asserting ${this.state.queue}`);
         }
-        for (const exchangery of this.state.exchanges) {
+        await promiseMap(this.state.exchanges, async (exchangery) => {
             log(`Asserting ${exchangery.exchange}`);
             await this.connectionManager.assertExchange(exchangery.exchange);
             if (this.state.queue) {
@@ -208,6 +237,6 @@ export class HaredoChain<T = unknown> {
                 await this.connectionManager.bindQueue(exchangery.exchange, this.state.queue, exchangery.pattern);
             }
             log(`Done asserting ${exchangery.exchange}`);
-        }
+        });
     }
 }

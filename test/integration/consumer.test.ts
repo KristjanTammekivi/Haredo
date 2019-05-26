@@ -7,7 +7,7 @@ use(chaiAsPromised);
 import { Haredo } from '../../src';
 import { setup, teardown } from './helpers/amqp';
 import { EventEmitter } from 'events';
-import { delay } from 'bluebird';
+import { delay } from '../../src/utils';
 
 describe('Consumer', () => {
     let haredo: Haredo;

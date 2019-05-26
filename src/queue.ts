@@ -1,10 +1,10 @@
 import { Options } from 'amqplib';
 import { Exchange } from './exchange';
-import { keyValuePairs } from './utils';
+import { keyValuePairs, flatObjectIsEqual } from './utils';
 
 export type QueueOptions = Options.AssertQueue;
 
-export const DEFAULT_QUEUE_OPTIONS: Options.AssertQueue = Object.freeze({
+export const DEFAULT_QUEUE_OPTIONS: QueueOptions = Object.freeze({
     durable: true,
     exclusive: false
 });
@@ -46,12 +46,11 @@ export class Queue<T = unknown> {
     }
     /**
     * the queue will be destroyed after n milliseconds of disuse,
-    * where use means having consumers
+    * where use means having consumers or being declared
     */
     expires(expires: number) {
         return this.clone({ expires });
     }
-    // TODO: dead letter queue
     dead(deadLetterExchange: Exchange | string, deadLetterRoutingKey?: string) {
         if (deadLetterExchange instanceof Exchange) {
             deadLetterExchange = deadLetterExchange.name;
@@ -63,5 +62,19 @@ export class Queue<T = unknown> {
     }
     toString() {
         return `Queue${this.name ? ` ${this.name} ` : ' '}opts:${keyValuePairs(this.opts).join(',')}`;
+    }
+    isEqual(queue: Queue) {
+        return this.name && queue.name &&
+            this.name === queue.name &&
+            this.opts.autoDelete === queue.opts.autoDelete &&
+            this.opts.deadLetterExchange === queue.opts.deadLetterExchange &&
+            this.opts.deadLetterRoutingKey === queue.opts.deadLetterRoutingKey &&
+            this.opts.durable === queue.opts.durable &&
+            this.opts.exclusive === queue.opts.exclusive &&
+            this.opts.expires === queue.opts.expires &&
+            this.opts.maxLength === queue.opts.maxLength &&
+            this.opts.maxPriority === queue.opts.maxPriority &&
+            this.opts.messageTtl === queue.opts.messageTtl &&
+            flatObjectIsEqual(this.opts.arguments, queue.opts.arguments);
     }
 }

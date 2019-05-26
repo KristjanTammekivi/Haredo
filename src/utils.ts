@@ -22,7 +22,37 @@ export const get = <T extends object, U>(obj: T, cb: (obj: T) => U): U | undefin
     } catch (e) {
         return;
     }
-}
+};
+
+export const flatObjectIsEqual = (base: any, top: any) => {
+    if (Object.keys(base).some((x) => base[x] !== top[x])) {
+        return false;
+    }
+    if (Object.keys(top).some((x) => base[x] !== top[x])) {
+        return false;
+    }
+    return true;
+};
+
+export const promiseMap = async <T, U>(arr: T[], cb: (obj: T, i: number, arr: T[]) => U) => {
+    return Promise.all<U>(arr.map(cb));
+};
+
+export const delay = (ms: number) => {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+};
+
+export const swallowError = async <T>(error: { new(): Error }, promise: Promise<T>): Promise<T | undefined> => {
+    try {
+        return await promise;
+    } catch (e) {
+        if (!(e instanceof error)) {
+            throw e;
+        }
+    }
+};
 
 type notany = object | string | number | undefined | null;
 export type MergeTypes<T, U> = T extends notany ? U extends notany ? T | U : T : U;

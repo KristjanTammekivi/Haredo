@@ -1,9 +1,9 @@
 import { Options, Connection, connect } from 'amqplib';
-import * as Bluebird from 'bluebird';
 import { makeDebug } from './logger';
 import { Queue } from './queue';
 import { Exchange } from './exchange';
 import { ConsumerManager } from './consumer-manager';
+import { delay } from './utils';
 
 const log = makeDebug('connectionmanager:');
 
@@ -12,10 +12,12 @@ export class ConnectionManager {
     closed = false;
     private closePromise: Promise<void>;
     connection: Connection;
-    connectionPromise: Bluebird<Connection>;
+    connectionPromise: Promise<Connection>;
     connectionOpts: string | Options.Connect;
     consumerManager = new ConsumerManager();
     socketOpts: any;
+    scopedQueues = [] as string[];
+    scopedExchanges = [] as string[];
     constructor(opts: string | Options.Connect = 'amqp://localhost:5672', socketOpts: any = {}) {
         this.connectionOpts = opts;
         this.socketOpts = socketOpts;
@@ -29,7 +31,7 @@ export class ConnectionManager {
         this.connection = null;
         this.connectionPromise = null;
         log('channel closed, reconnecting');
-        await Bluebird.delay(500);
+        await delay(500);
         return this.getConnection();
     }
 
@@ -39,7 +41,7 @@ export class ConnectionManager {
         }
         this.connection = null;
         log('connecting');
-        this.connectionPromise = connect(this.connectionOpts, this.socketOpts);
+        this.connectionPromise = Promise.resolve(connect(this.connectionOpts, this.socketOpts));
         this.connection = await this.connectionPromise;
         log('connection established');
         this.connection.on('close', () => this.reconnect());
@@ -53,7 +55,17 @@ export class ConnectionManager {
         log('creating channel');
         const channel = await this.connection.createChannel();
         // Without this channel errors will crash the application
-        // channel.on('error', () => { });
+        channel.on('error', () => { });
+        return channel;
+    }
+
+    async getConfirmChannel() {
+        if (!this.connection) {
+            await this.connectionPromise;
+        }
+        log('creating confirm channel');
+        const channel = await this.connection.createConfirmChannel();
+        channel.on('error', () => { });
         return channel;
     }
 

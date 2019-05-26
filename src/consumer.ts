@@ -5,6 +5,7 @@ import { MessageManager } from './message-manager';
 import { TypedEventEmitter } from './events';
 import { EventEmitter } from 'events';
 import { ChannelBrokenError, MessageAlreadyHandledError } from './errors';
+import { swallowError } from './utils';
 
 const CONSUMER_DEFAULTS: ConsumerOpts = {
     autoAck: true,
@@ -139,13 +140,3 @@ export class Consumer<T = any> {
         this.cancelled = true;
     }
 }
-
-const swallowError = async <T>(error: { new(): Error }, promise: Promise<T>): Promise<T | undefined> => {
-    try {
-        return await promise;
-    } catch (e) {
-        if (!(e instanceof error)) {
-            throw e;
-        }
-    }
-};

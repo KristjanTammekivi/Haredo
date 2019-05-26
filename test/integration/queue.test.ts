@@ -38,7 +38,7 @@ describe('Queue', () => {
         await haredo.queue(queue).publish({
             test: 5
         });
-        await getSingleMessage(queue.name)
+        await getSingleMessage(queue.name);
     });
     it('should assert as a shorthand queue', async () => {
         const queueName = 'test';

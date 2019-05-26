@@ -1,8 +1,8 @@
 import { Consumer } from './consumer';
-import { map } from 'bluebird';
 import { HaredoError } from './errors';
 import { EventEmitter } from 'events';
 import { TypedEventEmitter } from './events';
+import { promiseMap } from './utils';
 
 export enum ConsumerManagerEvents {
     drain = 'drain'
@@ -28,7 +28,7 @@ export class ConsumerManager {
     }
     async close() {
         this.closed = true;
-        await map(this.consumers, (consumer) => consumer.cancel());
+        await promiseMap(this.consumers, (consumer) => consumer.cancel());
         this.emitter.emit('drain');
     }
 }
