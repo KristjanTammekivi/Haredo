@@ -1,7 +1,7 @@
 # Haredo
 
 [![Build Status](https://travis-ci.com/KristjanTammekivi/Haredo.svg?token=5sH57fp4gyjYbXpM9ZY9&branch=master)](https://travis-ci.com/KristjanTammekivi/Haredo)
-![npm](https://img.shields.io/npm/v/haredo.svg)
+[![npm](https://img.shields.io/npm/v/haredo.svg)](https://www.npmjs.com/package/haredo)
 
 Yet another Rabbit library
 
