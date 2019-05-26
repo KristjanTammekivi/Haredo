@@ -1,19 +1,22 @@
 language: node_js
-
 node_js:
-  - "10"
-
+- '10'
 cache: yarn
-
 services:
-  - docker
-
+- docker
 before_install:
-  - cd test/docker
-  - docker-compose up -d
-  - cd ../..
-
+- cd test/docker
+- docker-compose up -d
+- cd ../..
 script:
-  - pwd
-  - yarn
-  - yarn run coverage
+- pwd
+- yarn
+- yarn run coverage
+deploy:
+  provider: npm
+  email: kristjantammekivi@gmail.com
+  api_key:
+    secure: NuvlMCdhRTgsMZ6pMa30eTD8FQrXomPq0oHZy7QZijL6dSKnopBMd19YDpQlXp3g/Do1H/kDzCQY7boiQdfzGbmmT6Ng9sEzsZGrgRmuNCATzA0CGdE4A3IiBLwZRCuZVMHJlyN+IXd9rEJSea6o2lP3QRTsCUVFsxOwMu+VAoF4su2Iey+tZPg6m9RI3zTRhpZgoHM1m9DHUG7RUnsKrcNcAiQIWecTW/TuFCPIkr+RgR6mEehtikdpCasZ3ymuxuVa0HIuSWtU5CFnO2Xs5ox0P/aNz7BkjE4/DJxRVdGcbXoWcKBL0pMp+AaATuozqTi60oYpGlYb7BFmKy5eWG5VAk99hTmHv+9q9KGgIs5Aq/wDoGa1TATzD/hDSCFck5xrLvFgV/NwbeI7x1FgbGbDqkG0f4fj3rnxXHN9h+D7PDgmbiRYF73M8hr3IHqtB4ORS56qEfDaACeL77c6Hh7Weae0ilr7xtpG+I1ttasp8HhcXHInnDzEtCHV9YFijmw/DKqciWQUuXcCiG8m5iK2shYqk5wM+eY8krD6Q5lxeeS+7KsDJVEYhobolvnfy8PJxNxYqjPs48S0TSLrqWAgrj/vh0QRrLXuL1BYcrBFBVqSnGLxz0/Mq6OC6/SpTgFCdMybeNC/KPli1LdQ1EJoRUjMiw10KBmCf0SLe20=
+  on:
+    tags: true
+    repo: KristjanTammekivi/Haredo
