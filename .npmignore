@@ -1,1 +1,4 @@
 src
+.nyc_output
+.vscode
+coverage
