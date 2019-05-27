@@ -55,7 +55,7 @@ describe('Exchange', () => {
         it('should delay a message', async () => {
             const exchange = new Exchange('test').delayed('direct');
             const message = new PreparedMessage({})
-                .setContent({})
+                .json({})
                 .delay(150);
             await haredo.exchange(exchange, '').queue('test').publish(message, '');
             let messageReceived = false;
