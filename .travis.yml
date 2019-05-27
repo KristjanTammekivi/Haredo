@@ -11,7 +11,7 @@ before_install:
 script:
 - pwd
 - yarn
-- yarn run coverage
+- yarn run coveralls
 - yarn run build:ts
 deploy:
   provider: npm

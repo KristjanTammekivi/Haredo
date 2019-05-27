@@ -13,7 +13,8 @@
     "test:integration:watch": "mocha --require source-map-support/register --require ts-node/register --watch --watch-extensions ts test/integration/**/*.test.ts",
     "test:unit": "mocha --require source-map-support/register --require ts-node/register test/unit/**/*.test.ts",
     "test:unit:watch": "mocha --require source-map-support/register --require ts-node/register --watch --watch-extensions ts test/unit/**/*.test.ts",
-    "coverage": "nyc mocha"
+    "coverage": "nyc npm run test",
+    "coveralls": "npm run coverage && nyc report --reporter=text-lcov | coveralls"
   },
   "nyc": {
     "include": [
@@ -53,6 +54,7 @@
     "@types/mocha": "^5.2.5",
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
+    "coveralls": "^3.0.3",
     "mocha": "^5.2.0",
     "nyc": "^13.1.0",
     "rabbitmq-stats": "^1.2.0",
