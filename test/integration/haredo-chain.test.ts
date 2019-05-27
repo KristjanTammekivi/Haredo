@@ -35,6 +35,6 @@ describe('HaredoChain', () => {
         await delay(50);
         await consumer.cancel();
         await expect(checkQueue('test.dead')).to.eventually.not.be.rejected;
-        await expect(getSingleMessage('test.dead').then(x => x.content)).to.eventually.eql('message');
+        await expect(getSingleMessage('test.dead').then(x => x.content)).to.eventually.eql('"message"');
     });
 });
