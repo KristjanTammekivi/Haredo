@@ -12,6 +12,7 @@ script:
 - pwd
 - yarn
 - yarn run coverage
+- yarn run build:ts
 deploy:
   provider: npm
   email: kristjantammekivi@gmail.com
