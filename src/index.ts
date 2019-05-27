@@ -5,6 +5,6 @@ export { HaredoChain, AddExchange, HaredoChainState } from './haredo-chain';
 export { HaredoError, BadArgumentsError, ChannelBrokenError, MessageAlreadyHandledError } from './errors';
 export { PreparedMessage, ExtendedPublishType, PreparedMessageOptions } from './prepared-message';
 export { HaredoMessage } from './haredo-message';
-export { Consumer, ConsumerOpts, FailHandlerOpts, MessageCallback } from './consumer';
+export { Consumer, ConsumerOpts, MessageCallback } from './consumer';
 export { ConsumerManager } from './consumer-manager';
 export { MessageManager } from './message-manager';

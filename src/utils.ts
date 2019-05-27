@@ -44,6 +44,16 @@ export const delay = (ms: number) => {
     });
 };
 
+
+export class TimeoutError extends Error { }
+
+export const timeout = (milliseconds: number) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(reject, milliseconds, new TimeoutError());
+    });
+}
+
+
 export const swallowError = async <T>(error: { new(): Error }, promise: Promise<T>): Promise<T | undefined> => {
     try {
         return await promise;

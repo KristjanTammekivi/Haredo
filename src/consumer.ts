@@ -6,6 +6,7 @@ import { TypedEventEmitter } from './events';
 import { EventEmitter } from 'events';
 import { ChannelBrokenError, MessageAlreadyHandledError } from './errors';
 import { swallowError } from './utils';
+import { FailHandlerOpts, FailHandler } from './fail-handler';
 
 const CONSUMER_DEFAULTS: ConsumerOpts = {
     autoAck: true,
@@ -22,12 +23,6 @@ const CONSUMER_DEFAULTS: ConsumerOpts = {
 
 export interface MessageCallback<T = unknown> {
     (message: HaredoMessage<T>): any;
-}
-
-export interface FailHandlerOpts {
-    failSpan: number;
-    failThreshold: number;
-    failTimeout: number;
 }
 
 export interface ConsumerOpts {
@@ -53,12 +48,16 @@ export class Consumer<T = any> {
     private messageManager = new MessageManager<T>();
     public consumerTag: string;
     public readonly emitter = new EventEmitter() as TypedEventEmitter<ConsumerEvents>;
+
+    private failHandler: FailHandler;
+
     constructor(
         private opts: ConsumerOpts,
         private connectionManager: ConnectionManager,
         private cb: MessageCallback<T>
     ) {
         this.prefetch = this.opts.prefetch;
+        this.failHandler = new FailHandler(this.opts.fail);
     }
     async start() {
         this.channel = await this.connectionManager.getChannel();
@@ -84,6 +83,7 @@ export class Consumer<T = any> {
                         // should I do something extra here
                         return;
                     }
+                    await this.failHandler.getTicket();
                     const messageInstance = new HaredoMessage<T>(message, this.opts.json, this);
                     if (this.cancelled) {
                         return this.nack(messageInstance);
@@ -117,6 +117,7 @@ export class Consumer<T = any> {
         await this.channel.ack(message.raw, false);
     }
     async nack(message: HaredoMessage<T>, requeue = true) {
+        this.failHandler.fail();
         if (!this.channel) {
             throw new ChannelBrokenError(message);
         }
