@@ -82,7 +82,7 @@ export class HaredoChain<T = unknown> {
     prefetch(prefetch: number) {
         return this.clone({ prefetch });
     }
-    strictJson() {
+    json() {
         return this.clone({ json: true });
     }
     reestablish() {

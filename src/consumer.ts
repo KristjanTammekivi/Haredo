@@ -41,6 +41,7 @@ export interface ConsumerOpts {
 
 export interface ConsumerEvents {
     cancel: never;
+    error: Error;
 }
 
 export class Consumer<T = any> {
@@ -94,6 +95,7 @@ export class Consumer<T = any> {
                             await swallowError(MessageAlreadyHandledError, messageInstance.ack(true));
                         }
                     } catch (e) {
+                        this.emitter.emit('error', e)
                         if (this.opts.autoAck) {
                             await swallowError(MessageAlreadyHandledError, messageInstance.nack(true, true));
                         }

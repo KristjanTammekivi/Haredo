@@ -1,4 +1,4 @@
-import { Options } from 'amqplib';
+import { Options, Connection } from 'amqplib';
 import { ConnectionManager } from './connection-manager';
 import { Queue } from './queue';
 import { HaredoChain } from './haredo-chain';
@@ -25,12 +25,20 @@ export class Haredo {
     connectionManager: ConnectionManager;
     closing = false;
     closed = false;
+    private connectionPromise: Promise<Connection>
     private closePromise: Promise<void>;
     emitter = new EventEmitter() as TypedEventEmitter<Events>;
     constructor(private opts: HaredoOptions = {}) {
         this.connectionManager = new ConnectionManager(this.opts.connection, this.opts.socketOpts);
     }
     async connect() {
+        if (this.connectionPromise) {
+            return this.connectionPromise
+        }
+        this.connectionPromise = this.internalConnect();
+        return this.connectionPromise;
+    }
+    async internalConnect() {
         const connection = await this.connectionManager.getConnection();
         connection.on('close', () => {
             if (this.opts.reconnect) {
@@ -39,6 +47,7 @@ export class Haredo {
                 this.emitter.emit(HaredoEvents.close);
             }
         });
+        return connection;
     }
     async close() {
         this.closing = true;

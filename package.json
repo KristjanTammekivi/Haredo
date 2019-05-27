@@ -4,7 +4,7 @@
   "description": "Wrapper around amqplib",
   "main": "dist/index.js",
   "scripts": {
-    "build": "rimraf dist && npm run build-ts",
+    "build": "rimraf dist && npm run build:ts",
     "build:ts": "tsc",
     "watch:ts": "tsc -w",
     "test": "mocha --require source-map-support/register --require ts-node/register test/**/*.test.ts",

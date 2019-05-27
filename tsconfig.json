@@ -6,7 +6,8 @@
         "inlineSourceMap": true,
         "experimentalDecorators": true,
         "declaration": true,
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "lib": ["es2017"]
     },
     "include": [
         "src/**/*"
