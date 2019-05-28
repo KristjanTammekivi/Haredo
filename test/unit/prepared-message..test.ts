@@ -22,7 +22,9 @@ describe('PreparedMessage', () => {
                 .appId('test')
                 .correlationId('test')
                 .persistent(true)
+                .persistent()
                 .mandatory(true)
+                .mandatory()
                 .expiration(500)
                 .messageId('test')
                 .userId('test')
@@ -35,7 +37,16 @@ describe('PreparedMessage', () => {
                 .contentType('application/json')
                 .replyTo('haredo')
                 .timestamp(new Date().getTime())
+                .clone()
                 .toString();
+        });
+        it('should replace existing routing key on method call', () => {
+            const message = new PreparedMessage({ routingKey: 'a' }).setRoutingKey('b');
+            expect(message).to.have.property('routingKey', 'b');
+        });
+        it('should replace existing content on method call', () => {
+            const message = new PreparedMessage({ content: 'a' }).setContent('b');
+            expect(message).to.have.property('content', 'b');
         });
     });
 });
