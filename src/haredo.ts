@@ -62,9 +62,9 @@ export class Haredo {
         return new HaredoChain<T>(this.connectionManager, {})
             .queue(queue);
     }
-    exchange<U>(exchange: Exchange<U>): HaredoChain<MergeTypes<T, U>>
-    exchange<U>(exchange: Exchange<U>, pattern?: string): HaredoChain<MergeTypes<T, U>>
-    exchange<U>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string, opts?: Partial<ExchangeOptions>): HaredoChain<MergeTypes<T, U>>
+    exchange<T>(exchange: Exchange<T>): HaredoChain<T>
+    exchange<T>(exchange: Exchange<T>, pattern?: string): HaredoChain<T>
+    exchange<T>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string, opts?: Partial<ExchangeOptions>): HaredoChain<T>
     exchange<T>(
         exchange: Exchange<T> | string,
         typeOrPattern: ExchangeType | xDelayedTypeStrings = ExchangeType.Direct,
