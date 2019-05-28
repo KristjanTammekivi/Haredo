@@ -64,7 +64,7 @@ export class Haredo {
     }
     exchange<T>(exchange: Exchange<T>): HaredoChain<MergeTypes<T, T>>
     exchange<T>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string): HaredoChain<MergeTypes<T, T>>
-    exchange<T>(exchange: Exchange<T>, pattern?: ExchangeType | xDelayedTypeStrings | string): HaredoChain<MergeTypes<T, T>>
+    exchange<T>(exchange: Exchange<T>, pattern?: string): HaredoChain<MergeTypes<T, T>>
     exchange<T>(
         exchange: Exchange<T> | string,
         typeOrPattern: ExchangeType | xDelayedTypeStrings = ExchangeType.Direct,

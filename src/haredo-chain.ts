@@ -56,9 +56,10 @@ export class HaredoChain<T = unknown> {
             queue,
         });
     }
+    // TODO: add exchange opts
     exchange<U>(exchange: Exchange<U>): HaredoChain<MergeTypes<T, U>>
     exchange<U>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string): HaredoChain<MergeTypes<T, U>>
-    exchange<U>(exchange: Exchange<U>, pattern?: ExchangeType | xDelayedTypeStrings | string): HaredoChain<MergeTypes<T, U>>
+    exchange<U>(exchange: Exchange<U>, pattern?: string): HaredoChain<MergeTypes<T, U>>
     exchange<U>(
         exchange: Exchange<U> | string,
         typeOrPattern: ExchangeType | xDelayedTypeStrings = ExchangeType.Direct,

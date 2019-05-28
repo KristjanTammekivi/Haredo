@@ -1,7 +1,7 @@
 {
   "name": "haredo",
   "version": "0.2.0",
-  "description": "Wrapper around amqplib",
+  "description": "A type-safe client library for rabbitmq",
   "keywords": [
     "rabbit",
     "rabbitmq",
