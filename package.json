@@ -1,8 +1,13 @@
 {
   "name": "haredo",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Wrapper around amqplib",
-  "keywords": ["rabbit", "rabbitmq", "amqp", "client"],
+  "keywords": [
+    "rabbit",
+    "rabbitmq",
+    "amqp",
+    "client"
+  ],
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf dist && npm run build:ts",
