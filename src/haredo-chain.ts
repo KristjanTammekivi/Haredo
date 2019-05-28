@@ -1,5 +1,5 @@
 import { Queue } from './queue';
-import { Exchange, ExchangeType, xDelayedTypeStrings, xDelayedTypesArray } from './exchange';
+import { Exchange, ExchangeType, xDelayedTypeStrings, xDelayedTypesArray, ExchangeOptions } from './exchange';
 import { MergeTypes, stringify, promiseMap } from './utils';
 import { BadArgumentsError, HaredoError } from './errors';
 import { makeDebug } from './logger';
@@ -56,20 +56,20 @@ export class HaredoChain<T = unknown> {
             queue,
         });
     }
-    // TODO: add exchange opts
     exchange<U>(exchange: Exchange<U>): HaredoChain<MergeTypes<T, U>>
-    exchange<U>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string): HaredoChain<MergeTypes<T, U>>
     exchange<U>(exchange: Exchange<U>, pattern?: string): HaredoChain<MergeTypes<T, U>>
+    exchange<U>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string, opts?: Partial<ExchangeOptions>): HaredoChain<MergeTypes<T, U>>
     exchange<U>(
         exchange: Exchange<U> | string,
         typeOrPattern: ExchangeType | xDelayedTypeStrings = ExchangeType.Direct,
-        pattern: string = '#'
+        pattern: string = '#',
+        exchangeOptions: Partial<ExchangeOptions> = {}
     ) {
         if (typeof exchange === 'string') {
             if (typeOrPattern !== undefined && !xDelayedTypesArray.includes(typeOrPattern as ExchangeType)) {
                 throw new BadArgumentsError(`When .exchange is called with a string as first argument, the second argument must be a valid exchange type, received ${typeOrPattern}, expected one of ${xDelayedTypesArray.join(' | ')}`);
             }
-            exchange = new Exchange(exchange, typeOrPattern);
+            exchange = new Exchange(exchange, typeOrPattern, exchangeOptions);
         } else {
             pattern = typeOrPattern
         }
@@ -163,7 +163,7 @@ export class HaredoChain<T = unknown> {
         if (this.state.confirm) {
             return new Promise<boolean>(async (resolve, reject) => {
                 try {
-                    const confirmChannel = await this.connectionManager.getConfirmChannel();
+                    const confirmChannel = await this.connectionManager.getConfirmChannelForPublishing();
                     const response = await confirmChannel.publish(
                         exchange.name,
                         message.routingKey,
@@ -182,14 +182,13 @@ export class HaredoChain<T = unknown> {
                 }
             });
         }
-        const channel = await this.connectionManager.getChannel();
+        const channel = await this.connectionManager.getChannelForPublishing();
         const response = await channel.publish(
             exchange.name,
             message.routingKey,
             Buffer.from(stringify(message.content)),
             message.options
         );
-        await channel.close();
         return response;
     }
 
@@ -197,7 +196,7 @@ export class HaredoChain<T = unknown> {
         if (this.state.confirm) {
             return new Promise<boolean>(async (resolve, reject) => {
                 try {
-                    const channel = await this.connectionManager.getConfirmChannel();
+                    const channel = await this.connectionManager.getConfirmChannelForPublishing();
                     const response = channel.sendToQueue(
                         queue.name,
                         Buffer.from(stringify(message.content)),
@@ -212,13 +211,12 @@ export class HaredoChain<T = unknown> {
                         }
                     );
                 } catch (e) {
-
+                    reject(e);
                 }
             });
         }
-        const channel = await this.connectionManager.getChannel();
+        const channel = await this.connectionManager.getChannelForPublishing();
         const response = await channel.sendToQueue(queue.name, Buffer.from(stringify(message.content)), message.options);
-        await channel.close();
         return response;
     }
 

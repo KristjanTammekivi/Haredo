@@ -67,8 +67,9 @@ haredo.exchange(exchange, '#')
     .queue(queue)
     .json()
     .autoAck()
-    .subscribe(data => {
-
+    .subscribe(async data => {
+        // do stuff with the data, message will be acked after the promise this function returns is resolved
+        // if it throws the message will be nacked/requeued
     });
 ```
 

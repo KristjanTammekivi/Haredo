@@ -1,4 +1,4 @@
-import { Options, Connection, connect } from 'amqplib';
+import { Options, Connection, connect, Channel, ConfirmChannel } from 'amqplib';
 import { makeDebug } from './logger';
 import { Queue } from './queue';
 import { Exchange } from './exchange';
@@ -16,8 +16,8 @@ export class ConnectionManager {
     connectionOpts: string | Options.Connect;
     consumerManager = new ConsumerManager();
     socketOpts: any;
-    scopedQueues = [] as string[];
-    scopedExchanges = [] as string[];
+    private publishChannel: Channel;
+    private publishConfirmChannel: ConfirmChannel;
     constructor(opts: string | Options.Connect = 'amqp://localhost:5672', socketOpts: any = {}) {
         this.connectionOpts = opts;
         this.socketOpts = socketOpts;
@@ -67,6 +67,28 @@ export class ConnectionManager {
         const channel = await this.connection.createConfirmChannel();
         channel.on('error', () => { });
         return channel;
+    }
+
+    async getChannelForPublishing() {
+        if (this.publishChannel) {
+            return this.publishChannel;
+        }
+        this.publishChannel = await this.getChannel();
+        this.publishChannel.on('close', () => {
+            this.publishChannel = null;
+        });
+        return this.publishChannel;
+    }
+
+    async getConfirmChannelForPublishing() {
+        if (this.publishConfirmChannel) {
+            return this.publishConfirmChannel;
+        }
+        this.publishConfirmChannel = await this.getConfirmChannel();
+        this.publishConfirmChannel.on('close', () => {
+            this.publishConfirmChannel = null;
+        });
+        return this.publishConfirmChannel;
     }
 
     async assertQueue(queue: Queue) {

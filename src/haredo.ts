@@ -2,7 +2,7 @@ import { Options, Connection } from 'amqplib';
 import { ConnectionManager } from './connection-manager';
 import { Queue } from './queue';
 import { HaredoChain } from './haredo-chain';
-import { Exchange, ExchangeType, xDelayedTypeStrings } from './exchange';
+import { Exchange, ExchangeType, xDelayedTypeStrings, ExchangeOptions } from './exchange';
 import { EventEmitter } from 'events';
 import { TypedEventEmitter } from './events';
 import { MergeTypes } from './utils';
@@ -62,16 +62,17 @@ export class Haredo {
         return new HaredoChain<T>(this.connectionManager, {})
             .queue(queue);
     }
-    exchange<T>(exchange: Exchange<T>): HaredoChain<MergeTypes<T, T>>
-    exchange<T>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string): HaredoChain<MergeTypes<T, T>>
-    exchange<T>(exchange: Exchange<T>, pattern?: string): HaredoChain<MergeTypes<T, T>>
+    exchange<U>(exchange: Exchange<U>): HaredoChain<MergeTypes<T, U>>
+    exchange<U>(exchange: Exchange<U>, pattern?: string): HaredoChain<MergeTypes<T, U>>
+    exchange<U>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string, opts?: Partial<ExchangeOptions>): HaredoChain<MergeTypes<T, U>>
     exchange<T>(
         exchange: Exchange<T> | string,
         typeOrPattern: ExchangeType | xDelayedTypeStrings = ExchangeType.Direct,
-        pattern: string = '#'
+        pattern: string = '#',
+        opts?: Partial<ExchangeOptions>
     ) {
         return new HaredoChain<T>(this.connectionManager, {})
-            .exchange(exchange as string, typeOrPattern, pattern);
+            .exchange(exchange as string, typeOrPattern, pattern, opts);
     }
 
 }

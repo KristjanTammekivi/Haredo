@@ -38,7 +38,7 @@ export class Exchange<T = unknown> {
     constructor(
         public readonly name: string,
         public readonly type: ExchangeType | exchangeTypeStrings = 'direct',
-        public readonly opts: ExchangeOptions = { arguments: {} }) {
+        public readonly opts: Partial<ExchangeOptions> = { arguments: {} }) {
         if (type === ExchangeType.Delayed && !xDelayedTypesArray.includes(get(opts, obj => obj.arguments['x-delayed-type'] as XDelayedType))) {
             throw new BadArgumentsError(`Exchange ${name}: exchange type type "delayed" requires a set x-delayed-type in arguments`);
         }

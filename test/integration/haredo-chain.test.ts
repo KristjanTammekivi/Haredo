@@ -37,4 +37,10 @@ describe('HaredoChain', () => {
         await expect(checkQueue('test.dead')).to.eventually.not.be.rejected;
         await expect(getSingleMessage('test.dead').then(x => x.content)).to.eventually.eql('"message"');
     });
+    it('should publish via confirm channel', async () => {
+        await haredo
+            .queue('test')
+            .confirm()
+            .publish('test');
+    })
 });
