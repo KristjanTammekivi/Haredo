@@ -25,8 +25,13 @@ For a long time I've been using [tortoise](https://www.npmjs.com/package/tortois
 
 ## TODOS
 
-- [ ] Queue and exchange shorthands
+- [x] Queue and exchange shorthands
 - [ ] Emit events from haredo
 - [ ] Specific error types
 - [ ] More examples
 - [ ] High test coverage
+
+## Notes
+
+Haredo wraps around [amqplib](https://www.npmjs.com/package/amqplib) and a number of docstrings for methods are either
+paraphrased or directly taken from aqmplib's docs (https://www.squaremobius.net/amqp.node/channel_api.html)

@@ -29,7 +29,7 @@ describe('HaredoChain', () => {
         await haredo.queue(queue).publish('message');
         const consumer = await haredo
             .queue(queue)
-            .subscribe(msg => {
+            .subscribe((data, msg) => {
                 msg.nack(false);
             });
         await delay(50);

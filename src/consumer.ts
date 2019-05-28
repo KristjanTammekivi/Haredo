@@ -22,7 +22,7 @@ const CONSUMER_DEFAULTS: ConsumerOpts = {
 }
 
 export interface MessageCallback<T = unknown> {
-    (message: HaredoMessage<T>): any;
+    (data: T, messageWrapper?: HaredoMessage<T>): any;
 }
 
 export interface ConsumerOpts {
@@ -90,7 +90,7 @@ export class Consumer<T = any> {
                     }
                     this.messageManager.add(messageInstance);
                     try {
-                        await this.cb(messageInstance);
+                        await this.cb(messageInstance.data, messageInstance);
                         if (this.opts.autoAck) {
                             await swallowError(MessageAlreadyHandledError, messageInstance.ack(true));
                         }

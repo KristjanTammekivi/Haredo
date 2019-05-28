@@ -79,7 +79,7 @@ describe('Exchange', () => {
             await haredo.exchange('test2', 'topic').publish(2, 'test2')
         ]);
         let messagesHandled = 0;
-        await chain.subscribe((msg) => {
+        await chain.subscribe(() => {
             messagesHandled++;
         });
         await delay(200);

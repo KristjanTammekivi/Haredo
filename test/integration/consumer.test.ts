@@ -24,7 +24,7 @@ describe('Consumer', () => {
     });
     describe('cancel', () => {
         it('should close channel', async () => {
-            const consumer = await haredo.queue('test').subscribe(async (message) => {
+            const consumer = await haredo.queue('test').subscribe(async (data, message) => {
                 await message.ack();
             });
             const channelClosedPromise = eventToPromise(consumer.channel, 'close');
@@ -34,7 +34,7 @@ describe('Consumer', () => {
         it('should wait for messages to be acked before closing channel', async () => {
             await haredo.queue('test').publish('test');
             let messageWasHandled = false;
-            const consumer = await haredo.queue('test').subscribe(async message => {
+            const consumer = await haredo.queue('test').subscribe(async (data, message) => {
                 await delay(100);
                 messageWasHandled = true;
                 await message.ack();
