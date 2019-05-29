@@ -5,7 +5,7 @@ import { MessageManager } from './message-manager';
 import { TypedEventEmitter } from './events';
 import { EventEmitter } from 'events';
 import { ChannelBrokenError, MessageAlreadyHandledError } from './errors';
-import { swallowError } from './utils';
+import { swallowError, delay } from './utils';
 import { FailHandlerOpts, FailHandler } from './fail-handler';
 
 const CONSUMER_DEFAULTS: ConsumerOpts = {
@@ -18,7 +18,8 @@ const CONSUMER_DEFAULTS: ConsumerOpts = {
         failSpan: 5000,
         failThreshold: Infinity,
         failTimeout: 5000
-    }
+    },
+    setterUpper: null
 }
 
 export interface MessageCallback<T = unknown> {
@@ -32,6 +33,7 @@ export interface ConsumerOpts {
     queueName: string;
     reestablish: boolean;
     fail: FailHandlerOpts;
+    setterUpper: () => Promise<any>;
 }
 
 export interface ConsumerEvents {
@@ -47,6 +49,7 @@ export class Consumer<T = any> {
     public cancelPromise: Promise<any>;
     private messageManager = new MessageManager<T>();
     public consumerTag: string;
+    public setterUpper: () => Promise<any>;
     public readonly emitter = new EventEmitter() as TypedEventEmitter<ConsumerEvents>;
 
     private failHandler: FailHandler;
@@ -57,16 +60,21 @@ export class Consumer<T = any> {
         private cb: MessageCallback<T>
     ) {
         this.prefetch = this.opts.prefetch;
+        this.setterUpper = this.opts.setterUpper;
         this.failHandler = new FailHandler(this.opts.fail);
     }
     async start() {
+        await this.setterUpper();
         this.channel = await this.connectionManager.getChannel();
         this.channel.once('close', async () => {
             this.channel = null;
             this.messageManager.channelBorked();
-            if (this.opts.reestablish && !this.cancelling) {
-                this.messageManager = new MessageManager();
-                this.start();
+            if (this.opts.reestablish) {
+                await delay(5);
+                if (!this.cancelling) {
+                    this.messageManager = new MessageManager();
+                    this.start();
+                }
             } else {
                 this.cancel();
             }

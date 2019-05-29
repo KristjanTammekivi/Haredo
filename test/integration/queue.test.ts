@@ -1,3 +1,4 @@
+import 'source-map-support/register';
 import 'mocha';
 import { expect, use } from 'chai';
 

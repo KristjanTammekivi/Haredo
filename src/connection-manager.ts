@@ -4,6 +4,7 @@ import { Queue } from './queue';
 import { Exchange } from './exchange';
 import { ConsumerManager } from './consumer-manager';
 import { delay } from './utils';
+import { HaredoError } from './errors';
 
 const log = makeDebug('connectionmanager:');
 
@@ -23,48 +24,53 @@ export class ConnectionManager {
         this.socketOpts = socketOpts;
     }
 
-    async reconnect() {
-        if (this.closing) {
-            log('channel closed, not reconnecting');
-            return;
-        }
-        this.connection = null;
-        this.connectionPromise = null;
-        log('channel closed, reconnecting');
-        await delay(500);
-        return this.getConnection();
-    }
-
     async getConnection() {
         if (this.connectionPromise) {
             return this.connectionPromise;
         }
-        this.connection = null;
-        log('connecting');
-        this.connectionPromise = Promise.resolve(connect(this.connectionOpts, this.socketOpts));
-        this.connection = await this.connectionPromise;
-        log('connection established');
-        this.connection.on('close', () => this.reconnect());
-        return this.connection;
+        if (this.closing) {
+            throw new HaredoError('Haredo is closing, no new connections will be opened');
+        }
+        this.connectionPromise = this.loopGetConnection();
+        return this.connectionPromise;
+    }
+
+    private async loopGetConnection () {
+        while (true) {
+            try {
+                const connection = await Promise.resolve(connect(this.connectionOpts, this.socketOpts));
+                connection.on('error', (err) => {
+                    log('connection error', err);
+                });
+                connection.on('close', () => {
+                    this.connectionPromise = undefined;
+                    this.connection = undefined;
+                    if (!this.closing) {
+                        this.getConnection();
+                    }
+                });
+                this.connection = connection;
+                return connection;
+            } catch (e) {
+                log('failed to connect', e);
+                await delay(1000);
+            }
+        }
     }
 
     async getChannel() {
-        if (!this.connection) {
-            await this.connectionPromise;
-        }
+        const connection = await this.getConnection();
         log('creating channel');
-        const channel = await this.connection.createChannel();
+        const channel = await connection.createChannel();
         // Without this channel errors will crash the application
         channel.on('error', () => { });
         return channel;
     }
 
     async getConfirmChannel() {
-        if (!this.connection) {
-            await this.connectionPromise;
-        }
+        const connection = await this.getConnection();
         log('creating confirm channel');
-        const channel = await this.connection.createConfirmChannel();
+        const channel = await connection.createConfirmChannel();
         channel.on('error', () => { });
         return channel;
     }
@@ -75,7 +81,7 @@ export class ConnectionManager {
         }
         this.publishChannel = await this.getChannel();
         this.publishChannel.on('close', () => {
-            this.publishChannel = null;
+            this.publishChannel = undefined;
         });
         return this.publishChannel;
     }
@@ -86,7 +92,7 @@ export class ConnectionManager {
         }
         this.publishConfirmChannel = await this.getConfirmChannel();
         this.publishConfirmChannel.on('close', () => {
-            this.publishConfirmChannel = null;
+            this.publishConfirmChannel = undefined;
         });
         return this.publishConfirmChannel;
     }

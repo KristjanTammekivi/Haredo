@@ -1,3 +1,4 @@
+import 'source-map-support/register';
 import 'mocha';
 import { expect, use } from 'chai';
 
@@ -14,7 +15,8 @@ describe('Consumer', () => {
     beforeEach(async () => {
         await setup();
         haredo = new Haredo({
-            connection: 'amqp://guest:guest@localhost:5672/test'
+            connection: 'amqp://guest:guest@localhost:5672/test',
+            reconnect: true
         });
         await haredo.connect();
     });

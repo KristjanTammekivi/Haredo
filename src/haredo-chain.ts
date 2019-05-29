@@ -102,7 +102,6 @@ export class HaredoChain<T = unknown> {
         return this.clone({ autoAck });
     }
     async subscribe(cb: MessageCallback<T>) {
-        await this.setup();
         const consumer = new Consumer({
             autoAck: this.state.autoAck,
             fail: {
@@ -113,7 +112,8 @@ export class HaredoChain<T = unknown> {
             json: this.state.json,
             prefetch: this.state.prefetch,
             queueName: this.state.queue.name,
-            reestablish: this.state.reestablish
+            reestablish: this.state.reestablish,
+            setterUpper: () => this.setup()
         }, this.connectionManager, cb);
         this.connectionManager.consumerManager.add(consumer);
         await consumer.start();

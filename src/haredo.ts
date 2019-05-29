@@ -5,7 +5,10 @@ import { HaredoChain } from './haredo-chain';
 import { Exchange, ExchangeType, xDelayedTypeStrings, ExchangeOptions } from './exchange';
 import { EventEmitter } from 'events';
 import { TypedEventEmitter } from './events';
-import { MergeTypes } from './utils';
+import { makeDebug } from './logger';
+import { delay } from './utils';
+
+const log = makeDebug('haredo')
 
 export interface HaredoOptions {
     connection?: Options.Connect | string;
@@ -13,12 +16,9 @@ export interface HaredoOptions {
     socketOpts?: any
 }
 
-export enum HaredoEvents {
-    close = 'close'
-}
-
 interface Events {
-    [HaredoEvents.close]: never;
+    close: never;
+    connected: never;
 }
 
 export class Haredo {
@@ -31,22 +31,9 @@ export class Haredo {
     constructor(private opts: HaredoOptions = {}) {
         this.connectionManager = new ConnectionManager(this.opts.connection, this.opts.socketOpts);
     }
-    async connect() {
-        if (this.connectionPromise) {
-            return this.connectionPromise
-        }
-        this.connectionPromise = this.internalConnect();
-        return this.connectionPromise;
-    }
-    async internalConnect() {
+    async connect(): Promise<Connection> {
         const connection = await this.connectionManager.getConnection();
-        connection.on('close', () => {
-            if (this.opts.reconnect) {
-                this.connect();
-            } else {
-                this.emitter.emit(HaredoEvents.close);
-            }
-        });
+        this.emitter.emit('connected');
         return connection;
     }
     async close() {
@@ -56,7 +43,7 @@ export class Haredo {
     }
     private async internalClose() {
         await this.connectionManager.close();
-        this.emitter.emit(HaredoEvents.close);
+        this.emitter.emit('close');
     }
     queue<T>(queue: Queue<T> | string) {
         return new HaredoChain<T>(this.connectionManager, {})
