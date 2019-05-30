@@ -25,7 +25,6 @@ export class Haredo {
     connectionManager: ConnectionManager;
     closing = false;
     closed = false;
-    private connectionPromise: Promise<Connection>
     private closePromise: Promise<void>;
     emitter = new EventEmitter() as TypedEventEmitter<Events>;
     constructor(private opts: HaredoOptions = {}) {

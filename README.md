@@ -8,6 +8,7 @@ Yet another RabbitMQ library
 - [Motivation](#motivation)
 - [Goals](#goals)
 - [Examples](#examples)
+- [Notes](#notes)
 
 ## Motivation
 
@@ -42,7 +43,8 @@ const haredo = new Haredo({
 ### Publishing to exchange
 
 ```typescript
-haredo.exchange('myexchange', 'topic', { durable: true })
+haredo
+    .exchange('myexchange', 'topic', { durable: true })
     .publish({ id: 52, status: 'active'}, 'item.created');
 ```
 
@@ -65,8 +67,6 @@ haredo.exchange(exchange).publish(myMessage, routingKey);
 ```typescript
 haredo.exchange(exchange, '#')
     .queue(queue)
-    .json()
-    .autoAck()
     .subscribe(async data => {
         // do stuff with the data, message will be acked after the promise this function returns is resolved
         // if it throws the message will be nacked/requeued
@@ -76,9 +76,10 @@ haredo.exchange(exchange, '#')
 ### Subscribing with manual ack/nack
 
 ```typescript
-haredo.exchange(exchange, '#')
+haredo
+    .exchange(exchange, '#')
     .queue(queue)
-    .json()
+    .autoAck(false)
     .subscribe(async (data, message) => {
         try {
             // do stuff...
@@ -104,11 +105,24 @@ interface MyMessage {
     status: string;
 }
 
+interface AnotherMessage {
+    id: number;
+    value: number;
+}
+
 const exchange = new Exchange<MyMessage>('myexchange', ExchangeType.Direct);
+const queue = new Queue<AnotherMessage>('');
 
 haredo.exchange(exchange).publish({ id: 5, status: 'inactive' });
 
 haredo.exchange(exchange).publish({ id: 5  }); // TS Error: property status is missing in type ... but required in type MyMessage
+
+haredo
+    .exchange(exchange, '#')
+    .queue(queue)
+    .subscribe(data => { // Data is of type MyMessage | AnotherMessage
+
+    });
 
 ```
 
@@ -120,14 +134,6 @@ const exchange = new Exchange('delayed-exchange').delayed('topic');
 const message = new PreparedMessage().delay(15000).json({ id: 4 }).setRoutingKey('item.created');
 haredo.exchange(exchange).publish(message); // Now message will be in the exchange for 15 seconds before being routed
 ```
-
-## TODOS
-
-- [x] Queue and exchange shorthands
-- [ ] Emit events from haredo
-- [ ] Specific error types
-- [ ] More examples
-- [ ] High test coverage
 
 ## Notes
 

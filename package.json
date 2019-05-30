@@ -1,11 +1,12 @@
 {
   "name": "haredo",
   "version": "0.3.0",
-  "description": "A type-safe client library for rabbitmq",
+  "description": "A type-safe client library for rabbitmq/amqp",
   "keywords": [
     "rabbit",
     "rabbitmq",
     "amqp",
+    "amqplib",
     "client"
   ],
   "main": "dist/index.js",
