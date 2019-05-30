@@ -65,6 +65,7 @@ describe('Consumer', () => {
             const consumer = await haredo
                 .queue('test')
                 .reestablish(false)
+                .prefetch(1)
                 .subscribe(() => {
                     messageWasHandled = true;
                 });

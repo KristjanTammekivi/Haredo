@@ -112,17 +112,6 @@ export class ConnectionManager {
         return reply;
     }
 
-    async bindExchange(source: Exchange, destination: Exchange, pattern: string, args?: any) {
-        const channel = await this.getChannel();
-        await Promise.all([
-            this.assertExchange(source),
-            this.assertExchange(destination)
-        ]);
-        const reply = await channel.bindExchange(source.name, destination.name, pattern, args);
-        await channel.close();
-        return reply;
-    }
-
     async bindQueue(exchange: Exchange, queue: Queue, pattern: string, args?: any) {
         const channel = await this.getChannel();
         await Promise.all([

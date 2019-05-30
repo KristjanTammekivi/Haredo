@@ -35,6 +35,12 @@ export interface ExchangeOptions extends Options.AssertExchange {
 }
 
 export class Exchange<T = unknown> {
+    /**
+     * Create a Exchange object to aid in setup (note: this doesn't assert it)
+     * @param name name of the exchange
+     * @param type Set the exchange type (direct/topic/headers/fanout/x-delayed-message)
+     * @param opts Options that will be passed directly to amqplib
+     */
     constructor(
         public readonly name: string,
         public readonly type: ExchangeType | exchangeTypeStrings = 'direct',
@@ -43,7 +49,7 @@ export class Exchange<T = unknown> {
             throw new BadArgumentsError(`Exchange ${name}: exchange type type "delayed" requires a set x-delayed-type in arguments`);
         }
     }
-    private clone(opts: Partial<ExchangeOptions> = {}, type: ExchangeType = this.type as ExchangeType) {
+    clone(opts: Partial<ExchangeOptions> = {}, type: ExchangeType = this.type as ExchangeType) {
         const newOpts = Object.assign({}, this.opts, { ...opts, arguments: Object.assign({}, this.opts.arguments, opts.arguments) });
         return new Exchange<T>(this.name, type, newOpts);
     }
@@ -68,18 +74,33 @@ export class Exchange<T = unknown> {
     alternateExchange(alternateExchange: Exchange | string) {
         return this.clone({ alternateExchange: typeof alternateExchange === 'string' ? alternateExchange : alternateExchange.name });
     }
+    /**
+     * Set the exchange type as 'direct'
+     */
     direct() {
         return this.clone({}, ExchangeType.Direct);
     }
+    /**
+     * Set the exchange type as 'topic'
+     */
     topic() {
         return this.clone({}, ExchangeType.Topic);
     }
+    /**
+     * Set the exchange type as 'headers'
+     */
     headers() {
         return this.clone({}, ExchangeType.Headers);
     }
+    /**
+     * Set the exchange type as 'fanout'
+     */
     fanout() {
         return this.clone({}, ExchangeType.Fanout);
     }
+    /**
+     * Set the exchange type as 'delayed' and x-delayed-type attribute as the specified
+     */
     delayed(xDelayedType: XDelayedType | xDelayedTypeStrings) {
         return this.clone({ arguments: { 'x-delayed-type': xDelayedType as XDelayedType } }, ExchangeType.Delayed);
     }
