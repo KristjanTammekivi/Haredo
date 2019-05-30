@@ -5,20 +5,22 @@ import { expect, use } from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 use(chaiAsPromised);
 
-import { Haredo } from '../../src';
+import { Haredo, Queue } from '../../src';
 import { setup, teardown } from './helpers/amqp';
 import { EventEmitter } from 'events';
 import { delay } from '../../src/utils';
+import { Connection } from 'amqplib';
 
 describe('Consumer', () => {
     let haredo: Haredo;
+    let connection: Connection;
     beforeEach(async () => {
         await setup();
         haredo = new Haredo({
             connection: 'amqp://guest:guest@localhost:5672/test',
             reconnect: true
         });
-        await haredo.connect();
+        connection = await haredo.connect();
     });
     afterEach(async () => {
         await haredo.close();
@@ -75,6 +77,18 @@ describe('Consumer', () => {
             await consumer.cancel();
             expect(messageWasHandled).to.be.false;
         });
+    });
+    it('should reconnect when connection gets killed', async () => {
+        const queue = new Queue('test');
+        let messageHandled = true;
+        await haredo.queue(queue).subscribe(msg => {
+            messageHandled = true;
+        });
+        await connection.close();
+        await delay(50);
+        await haredo.queue(queue).publish('message');
+        await delay(50);
+        expect(messageHandled).to.be.true;
     });
 });
 
