@@ -31,15 +31,15 @@ export interface HaredoChainState<T> {
 export class HaredoChain<T = unknown> {
     state: Partial<HaredoChainState<T>> = {};
     constructor(public connectionManager: ConnectionManager, state: Partial<HaredoChainState<T>>) {
-        this.state.autoAck = state.autoAck === undefined ? true : !!state.autoAck;
+        this.state.autoAck = state.autoAck === false ? false : true;
         this.state.queue = state.queue;
         this.state.exchanges = [].concat(state.exchanges || []);
         this.state.prefetch = state.prefetch || 0;
-        this.state.reestablish = !!state.reestablish;
+        this.state.reestablish = state.reestablish === undefined ? true : false;
         this.state.failSpan = state.failSpan;
         this.state.failThreshold = state.failThreshold;
         this.state.failTimeout = state.failTimeout;
-        this.state.json = !!state.json || false;
+        this.state.json = state.json === false ? false : true;
         this.state.confirm = state.confirm;
     }
     private clone<U = T>(state: Partial<HaredoChainState<U>>) {
@@ -83,11 +83,11 @@ export class HaredoChain<T = unknown> {
     prefetch(prefetch: number) {
         return this.clone({ prefetch });
     }
-    json() {
-        return this.clone({ json: true });
+    json(json = true) {
+        return this.clone({ json });
     }
-    reestablish() {
-        return this.clone({ reestablish: true });
+    reestablish(reestablish = true) {
+        return this.clone({ reestablish });
     }
     failThreshold(failThreshold: number) {
         return this.clone({ failThreshold });
