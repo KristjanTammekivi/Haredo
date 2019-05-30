@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "target": "es2017",
+        "target": "es2016",
         "noImplicitAny": true,
         "inlineSourceMap": true,
         "experimentalDecorators": true,

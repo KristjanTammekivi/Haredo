@@ -11,10 +11,10 @@ export const DEFAULT_QUEUE_OPTIONS: QueueOptions = Object.freeze({
 
 export class Queue<T = unknown> {
     opts: QueueOptions;
-    constructor(public name?: string, opts: Partial<QueueOptions> = {}) {
+    constructor(public name?: string, opts: Partial<QueueOptions> = { arguments: {}}) {
         this.opts = Object.assign({}, DEFAULT_QUEUE_OPTIONS, opts);
     }
-    private clone(opts: Partial<QueueOptions> = {}) {
+    clone(opts: Partial<QueueOptions> = {}) {
         return new Queue<T>(this.name, Object.assign({}, this.opts, opts));
     }
     /**
