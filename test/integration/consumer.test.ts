@@ -17,8 +17,7 @@ describe('Consumer', () => {
     beforeEach(async () => {
         await setup();
         haredo = new Haredo({
-            connection: 'amqp://guest:guest@localhost:5672/test',
-            reconnect: true
+            connection: 'amqp://guest:guest@localhost:5672/test'
         });
         connection = await haredo.connect();
     });
