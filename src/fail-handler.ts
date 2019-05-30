@@ -5,13 +5,12 @@ export interface FailHandlerOpts {
 }
 
 export class FailHandler {
-    private threshold: number;
-    private timeout: number;
-    private span: number;
-    private failCount: number = 0;
-    private failUntil: number;
-    private spanTimeout: NodeJS.Timer;
-    public ready: boolean = true;
+    public threshold: number;
+    public timeout: number;
+    public span: number;
+    public failCount: number = 0;
+    public failUntil: number;
+    public timeouts = [] as NodeJS.Timeout[];
 
     constructor(opts: FailHandlerOpts) {
         this.threshold = opts.failThreshold || Infinity;
@@ -22,24 +21,22 @@ export class FailHandler {
     fail() {
         this.failCount++;
         if (this.failCount >= this.threshold) {
-            this.ready = false;
             this.failUntil = new Date().getTime() + this.timeout;
-            clearTimeout(this.spanTimeout);
-            this.spanTimeout = setTimeout(
-                () => this.clear(),
-                Math.max(this.failUntil - new Date().getTime(), 0)
-            );
             return false;
         }
-        setTimeout(() => {
-            this.failCount = 0;
+        const timeout = setTimeout(() => {
+            this.failCount--;
+            this.timeouts = this.timeouts.filter(x => x !== timeout);
         }, this.span);
+
+        this.timeouts = this.timeouts.concat(timeout);
+
         return true;
     }
 
     getTicket() {
         return new Promise((resolve) => {
-            if (this.ready) {
+            if (this.failUntil < new Date().getTime()) {
                 return resolve();
             }
             setTimeout(resolve, Math.max(this.failUntil - new Date().getTime(), 0));
@@ -47,9 +44,9 @@ export class FailHandler {
     }
 
     clear() {
-        this.spanTimeout = undefined;
         this.failCount = 0;
-        this.failUntil = undefined;
-        this.ready = true;
+        this.failUntil = new Date().getTime();
+        this.timeouts.forEach(x => clearTimeout(x));
+        this.timeouts = [];
     }
 }
