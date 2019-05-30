@@ -20,7 +20,10 @@
     "test:unit": "mocha --require source-map-support/register --require ts-node/register test/unit/**/*.test.ts",
     "test:unit:watch": "mocha --require source-map-support/register --require ts-node/register --watch --watch-extensions ts test/unit/**/*.test.ts",
     "coverage": "nyc npm run test",
-    "coveralls": "npm run coverage && nyc report --reporter=text-lcov | coveralls"
+    "coveralls": "npm run coverage && nyc report --reporter=text-lcov | coveralls",
+    "release:major": "changelog -M && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --major && git push && git push --tags",
+    "release:minor": "changelog -m && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --minor && git push && git push --tags",
+    "release:patch": "changelog -p && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --patch && git push && git push --tags"
   },
   "nyc": {
     "include": [
@@ -61,6 +64,7 @@
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "coveralls": "^3.0.3",
+    "generate-changelog": "^1.7.1",
     "mocha": "^5.2.0",
     "nyc": "^13.1.0",
     "rabbitmq-stats": "^1.2.0",
