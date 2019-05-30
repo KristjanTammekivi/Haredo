@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { FailHandler } from '../../src/fail-handler';
 import { TimeoutError, timeout } from '../../src/utils';
 
-describe.only('FailHandler', () => {
+describe('FailHandler', () => {
     it('should get a ticket', async () => {
         const failHandler = new FailHandler({
             failSpan: 5000,
