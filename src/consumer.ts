@@ -76,6 +76,7 @@ export class Consumer<T = any> {
                     this.start();
                 }
             } else {
+                this.messageManager.channelBorked();
                 this.cancel();
             }
         });

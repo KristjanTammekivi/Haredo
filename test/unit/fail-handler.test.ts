@@ -32,7 +32,7 @@ describe('FailHandler', () => {
             expect(e).to.be.instanceof(TimeoutError);
         }
         await failHandler.getTicket();
-        expect(failHandler.failUntil).to.be.lessThan(new Date().getTime());
+        expect(failHandler.failUntil).to.not.be.above(new Date().getTime());
         failHandler.clear()
     }).timeout(200);
 });

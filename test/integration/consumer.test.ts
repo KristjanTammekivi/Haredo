@@ -36,14 +36,13 @@ describe('Consumer', () => {
         it('should wait for messages to be acked before closing channel', async () => {
             await haredo.queue('test').publish('test');
             let messageWasHandled = false;
-            const consumer = await haredo.queue('test').subscribe(async (data, message) => {
+            const consumer = await haredo.queue('test').reestablish(false).subscribe(async (data, message) => {
                 await delay(100);
                 messageWasHandled = true;
                 await message.ack();
             });
-            const channelClosedPromise = eventToPromise(consumer.channel, 'close');
-            consumer.cancel();
-            await expect(channelClosedPromise).to.eventually.be.fulfilled;
+            await delay(20);
+            await consumer.cancel();
             expect(messageWasHandled).to.be.true;
         });
     });
@@ -52,7 +51,6 @@ describe('Consumer', () => {
             let messageWasHandled = false;
             const consumer = await haredo
                 .queue('test')
-                .reestablish()
                 .subscribe(() => {
                     messageWasHandled = true;
                 });
@@ -62,16 +60,17 @@ describe('Consumer', () => {
             await consumer.cancel();
             expect(messageWasHandled).to.be.true;
         });
-        it('should not reestablish on channel close when reestablish is not set', async () => {
+        it('should not reestablish on channel close when reestablish is false', async () => {
             let messageWasHandled = false;
             const consumer = await haredo
                 .queue('test')
+                .reestablish(false)
                 .subscribe(() => {
                     messageWasHandled = true;
                 });
             await consumer.channel.close();
             await haredo.queue('test').publish({});
-            await delay(50);
+            await delay(200);
             await consumer.cancel();
             expect(messageWasHandled).to.be.false;
         });

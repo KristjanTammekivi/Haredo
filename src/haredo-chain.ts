@@ -35,7 +35,7 @@ export class HaredoChain<T = unknown> {
         this.state.queue = state.queue;
         this.state.exchanges = [].concat(state.exchanges || []);
         this.state.prefetch = state.prefetch || 0;
-        this.state.reestablish = state.reestablish === undefined ? true : false;
+        this.state.reestablish = state.reestablish === false ? false : true;
         this.state.failSpan = state.failSpan;
         this.state.failThreshold = state.failThreshold;
         this.state.failTimeout = state.failTimeout;
@@ -84,7 +84,7 @@ export class HaredoChain<T = unknown> {
         return this.clone({ prefetch });
     }
     json(json = true) {
-        return this.clone({ json });
+        return this.clone<typeof json extends false ? string : T>({ json });
     }
     reestablish(reestablish = true) {
         return this.clone({ reestablish });
