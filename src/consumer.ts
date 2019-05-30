@@ -63,6 +63,9 @@ export class Consumer<T = any> {
         this.setterUpper = this.opts.setterUpper;
         this.failHandler = new FailHandler(this.opts.fail);
     }
+    /**
+     * Start the consumer
+     * */
     async start() {
         await this.setterUpper();
         this.channel = await this.connectionManager.getChannel();
@@ -113,18 +116,40 @@ export class Consumer<T = any> {
             );
         this.consumerTag = consumerInfo.consumerTag;
     }
+    /**
+     * Set the prefetch for the channel
+     *
+     * 0 means no prefetch limit
+     */
     async setPrefetch(count: number) {
         // TODO: make sure you can actually change prefetch during consuming
         this.prefetch = count;
         await this.channel.prefetch(this.prefetch);
 
     }
+    /**
+     * ack a message, only to be used internally
+     *
+     * use message.ack() instead
+     *
+     * @example
+     * haredo.queue('test').subscribe((data, haredoMessage) => {
+     *   haredoMessage.ack();
+     * });
+     */
     async ack(message: HaredoMessage<T>) {
         if (!this.channel) {
             throw new ChannelBrokenError(message);
         }
         await this.channel.ack(message.raw, false);
     }
+    /**
+     * nack a message, only to be used internally
+    * @example
+     * haredo.queue('test').subscribe((data, haredoMessage) => {
+     *   haredoMessage.nack(false);
+     * });
+     */
     async nack(message: HaredoMessage<T>, requeue = true) {
         this.failHandler.fail();
         if (!this.channel) {
@@ -132,6 +157,10 @@ export class Consumer<T = any> {
         }
         await this.channel.nack(message.raw, false, requeue);
     }
+    /**
+     * Cancel a consumer, wait for messages to finish processing
+     * and then close the channel
+     */
     cancel() {
         if (this.cancelPromise) {
             return this.cancelPromise;

@@ -44,10 +44,21 @@ export class Haredo {
         await this.connectionManager.close();
         this.emitter.emit('close');
     }
+    /**
+     * Start the chain off with a queue.
+     */
     queue<T>(queue: Queue<T> | string) {
         return new HaredoChain<T>(this.connectionManager, {})
             .queue(queue);
     }
+    /**
+     * Start the chain off with a exchange. When pattern is omitted it
+     * defaults to '#'
+     *
+     * '#' - wildcard for zero or more dot-limited words
+     *
+     * '*' - wildcard for a single word
+     */
     exchange<T>(exchange: Exchange<T>): HaredoChain<T>
     exchange<T>(exchange: Exchange<T>, pattern?: string): HaredoChain<T>
     exchange<T>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string, opts?: Partial<ExchangeOptions>): HaredoChain<T>
