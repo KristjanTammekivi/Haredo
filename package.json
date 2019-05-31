@@ -7,7 +7,8 @@
     "rabbitmq",
     "amqp",
     "amqplib",
-    "client"
+    "client",
+    "typescript"
   ],
   "main": "dist/index.js",
   "scripts": {
@@ -24,7 +25,8 @@
     "coveralls": "npm run coverage && nyc report --reporter=text-lcov | coveralls",
     "release:major": "changelog -M && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --major && git push && git push --tags",
     "release:minor": "changelog -m && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --minor && git push && git push --tags",
-    "release:patch": "changelog -p && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --patch && git push && git push --tags"
+    "release:patch": "changelog -p && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --patch && git push && git push --tags",
+    "generate-docs": "typedoc --out docs --excludeNotExported"
   },
   "nyc": {
     "include": [
@@ -72,6 +74,7 @@
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.6",
     "ts-node": "^7.0.0",
+    "typedoc": "^0.14.2",
     "typescript": "3.4.5"
   }
 }
