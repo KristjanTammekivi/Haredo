@@ -13,3 +13,9 @@ export class ChannelBrokenError extends HaredoError {
 export class MessageAlreadyHandledError extends HaredoError { }
 
 export class BadArgumentsError extends HaredoError { }
+
+export class HaredoClosingError extends HaredoError {
+    constructor() {
+        super('Haredo is closing, cannot create new connection');
+    }
+}

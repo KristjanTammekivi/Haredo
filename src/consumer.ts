@@ -7,6 +7,10 @@ import { EventEmitter } from 'events';
 import { ChannelBrokenError, MessageAlreadyHandledError } from './errors';
 import { swallowError, delay } from './utils';
 import { FailHandlerOpts, FailHandler } from './fail-handler';
+import { makeLogger } from './logger';
+import { log } from 'util';
+
+const { debug, error, info } = makeLogger('Consumer');
 
 const CONSUMER_DEFAULTS: ConsumerOpts = {
     autoAck: true,
@@ -70,18 +74,24 @@ export class Consumer<T = any> {
         await this.setterUpper();
         this.channel = await this.connectionManager.getChannel();
         this.channel.once('close', async () => {
+            info('channel closed');
             this.channel = null;
             this.messageManager.channelBorked();
             if (this.opts.reestablish) {
                 await delay(5);
-                if (!this.cancelling) {
-                    this.messageManager = new MessageManager();
-                    this.start();
+                try {
+                    if (!this.cancelling) {
+                        this.messageManager = new MessageManager();
+                        await this.start();
+                    }
+                } catch(e) {
+                    error('Failed to restart consumer', e);
+                    this.emitter.emit('error', e);
                 }
-            } else {
-                this.messageManager.channelBorked();
-                this.cancel();
+                return;
             }
+            this.messageManager.channelBorked();
+            this.cancel();
         });
         if (this.opts.prefetch) {
             await this.setPrefetch(this.opts.prefetch);
@@ -95,22 +105,28 @@ export class Consumer<T = any> {
                         // should I do something extra here
                         return;
                     }
-                    await this.failHandler.getTicket();
-                    const messageInstance = new HaredoMessage<T>(message, this.opts.json, this);
-                    if (this.cancelled) {
-                        return this.nack(messageInstance);
-                    }
-                    this.messageManager.add(messageInstance);
                     try {
-                        await this.cb(messageInstance.data, messageInstance);
-                        if (this.opts.autoAck) {
-                            await swallowError(MessageAlreadyHandledError, messageInstance.ack(true));
+                        await this.failHandler.getTicket();
+                        const messageInstance = new HaredoMessage<T>(message, this.opts.json, this);
+                        if (this.cancelled) {
+                            return this.nack(messageInstance);
+                        }
+                        this.messageManager.add(messageInstance);
+                        try {
+                            await this.cb(messageInstance.data, messageInstance);
+                            if (this.opts.autoAck) {
+                                await swallowError(MessageAlreadyHandledError, messageInstance.ack(true));
+                            }
+                        } catch (e) {
+                            this.emitter.emit('error', e);
+                            error('error processing message', e, messageInstance);
+                            if (this.opts.autoAck) {
+                                await swallowError(MessageAlreadyHandledError, messageInstance.nack(true, true));
+                            }
                         }
                     } catch (e) {
-                        this.emitter.emit('error', e)
-                        if (this.opts.autoAck) {
-                            await swallowError(MessageAlreadyHandledError, messageInstance.nack(true, true));
-                        }
+                        error('Uncaught consumer error', e);
+                        this.emitter.emit('error', e);
                     }
                 }
             );
@@ -172,10 +188,13 @@ export class Consumer<T = any> {
     private async internalCancel() {
         if (this.channel) {
             await this.channel.cancel(this.consumerTag);
+            info('consumer cancelled');
             this.emitter.emit('cancel');
             await this.messageManager.drain();
             await this.channel.close();
+            info('consumer channel closed');
         } else {
+            info('channel was already closed before cancel was called');
             this.emitter.emit('cancel');
         }
         this.cancelled = true;

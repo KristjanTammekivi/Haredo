@@ -3,10 +3,13 @@ import { HaredoError } from './errors';
 import { EventEmitter } from 'events';
 import { TypedEventEmitter } from './events';
 import { promiseMap } from './utils';
+import { makeLogger } from './logger';
 
 export enum ConsumerManagerEvents {
     drain = 'drain'
 }
+
+const { info } = makeLogger('ConsumerManager');
 
 interface Events {
     drain: void;
@@ -29,6 +32,7 @@ export class ConsumerManager {
     async close() {
         this.closed = true;
         await promiseMap(this.consumers, (consumer) => consumer.cancel());
+        info('all consumers cancelled');
         this.emitter.emit('drain');
     }
 }

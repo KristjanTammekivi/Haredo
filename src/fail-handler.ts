@@ -1,3 +1,7 @@
+import { makeLogger } from './logger';
+
+const { debug } = makeLogger('FailHandler');
+
 export interface FailHandlerOpts {
     failThreshold: number;
     failTimeout: number;
@@ -22,6 +26,7 @@ export class FailHandler {
         this.failCount++;
         if (this.failCount >= this.threshold) {
             this.failUntil = new Date().getTime() + this.timeout;
+            debug('Failhandler threshold reached, waiting until', new Date(this.failUntil));
             return false;
         }
         const timeout = setTimeout(() => {

@@ -50,4 +50,7 @@ export class HaredoMessage<T = unknown> {
         await this.consumer.nack(this, requeue);
         this.emitter.emit('handled');
     }
+    toString() {
+        return this.dataString;
+    }
 }

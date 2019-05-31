@@ -5,10 +5,10 @@ import { HaredoChain } from './haredo-chain';
 import { Exchange, ExchangeType, xDelayedTypeStrings, ExchangeOptions } from './exchange';
 import { EventEmitter } from 'events';
 import { TypedEventEmitter } from './events';
-import { makeDebug } from './logger';
-import { delay } from './utils';
+import { makeLogger } from './logger';
+import { HaredoError } from './errors';
 
-const log = makeDebug('haredo')
+const { info } = makeLogger('Haredo');
 
 export interface HaredoOptions {
     connection?: Options.Connect | string;
@@ -19,6 +19,7 @@ export interface HaredoOptions {
 interface Events {
     close: never;
     connected: never;
+    error: HaredoError;
 }
 
 export class Haredo {
@@ -29,19 +30,25 @@ export class Haredo {
     emitter = new EventEmitter() as TypedEventEmitter<Events>;
     constructor(private opts: HaredoOptions = {}) {
         this.connectionManager = new ConnectionManager(this.opts.connection, this.opts.socketOpts);
+        this.connectionManager.emitter.on('error', (err) => {
+            this.emitter.emit('error', err);
+        });
     }
     async connect(): Promise<Connection> {
         const connection = await this.connectionManager.getConnection();
+        info('connected');
         this.emitter.emit('connected');
         return connection;
     }
     async close() {
+        info('Closing');
         this.closing = true;
         this.closePromise = this.closePromise || this.internalClose();
         return this.closePromise;
     }
     private async internalClose() {
         await this.connectionManager.close();
+        info('Closed');
         this.emitter.emit('close');
     }
     /**

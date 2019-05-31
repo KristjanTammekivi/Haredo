@@ -1,12 +1,19 @@
 import { Options, Connection, connect, Channel, ConfirmChannel } from 'amqplib';
-import { makeDebug } from './logger';
+import { makeLogger } from './logger';
 import { Queue } from './queue';
 import { Exchange } from './exchange';
 import { ConsumerManager } from './consumer-manager';
 import { delay } from './utils';
-import { HaredoError } from './errors';
+import { HaredoError, HaredoClosingError } from './errors';
+import { EventEmitter } from 'events';
+import { TypedEventEmitter } from './events';
 
-const log = makeDebug('connectionmanager:');
+const { info, error, debug } = makeLogger('ConnectionManager');
+
+interface Events {
+    close: void;
+    error: HaredoError;
+}
 
 export class ConnectionManager {
     closing = false;
@@ -19,6 +26,7 @@ export class ConnectionManager {
     socketOpts: any;
     private publishChannel: Channel;
     private publishConfirmChannel: ConfirmChannel;
+    public emitter = new EventEmitter() as TypedEventEmitter<Events>;
     constructor(opts: string | Options.Connect = 'amqp://localhost:5672', socketOpts: any = {}) {
         this.connectionOpts = opts;
         this.socketOpts = socketOpts;
@@ -29,7 +37,9 @@ export class ConnectionManager {
             return this.connectionPromise;
         }
         if (this.closing) {
-            throw new HaredoError('Haredo is closing, no new connections will be opened');
+            const error = new HaredoClosingError();
+            this.emitter.emit('error', error);
+            throw error;
         }
         this.connectionPromise = this.loopGetConnection();
         return this.connectionPromise;
@@ -40,9 +50,10 @@ export class ConnectionManager {
             try {
                 const connection = await Promise.resolve(connect(this.connectionOpts, this.socketOpts));
                 connection.on('error', (err) => {
-                    log('connection error', err);
+                    error('connection error', err);
                 });
                 connection.on('close', () => {
+                    info('connection closed');
                     this.connectionPromise = undefined;
                     this.connection = undefined;
                     if (!this.closing) {
@@ -52,7 +63,7 @@ export class ConnectionManager {
                 this.connection = connection;
                 return connection;
             } catch (e) {
-                log('failed to connect', e);
+                error('failed to connect', e);
                 await delay(1000);
             }
         }
@@ -60,18 +71,22 @@ export class ConnectionManager {
 
     async getChannel() {
         const connection = await this.getConnection();
-        log('creating channel');
+        debug('creating channel');
         const channel = await connection.createChannel();
         // Without this channel errors will crash the application
-        channel.on('error', () => { });
+        channel.on('error', (err) => {
+            error('Channel error', err);
+        });
         return channel;
     }
 
     async getConfirmChannel() {
         const connection = await this.getConnection();
-        log('creating confirm channel');
+        debug('creating confirm channel');
         const channel = await connection.createConfirmChannel();
-        channel.on('error', () => { });
+        channel.on('error', (err) => {
+            error('ConfirmChannel error', err);
+        });
         return channel;
     }
 
@@ -81,6 +96,7 @@ export class ConnectionManager {
         }
         this.publishChannel = await this.getChannel();
         this.publishChannel.on('close', () => {
+            debug('publishchannel was closed');
             this.publishChannel = undefined;
         });
         return this.publishChannel;
@@ -92,6 +108,7 @@ export class ConnectionManager {
         }
         this.publishConfirmChannel = await this.getConfirmChannel();
         this.publishConfirmChannel.on('close', () => {
+            debug('publishconfirmchannel was closed');
             this.publishConfirmChannel = undefined;
         });
         return this.publishConfirmChannel;
@@ -129,12 +146,12 @@ export class ConnectionManager {
     }
 
     private async internalClose() {
-        log('closing');
         await this.consumerManager.close();
         this.closing = true;
         if (this.connection) {
             await this.connection.close();
         }
         this.closed = true;
+        this.emitter.emit('close');
     }
 }

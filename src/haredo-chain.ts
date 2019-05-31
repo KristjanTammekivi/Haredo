@@ -2,13 +2,13 @@ import { Queue } from './queue';
 import { Exchange, ExchangeType, xDelayedTypeStrings, xDelayedTypesArray, ExchangeOptions } from './exchange';
 import { MergeTypes, stringify, promiseMap } from './utils';
 import { BadArgumentsError, HaredoError } from './errors';
-import { makeDebug } from './logger';
+import { makeLogger } from './logger';
 import { ConnectionManager } from './connection-manager';
 import { Consumer, MessageCallback } from './consumer';
 import { PreparedMessage, ExtendedPublishType } from './prepared-message';
 import { Buffer } from 'buffer';
 
-const log = makeDebug('connectionmanager:');
+const { debug } = makeLogger('HaredoChain:');
 
 export interface AddExchange {
     exchange: Exchange;
@@ -223,19 +223,19 @@ export class HaredoChain<T = unknown> {
     async setup() {
         // TODO: put this into a promise, don't let 2 calls
         if (this.state.queue) {
-            log(`Asserting ${this.state.queue}`);
+            debug(`Asserting ${this.state.queue}`);
             await this.connectionManager.assertQueue(this.state.queue)
-            log(`Done asserting ${this.state.queue}`);
+            debug(`Done asserting ${this.state.queue}`);
         }
         await promiseMap(this.state.exchanges, async (exchangery) => {
-            log(`Asserting ${exchangery.exchange}`);
+            debug(`Asserting ${exchangery.exchange}`);
             await this.connectionManager.assertExchange(exchangery.exchange);
             if (this.state.queue) {
                 const queue = this.state.queue;
-                log(`Binding ${queue} to ${exchangery.exchange} using pattern ${exchangery.pattern}`);
+                debug(`Binding ${queue} to ${exchangery.exchange} using pattern ${exchangery.pattern}`);
                 await this.connectionManager.bindQueue(exchangery.exchange, this.state.queue, exchangery.pattern);
             }
-            log(`Done asserting ${exchangery.exchange}`);
+            debug(`Done asserting ${exchangery.exchange}`);
         });
     }
 }

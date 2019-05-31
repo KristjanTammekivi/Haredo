@@ -128,6 +128,20 @@ haredo
 
 ```
 
+### Setting loggers
+
+By default [debug](https://www.npmjs.com/package/debug) is used as a logger (to use this set the env variable DEBUG=haredo).
+This behaviour can be altered though.
+
+```typescript
+import { setLoggers } from 'haredo';
+setLoggers({
+    debug: (message) => console.log(message),
+    info: (message) => console.info(message),
+    error: (message) => console.error(message)
+});
+```
+
 ### Delayed messages
 Note: this requires [RabbitMQ Delayed Message Plugin](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange) to be installed on the server.
 
