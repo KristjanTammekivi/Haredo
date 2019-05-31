@@ -1,3 +1,20 @@
+#### 0.3.2 (2019-05-31)
+
+##### Chores
+
+*  add homepage ([02fe6135](https://github.com/KristjanTammekivi/haredo/commit/02fe6135b3a38b9d140dcfb162bfb5ed85366255))
+*  bump version for debug ([ff7a51ee](https://github.com/KristjanTammekivi/haredo/commit/ff7a51ee2e32d4826b1aeb952a591cc8454ab833))
+
+##### Documentation Changes
+
+*  add typedoc generation ([3ddbd8d3](https://github.com/KristjanTammekivi/haredo/commit/3ddbd8d3181c4be919c591f612148bf154a01ba5))
+*  add jsdoc for consumer and haredo methods ([f737529e](https://github.com/KristjanTammekivi/haredo/commit/f737529e738612618215a5749a13ba3f17ae2649))
+
+##### Tests
+
+*  raise coverage for HaredoChain ([eae3587b](https://github.com/KristjanTammekivi/haredo/commit/eae3587b25364f902ea385502998c24f3d2a707e))
+*  add test for reconnection ([dc76fc3f](https://github.com/KristjanTammekivi/haredo/commit/dc76fc3f5e65ee6f7c387adbe937ce7b81a99ac0))
+
 #### 0.3.1 (2019-05-30)
 
 ##### Documentation Changes
