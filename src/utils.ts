@@ -52,9 +52,19 @@ export const timeout = (milliseconds: number) => {
     });
 };
 
-export const swallowError = async <T>(error: { new(): Error }, promise: Promise<T>): Promise<T | undefined> => {
+export const swallowRejection = async <T>(error: { new(): Error }, promise: Promise<T>): Promise<T | undefined> => {
     try {
         return await promise;
+    } catch (e) {
+        if (!(e instanceof error)) {
+            throw e;
+        }
+    }
+};
+
+export const swallowError = <T>(error: { new(): Error}, fn: () => T): T | undefined => {
+    try {
+        return fn();
     } catch (e) {
         if (!(e instanceof error)) {
             throw e;

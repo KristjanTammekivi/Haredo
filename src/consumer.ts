@@ -5,7 +5,7 @@ import { MessageManager } from './message-manager';
 import { TypedEventEmitter } from './events';
 import { EventEmitter } from 'events';
 import { ChannelBrokenError, MessageAlreadyHandledError } from './errors';
-import { swallowError, delay } from './utils';
+import { swallowRejection, delay, swallowError } from './utils';
 import { FailHandlerOpts, FailHandler } from './fail-handler';
 import { makeLogger } from './logger';
 import { log } from 'util';
@@ -116,13 +116,13 @@ export class Consumer<T = any> {
                         try {
                             await this.cb(messageInstance.data, messageInstance);
                             if (this.opts.autoAck) {
-                                await swallowError(MessageAlreadyHandledError, messageInstance.ack(true));
+                                await swallowError(MessageAlreadyHandledError, () =>  messageInstance.ack());
                             }
                         } catch (e) {
                             this.emitter.emit('error', e);
                             error('error processing message', e, messageInstance);
                             if (this.opts.autoAck) {
-                                await swallowError(MessageAlreadyHandledError, messageInstance.nack(true, true));
+                                await swallowError(MessageAlreadyHandledError, () =>  messageInstance.nack(true));
                             }
                         }
                     } catch (e) {
@@ -154,7 +154,7 @@ export class Consumer<T = any> {
      *   haredoMessage.ack();
      * });
      */
-    async ack(message: HaredoMessage<T>) {
+    ack(message: HaredoMessage<T>) {
         if (!this.channel) {
             throw new ChannelBrokenError(message);
         }
@@ -167,7 +167,7 @@ export class Consumer<T = any> {
      *   haredoMessage.nack(false);
      * });
      */
-    async nack(message: HaredoMessage<T>, requeue = true) {
+    nack(message: HaredoMessage<T>, requeue = true) {
         this.failHandler.fail();
         if (!this.channel) {
             throw new ChannelBrokenError(message);

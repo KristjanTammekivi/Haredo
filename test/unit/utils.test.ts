@@ -2,9 +2,8 @@ import 'mocha';
 import { expect, use } from 'chai';
 
 import * as chaiAsPromised from 'chai-as-promised';
-import { Haredo, Queue, HaredoError, BadArgumentsError } from '../../src/index';
-import { setup, teardown, verifyQueue, getSingleMessage } from '../integration/helpers/amqp';
-import { flatObjectIsEqual, swallowError } from '../../src/utils';
+import { HaredoError, BadArgumentsError } from '../../src/index';
+import { flatObjectIsEqual, swallowRejection } from '../../src/utils';
 use(chaiAsPromised);
 
 describe('utils', () => {
@@ -22,10 +21,10 @@ describe('utils', () => {
     });
     describe('swallowError', () => {
         it('should swallow specified error', async () => {
-            await expect(swallowError(HaredoError, Promise.reject(new HaredoError()))).to.eventually.not.be.rejected;
+            await expect(swallowRejection(HaredoError, Promise.reject(new HaredoError()))).to.eventually.not.be.rejected;
         });
         it('should reject non-specified errors', async () => {
-            await expect(swallowError(BadArgumentsError, Promise.reject(new HaredoError('test')))).to.be.rejectedWith('test');
+            await expect(swallowRejection(BadArgumentsError, Promise.reject(new HaredoError('test')))).to.be.rejectedWith('test');
         });
     });
 });

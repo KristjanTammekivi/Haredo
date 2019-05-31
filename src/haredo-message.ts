@@ -1,6 +1,6 @@
 import { Message } from 'amqplib';
 import { Consumer } from './consumer';
-import { ChannelBrokenError, MessageAlreadyHandledError } from './errors';
+import { MessageAlreadyHandledError, FailedParsingJsonError } from './errors';
 import { EventEmitter } from 'events';
 import { TypedEventEmitter } from './events';
 
@@ -19,7 +19,11 @@ export class HaredoMessage<T = unknown> {
     constructor(public readonly raw: Message, parseJson: boolean, public readonly consumer: Consumer) {
         this.dataString = raw.content.toString();
         if (parseJson) {
-            this.data = JSON.parse(this.dataString);
+            try {
+                this.data = JSON.parse(this.dataString);
+            } catch (e) {
+                throw new FailedParsingJsonError(this.dataString)
+            }
         } else {
             this.data = this.dataString as any;
         }
@@ -27,30 +31,24 @@ export class HaredoMessage<T = unknown> {
     getHeaders() {
         return this.raw.properties.headers;
     }
-    async ack(suppressHandledError = false) {
+    ack() {
         if (this.isHandled) {
-            if (suppressHandledError) {
-                return;
-            }
             throw new MessageAlreadyHandledError('A message can only be acked/nacked once');
         }
         this.isHandled = true;
         this.isAcked = true;
-        await this.consumer.ack(this);
+        this.consumer.ack(this);
         this.emitter.emit('handled');
     }
-    async nack(requeue = true, suppressHandledError = false) {
+    nack(requeue = true) {
         if (this.isHandled) {
-            if (suppressHandledError) {
-                return;
-            }
             throw new MessageAlreadyHandledError('A message can only be acked/nacked once');
         }
         this.isHandled = true;
-        await this.consumer.nack(this, requeue);
+        this.consumer.nack(this, requeue);
         this.emitter.emit('handled');
     }
     toString() {
-        return this.dataString;
+        return `HaredoMessage ${ this.dataString }`;
     }
 }
