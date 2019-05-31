@@ -29,11 +29,3 @@ export const typedEventToPromise = <T>(
         });
     });
 };
-
-export const eventToPromise = (emitter: EventEmitter, event: string) => {
-    return new Promise((resolve) => {
-        emitter.once(event, () => {
-            resolve();
-        });
-    });
-};
