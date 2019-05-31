@@ -1,0 +1,50 @@
+{
+    "extends": [
+        "tslint-config-airbnb",
+        "tslint-sonarts"
+    ],
+    "rules": {
+        "max-line-length": [
+            true,
+            140
+        ],
+        "trailing-comma": false,
+        "indent": [
+            true,
+            "spaces",
+            4
+        ],
+        "ter-indent": [
+            true,
+            4
+        ],
+        "import-name": [
+            false
+        ],
+        "quotemark": [
+            true,
+            "single",
+            "avoid-escape"
+        ],
+        "curly": [
+            true,
+            "all"
+        ],
+        "no-floating-promises": true,
+        "align": [
+            true,
+            "parameters",
+            "statements",
+            "members"
+        ],
+        "no-parameter-reassignment": false,
+        "no-identical-functions": false,
+        "object-shorthand-properties-first": false,
+        "interface-over-type-literal": true
+    },
+    "linterOptions": {
+        "exclude": [
+            "**/*.test.ts"
+        ]
+    }
+}

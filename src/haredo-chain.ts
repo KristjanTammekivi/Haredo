@@ -1,6 +1,6 @@
 import { Queue } from './queue';
 import { Exchange, ExchangeType, xDelayedTypeStrings, xDelayedTypesArray, ExchangeOptions } from './exchange';
-import { MergeTypes, stringify, promiseMap } from './utils';
+import { MergeTypes, stringify, promiseMap, defaultToTrue } from './utils';
 import { BadArgumentsError, HaredoError } from './errors';
 import { makeLogger } from './logger';
 import { ConnectionManager } from './connection-manager';
@@ -31,19 +31,19 @@ export interface HaredoChainState<T> {
 export class HaredoChain<T = unknown> {
     state: Partial<HaredoChainState<T>> = {};
     constructor(public connectionManager: ConnectionManager, state: Partial<HaredoChainState<T>>) {
-        this.state.autoAck = state.autoAck === false ? false : true;
+        this.state.autoAck = defaultToTrue(state.autoAck);
         this.state.queue = state.queue;
         this.state.exchanges = [].concat(state.exchanges || []);
         this.state.prefetch = state.prefetch || 0;
-        this.state.reestablish = state.reestablish === false ? false : true;
+        this.state.reestablish = defaultToTrue(state.reestablish);
         this.state.failSpan = state.failSpan;
         this.state.failThreshold = state.failThreshold;
         this.state.failTimeout = state.failTimeout;
-        this.state.json = state.json === false ? false : true;
+        this.state.json = defaultToTrue(state.json);
         this.state.confirm = state.confirm;
     }
     private clone<U = T>(state: Partial<HaredoChainState<U>>) {
-        return new HaredoChain<U>(this.connectionManager, Object.assign({}, this.state, state))
+        return new HaredoChain<U>(this.connectionManager, Object.assign({}, this.state, state));
     }
     queue<U = unknown>(queue: Queue<U> | string) {
         if (!(queue instanceof Queue)) {
@@ -56,9 +56,14 @@ export class HaredoChain<T = unknown> {
             queue,
         });
     }
-    exchange<U>(exchange: Exchange<U>): HaredoChain<MergeTypes<T, U>>
-    exchange<U>(exchange: Exchange<U>, pattern?: string): HaredoChain<MergeTypes<T, U>>
-    exchange<U>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string, opts?: Partial<ExchangeOptions>): HaredoChain<MergeTypes<T, U>>
+    exchange<U>(exchange: Exchange<U>): HaredoChain<MergeTypes<T, U>>;
+    exchange<U>(exchange: Exchange<U>, pattern?: string): HaredoChain<MergeTypes<T, U>>;
+    exchange<U>(
+        exchange: string,
+        type?: ExchangeType | xDelayedTypeStrings,
+        pattern?: string,
+        opts?: Partial<ExchangeOptions>
+    ): HaredoChain<MergeTypes<T, U>>;
     exchange<U>(
         exchange: Exchange<U> | string,
         typeOrPattern: ExchangeType | xDelayedTypeStrings = ExchangeType.Direct,
@@ -67,18 +72,19 @@ export class HaredoChain<T = unknown> {
     ) {
         if (typeof exchange === 'string') {
             if (typeOrPattern !== undefined && !xDelayedTypesArray.includes(typeOrPattern as ExchangeType)) {
+                // tslint:disable-next-line:max-line-length
                 throw new BadArgumentsError(`When .exchange is called with a string as first argument, the second argument must be a valid exchange type, received ${typeOrPattern}, expected one of ${xDelayedTypesArray.join(' | ')}`);
             }
             exchange = new Exchange(exchange, typeOrPattern, exchangeOptions);
         } else {
-            pattern = typeOrPattern
+            pattern = typeOrPattern;
         }
         return this.clone<MergeTypes<T, U>>({
             exchanges: this.state.exchanges.concat({
                 exchange,
                 pattern
             })
-        })
+        });
     }
     prefetch(prefetch: number) {
         return this.clone({ prefetch });
@@ -153,10 +159,9 @@ export class HaredoChain<T = unknown> {
             message = message.clone({ routingKey, options });
         }
         if (this.state.exchanges.length) {
-            return this.publishToExchange(message, this.state.exchanges[0].exchange)
-        } else {
-            return this.publishToQueue(message, this.state.queue);
+            return this.publishToExchange(message, this.state.exchanges[0].exchange);
         }
+        return this.publishToQueue(message, this.state.queue);
     }
 
     private async publishToExchange(message: PreparedMessage<T>, exchange: Exchange<T>) {
@@ -183,13 +188,12 @@ export class HaredoChain<T = unknown> {
             });
         }
         const channel = await this.connectionManager.getChannelForPublishing();
-        const response = await channel.publish(
+        return channel.publish(
             exchange.name,
             message.routingKey,
             Buffer.from(stringify(message.content)),
             message.options
         );
-        return response;
     }
 
     private async publishToQueue(message: PreparedMessage<T>, queue: Queue<T>) {
@@ -216,15 +220,14 @@ export class HaredoChain<T = unknown> {
             });
         }
         const channel = await this.connectionManager.getChannelForPublishing();
-        const response = await channel.sendToQueue(queue.name, Buffer.from(stringify(message.content)), message.options);
-        return response;
+        return channel.sendToQueue(queue.name, Buffer.from(stringify(message.content)), message.options);
     }
 
     async setup() {
         // TODO: put this into a promise, don't let 2 calls
         if (this.state.queue) {
             debug(`Asserting ${this.state.queue}`);
-            await this.connectionManager.assertQueue(this.state.queue)
+            await this.connectionManager.assertQueue(this.state.queue);
             debug(`Done asserting ${this.state.queue}`);
         }
         await promiseMap(this.state.exchanges, async (exchangery) => {

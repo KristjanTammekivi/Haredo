@@ -31,7 +31,7 @@ export class ConsumerManager {
     }
     async close() {
         this.closed = true;
-        await promiseMap(this.consumers, (consumer) => consumer.cancel());
+        await promiseMap(this.consumers, consumer => consumer.cancel());
         info('all consumers cancelled');
         this.emitter.emit('drain');
     }

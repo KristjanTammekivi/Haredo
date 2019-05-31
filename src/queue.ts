@@ -11,7 +11,7 @@ export const DEFAULT_QUEUE_OPTIONS: QueueOptions = Object.freeze({
 
 export class Queue<T = unknown> {
     opts: QueueOptions;
-    constructor(public name?: string, opts: Partial<QueueOptions> = { arguments: {}}) {
+    constructor(public name?: string, opts: Partial<QueueOptions> = { arguments: {} }) {
         this.opts = Object.assign({}, DEFAULT_QUEUE_OPTIONS, opts);
     }
     clone(opts: Partial<QueueOptions> = {}) {
@@ -61,7 +61,7 @@ export class Queue<T = unknown> {
         });
     }
     toString() {
-        return `Queue${this.name ? ` ${this.name} ` : ' '}opts:${keyValuePairs(this.opts).join(',')}`;
+        return `Queue${this.name ? padString(this.name) : ' '}opts:${keyValuePairs(this.opts).join(',')}`;
     }
     isEqual(queue: Queue) {
         return this.name && queue.name &&
@@ -78,3 +78,5 @@ export class Queue<T = unknown> {
             flatObjectIsEqual(this.opts.arguments, queue.opts.arguments);
     }
 }
+
+export const padString = (str: string) => ` ${ str } `;

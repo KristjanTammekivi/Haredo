@@ -52,12 +52,12 @@ export class ConnectionManager {
                 connection.on('error', (err) => {
                     error('connection error', err);
                 });
-                connection.on('close', () => {
+                connection.on('close', async () => {
                     info('connection closed');
                     this.connectionPromise = undefined;
                     this.connection = undefined;
                     if (!this.closing) {
-                        this.getConnection();
+                        await this.getConnection();
                     }
                 });
                 this.connection = connection;

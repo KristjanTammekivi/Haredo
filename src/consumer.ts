@@ -24,7 +24,7 @@ const CONSUMER_DEFAULTS: ConsumerOpts = {
         failTimeout: 5000
     },
     setterUpper: null
-}
+};
 
 export interface MessageCallback<T = unknown> {
     (data: T, messageWrapper?: HaredoMessage<T>): any;
@@ -70,6 +70,7 @@ export class Consumer<T = any> {
     /**
      * Start the consumer
      * */
+    // tslint:disable-next-line:cognitive-complexity
     async start() {
         await this.setterUpper();
         this.channel = await this.connectionManager.getChannel();
@@ -84,14 +85,14 @@ export class Consumer<T = any> {
                         this.messageManager = new MessageManager();
                         await this.start();
                     }
-                } catch(e) {
+                } catch (e) {
                     error('Failed to restart consumer', e);
                     this.emitter.emit('error', e);
                 }
                 return;
             }
             this.messageManager.channelBorked();
-            this.cancel();
+            await this.cancel();
         });
         if (this.opts.prefetch) {
             await this.setPrefetch(this.opts.prefetch);
@@ -157,7 +158,7 @@ export class Consumer<T = any> {
         if (!this.channel) {
             throw new ChannelBrokenError(message);
         }
-        await this.channel.ack(message.raw, false);
+        this.channel.ack(message.raw, false);
     }
     /**
      * nack a message, only to be used internally
@@ -171,7 +172,7 @@ export class Consumer<T = any> {
         if (!this.channel) {
             throw new ChannelBrokenError(message);
         }
-        await this.channel.nack(message.raw, false, requeue);
+        this.channel.nack(message.raw, false, requeue);
     }
     /**
      * Cancel a consumer, wait for messages to finish processing

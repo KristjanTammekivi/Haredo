@@ -13,7 +13,7 @@ const { info } = makeLogger('Haredo');
 export interface HaredoOptions {
     connection?: Options.Connect | string;
     reconnect?: boolean;
-    socketOpts?: any
+    socketOpts?: any;
 }
 
 interface Events {
@@ -66,9 +66,14 @@ export class Haredo {
      *
      * '*' - wildcard for a single word
      */
-    exchange<T>(exchange: Exchange<T>): HaredoChain<T>
-    exchange<T>(exchange: Exchange<T>, pattern?: string): HaredoChain<T>
-    exchange<T>(exchange: string, type?: ExchangeType | xDelayedTypeStrings, pattern?: string, opts?: Partial<ExchangeOptions>): HaredoChain<T>
+    exchange<T>(exchange: Exchange<T>): HaredoChain<T>;
+    exchange<T>(exchange: Exchange<T>, pattern?: string): HaredoChain<T>;
+    exchange<T>(
+        exchange: string,
+        type?: ExchangeType | xDelayedTypeStrings,
+        pattern?: string,
+        opts?: Partial<ExchangeOptions>
+    ): HaredoChain<T>;
     exchange<T>(
         exchange: Exchange<T> | string,
         typeOrPattern: ExchangeType | xDelayedTypeStrings = ExchangeType.Direct,

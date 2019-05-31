@@ -1,6 +1,6 @@
 import { Queue } from '../queue';
 import { Haredo } from '../haredo';
-import { ExchangeType, Exchange } from '../exchange';
+import { Exchange } from '../exchange';
 import { PreparedMessage } from '../prepared-message';
 
 export const main = async () => {
@@ -15,4 +15,4 @@ export const main = async () => {
     await haredo.exchange(exchange).queue(queue).publish(message);
 };
 
-main();
+process.nextTick(main);

@@ -1,5 +1,5 @@
 export const keyValuePairs = (obj: Object): string[] => {
-    return Object.keys(obj).map(key => {
+    return Object.keys(obj).map((key) => {
         return `${key}=${stringify((obj as any)[key])}`;
     });
 };
@@ -25,10 +25,10 @@ export const get = <T extends object, U>(obj: T, cb: (obj: T) => U): U | undefin
 };
 
 export const flatObjectIsEqual = (base: any, top: any) => {
-    if (Object.keys(base).some((x) => base[x] !== top[x])) {
+    if (Object.keys(base).some(x => base[x] !== top[x])) {
         return false;
     }
-    if (Object.keys(top).some((x) => base[x] !== top[x])) {
+    if (Object.keys(top).some(x => base[x] !== top[x])) {
         return false;
     }
     return true;
@@ -44,15 +44,13 @@ export const delay = (ms: number) => {
     });
 };
 
-
 export class TimeoutError extends Error { }
 
 export const timeout = (milliseconds: number) => {
     return new Promise((resolve, reject) => {
         setTimeout(reject, milliseconds, new TimeoutError());
     });
-}
-
+};
 
 export const swallowError = async <T>(error: { new(): Error }, promise: Promise<T>): Promise<T | undefined> => {
     try {
@@ -66,3 +64,5 @@ export const swallowError = async <T>(error: { new(): Error }, promise: Promise<
 
 type notany = object | string | number | undefined | null;
 export type MergeTypes<T, U> = T extends notany ? U extends notany ? T | U : T : U;
+
+export const defaultToTrue = (bool: boolean) => bool === undefined ? true : bool;

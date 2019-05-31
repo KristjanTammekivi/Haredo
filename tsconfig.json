@@ -7,6 +7,16 @@
         "experimentalDecorators": true,
         "declaration": true,
         "outDir": "./dist",
+        "plugins": [
+            {
+                "name": "typescript-tslint-plugin",
+                "alwaysShowRuleFailuresAsWarnings": false,
+                "ignoreDefinitionFiles": true,
+                "configFile": "./tslint.json",
+                "suppressWhileTypeErrorsPresent": false,
+                "mockTypeScriptVersion": false
+            }
+        ],
         "lib": ["es2017"]
     },
     "include": [

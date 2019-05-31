@@ -58,9 +58,8 @@ export class PreparedMessage<T = unknown> {
             return this
                 .setHeader('Content-Type', 'application/json')
                 .setContent(JSON.stringify(content));
-        } else {
-            return this.setHeader('Content-Type', 'application/json');
         }
+        return this.setHeader('Content-Type', 'application/json');
     }
     /**
      * Set routing key do determine how this message will be routed
@@ -173,14 +172,14 @@ export class PreparedMessage<T = unknown> {
      * Route the message to provided routing keys in addition to the main one
      */
     carbonCopy(recipients: string | string[]) {
-        return this.clone({ options: { CC: recipients }});
+        return this.clone({ options: { CC: recipients } });
     }
     /**
      * Same as .carbonCopy but the value will not be sent in message headers
      * to consumers
      */
     blindCarbonCopy(recipients: string | string[]) {
-        return this.clone({ options: { BCC: recipients }});
+        return this.clone({ options: { BCC: recipients } });
     }
     toString() {
         return `PreparedMessage opts:${keyValuePairs(this.options).join(' ')}`.trim();

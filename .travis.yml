@@ -11,6 +11,7 @@ before_install:
 script:
 - pwd
 - yarn
+- yarn run lint
 - yarn run coveralls
 - yarn run build:ts
 deploy:

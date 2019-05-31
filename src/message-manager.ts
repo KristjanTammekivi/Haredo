@@ -13,7 +13,7 @@ interface Events {
 
 export class MessageManager<T = unknown> {
     private messages: HaredoMessage<T>[] = [];
-    public readonly emitter = new EventEmitter() as TypedEventEmitter<Events>
+    public readonly emitter = new EventEmitter() as TypedEventEmitter<Events>;
     get length() {
         return this.messages.length;
     }
@@ -36,7 +36,7 @@ export class MessageManager<T = unknown> {
         await promiseMap(this.messages, message => typedEventToPromise(message.emitter, 'handled'));
     }
     channelBorked() {
-        this.messages.forEach(message => {
+        this.messages.forEach((message) => {
             message.channelBorked = true;
         });
     }

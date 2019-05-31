@@ -17,21 +17,18 @@ interface TypedEE<T> {
 
 export type TypedEventEmitter<T> = TypedEE<T> & Omit<
     EventEmitter,
-    'addListener' | 'on' | 'once' | 'removeListener' |
-    'removeAllListeners' | 'listeners' | 'emit' |
-    'listenerCount' | 'prependListener' | 'prependOnceListener'>;
-
+    keyof TypedEE<any>>;
 
 export const typedEventToPromise = <T>(
     emitter: TypedEventEmitter<T>,
     event: keyof T
 ): Promise<any> => {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         emitter.once(event, (...args: any[]) => {
             resolve(args);
         });
     });
-}
+};
 
 export const eventToPromise = (emitter: EventEmitter, event: string) => {
     return new Promise((resolve) => {

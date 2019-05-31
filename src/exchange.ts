@@ -10,6 +10,8 @@ export const enum ExchangeType {
     Delayed = 'x-delayed-message'
 }
 
+const XDELAYEDTYPEKEY = 'x-delayed-type';
+
 export type xDelayedTypeStrings = 'direct' | 'fanout' | 'topic' | 'headers';
 
 type exchangeTypeStrings = 'direct' | 'fanout' | 'topic' | 'headers' | 'x-delayed-message';
@@ -26,12 +28,12 @@ export const xDelayedTypesArray = [
     ExchangeType.Headers
 ];
 
-type x = keyof typeof xDelayedTypesArray
+type x = keyof typeof xDelayedTypesArray;
 
 export interface ExchangeOptions extends Options.AssertExchange {
     arguments: {
-        'x-delayed-type'?: XDelayedType;
-    }
+        [XDELAYEDTYPEKEY]?: XDelayedType;
+    };
 }
 
 export class Exchange<T = unknown> {
@@ -45,7 +47,10 @@ export class Exchange<T = unknown> {
         public readonly name: string,
         public readonly type: ExchangeType | exchangeTypeStrings = 'direct',
         public readonly opts: Partial<ExchangeOptions> = { arguments: {} }) {
-        if (type === ExchangeType.Delayed && !xDelayedTypesArray.includes(get(opts, obj => obj.arguments['x-delayed-type'] as XDelayedType))) {
+        if (
+            type === ExchangeType.Delayed &&
+            !xDelayedTypesArray.includes(get(opts, obj => obj.arguments[XDELAYEDTYPEKEY]))
+        ) {
             throw new BadArgumentsError(`Exchange ${name}: exchange type type "delayed" requires a set x-delayed-type in arguments`);
         }
     }
@@ -66,7 +71,7 @@ export class Exchange<T = unknown> {
      * Defaults to false.
      */
     autoDelete(autoDelete = true) {
-        return this.clone({ autoDelete })
+        return this.clone({ autoDelete });
     }
     /**
      * send all unrouted messages to this exchange
@@ -102,7 +107,7 @@ export class Exchange<T = unknown> {
      * Set the exchange type as 'delayed' and x-delayed-type attribute as the specified
      */
     delayed(xDelayedType: XDelayedType | xDelayedTypeStrings) {
-        return this.clone({ arguments: { 'x-delayed-type': xDelayedType as XDelayedType } }, ExchangeType.Delayed);
+        return this.clone({ arguments: { [XDELAYEDTYPEKEY]: xDelayedType as XDelayedType } }, ExchangeType.Delayed);
     }
     toString() {
         return `Exchange ${this.name} ${this.type} opts:${keyValuePairs(this.opts).join(',')}`;

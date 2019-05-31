@@ -1,7 +1,7 @@
 import { HaredoMessage } from './haredo-message';
 
 export class HaredoError extends Error {
-    name: 'HaredoError'
+    name: 'HaredoError';
 }
 
 export class ChannelBrokenError extends HaredoError {

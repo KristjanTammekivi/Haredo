@@ -13,4 +13,4 @@ export const main = async () => {
     });
 };
 
-main();
+process.nextTick(main);

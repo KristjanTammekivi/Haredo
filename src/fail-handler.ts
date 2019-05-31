@@ -23,14 +23,14 @@ export class FailHandler {
     }
 
     fail() {
-        this.failCount++;
+        this.failCount += 1;
         if (this.failCount >= this.threshold) {
             this.failUntil = new Date().getTime() + this.timeout;
             debug('Failhandler threshold reached, waiting until', new Date(this.failUntil));
             return false;
         }
         const timeout = setTimeout(() => {
-            this.failCount--;
+            this.failCount -= 1;
             this.timeouts = this.timeouts.filter(x => x !== timeout);
         }, this.span);
 

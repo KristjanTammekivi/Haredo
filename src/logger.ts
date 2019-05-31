@@ -4,13 +4,13 @@ import { inspect } from 'util';
 const debugLog = Debug('haredo');
 
 interface Logger {
-    (message: string): void
+    (message: string): void;
 }
 
 interface Loggers {
-    error: Logger,
-    info: Logger,
-    debug: Logger
+    error: Logger;
+    info: Logger;
+    debug: Logger;
 }
 
 const loggers: Loggers = {
@@ -21,15 +21,14 @@ const loggers: Loggers = {
 
 export const format = (messages: any[]) => {
     return  messages
-        .map(message => {
+        .map((message) => {
             if (typeof message === 'object') {
                 return inspect(message);
-            } else {
-                return message;
             }
+            return message;
         })
         .join(' ');
-}
+};
 
 export const makeLogger = (prefix: string) => ({
     error: (...messages: any[]) => {
