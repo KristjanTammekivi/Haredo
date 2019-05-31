@@ -5,12 +5,11 @@ import { MessageManager } from './message-manager';
 import { TypedEventEmitter } from './events';
 import { EventEmitter } from 'events';
 import { ChannelBrokenError, MessageAlreadyHandledError } from './errors';
-import { swallowRejection, delay, swallowError } from './utils';
+import { delay, swallowError } from './utils';
 import { FailHandlerOpts, FailHandler } from './fail-handler';
 import { makeLogger } from './logger';
-import { log } from 'util';
 
-const { debug, error, info } = makeLogger('Consumer');
+const { error, info } = makeLogger('Consumer');
 
 const CONSUMER_DEFAULTS: ConsumerOpts = {
     autoAck: true,
@@ -116,13 +115,13 @@ export class Consumer<T = any> {
                         try {
                             await this.cb(messageInstance.data, messageInstance);
                             if (this.opts.autoAck) {
-                                await swallowError(MessageAlreadyHandledError, () =>  messageInstance.ack());
+                                swallowError(MessageAlreadyHandledError, () =>  messageInstance.ack());
                             }
                         } catch (e) {
                             this.emitter.emit('error', e);
                             error('error processing message', e, messageInstance);
                             if (this.opts.autoAck) {
-                                await swallowError(MessageAlreadyHandledError, () =>  messageInstance.nack(true));
+                                swallowError(MessageAlreadyHandledError, () =>  messageInstance.nack(true));
                             }
                         }
                     } catch (e) {

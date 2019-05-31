@@ -22,7 +22,7 @@ export class HaredoMessage<T = unknown> {
             try {
                 this.data = JSON.parse(this.dataString);
             } catch (e) {
-                throw new FailedParsingJsonError(this.dataString)
+                throw new FailedParsingJsonError(this.dataString);
             }
         } else {
             this.data = this.dataString as any;
