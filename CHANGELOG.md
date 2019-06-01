@@ -1,3 +1,19 @@
+#### 0.4.1 (2019-06-01)
+
+##### New Features
+
+*  add Haredo logo ([c763165d](https://github.com/KristjanTammekivi/haredo/commit/c763165db0edbe66232c14f3128ad87c84667dc1))
+
+##### Bug Fixes
+
+*  build errors ([5a036647](https://github.com/KristjanTammekivi/haredo/commit/5a036647f4c5b9a3fcbee2093d0cc472d7890683))
+
+##### Tests
+
+*  higher coverage for haredo and fail-handler ([fa38b0ad](https://github.com/KristjanTammekivi/haredo/commit/fa38b0adad4ed0993d583b0ea7f107fc96e103a1))
+*  cover consumer with tests, fix error in cancellation logic ([8573390e](https://github.com/KristjanTammekivi/haredo/commit/8573390ead6ad48e920fc0aad9dadfd8ecde8e2e))
+*  add logger tests ([cc1fbc83](https://github.com/KristjanTammekivi/haredo/commit/cc1fbc83347ae6b950e37265bf0ae5e98530f77e))
+
 ### 0.4.0 (2019-06-01)
 
 ##### Chores
