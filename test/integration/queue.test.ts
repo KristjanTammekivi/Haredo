@@ -46,4 +46,11 @@ describe('Queue', () => {
         await haredo.queue(queueName).setup();
         await verifyQueue(queueName, { durable: true });
     });
+    it('should publish with json taken into account', async () => {
+        const queue = new Queue<string>('myqueeu');
+        await haredo.queue(queue).json(false).publish('mystring');
+        await expect(getSingleMessage(queue.name)).to.eventually.have.property('content', 'mystring');
+        await haredo.queue(queue).json().publish('mystring');
+        await expect(getSingleMessage(queue.name)).to.eventually.have.property('content', '"mystring"');
+    });
 });

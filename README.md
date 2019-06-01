@@ -40,6 +40,7 @@ import { Haredo } from 'haredo';
 const haredo = new Haredo({
     connection: 'amqp://localhost:5672/'
 });
+haredo.connect();
 ```
 
 ### Publishing to exchange

@@ -154,7 +154,8 @@ export class HaredoChain<T = unknown> {
             options = optRoutingKey;
         }
         if (!(message instanceof PreparedMessage)) {
-            message = new PreparedMessage<T>({ content: JSON.stringify(message), routingKey, options });
+            const content = this.state.json ? JSON.stringify(message) : message.toString();
+            message = new PreparedMessage<T>({ content, routingKey, options });
         } else {
             message = message.clone({ routingKey, options });
         }
