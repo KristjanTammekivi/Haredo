@@ -21,17 +21,16 @@ Yet another RabbitMQ library
 
 For a long time I've been using [tortoise](https://www.npmjs.com/package/tortoise) as my go-to RabbitMQ client. I quite like the chaining API it has but tortoise does have it's downsides (it's not being maintained, accessing message metadata needs you to not use arrow functions, missing typings, etc.)
 
-### Goals
+### Features
 
 - Typescript based
 - Chaining based API
 - Possibility to type messages used in publishing/subscribing
 - Preparable Queue and Exchange objects
+- Graceful shutdown
 - Easy to use:
     - Dead Letter
     - Delayed exchanges
-    - RPC
-    - Graceful shutdown
     - Mock
 
 ## Examples

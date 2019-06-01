@@ -30,7 +30,7 @@ export class MessageManager<T = unknown> {
         this.messages = this.messages.filter(x => x !== message);
     }
     async drain() {
-        if (this.messages.length === 0) {
+        if (this.isDrained()) {
             return;
         }
         await promiseMap(this.messages, message => typedEventToPromise(message.emitter, 'handled'));

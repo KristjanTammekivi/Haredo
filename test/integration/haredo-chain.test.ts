@@ -38,10 +38,16 @@ describe('HaredoChain', () => {
         await expect(checkQueue('test.dead')).to.eventually.not.be.rejected;
         await expect(getSingleMessage('test.dead').then(x => x.content)).to.eventually.eql('"message"');
     });
-    it('should publish via confirm channel', async () => {
+    it('should publish via confirm channel to queue', async () => {
         await haredo
             .queue('test')
             .confirm()
             .publish('test');
-    })
+    });
+    it('should publish via confirm channel to exchange', async () => {
+        await haredo
+            .exchange('test')
+            .confirm()
+            .publish('test', 'routingkey');
+    });
 });

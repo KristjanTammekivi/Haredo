@@ -26,6 +26,7 @@ export interface HaredoChainState<T> {
     reestablish: boolean;
     json: boolean;
     confirm: boolean;
+    skipSetup: boolean;
 }
 
 export class HaredoChain<T = unknown> {
@@ -41,6 +42,7 @@ export class HaredoChain<T = unknown> {
         this.state.failTimeout = state.failTimeout;
         this.state.json = defaultToTrue(state.json);
         this.state.confirm = state.confirm;
+        this.state.skipSetup = state.skipSetup;
     }
     private clone<U = T>(state: Partial<HaredoChainState<U>>) {
         return new HaredoChain<U>(this.connectionManager, Object.assign({}, this.state, state));
@@ -129,6 +131,10 @@ export class HaredoChain<T = unknown> {
 
     confirm(confirm = true) {
         return this.clone({ confirm });
+    }
+
+    skipSetup(skipSetup = true) {
+        return this.clone({ skipSetup });
     }
 
     publish(message: T | PreparedMessage<T>): Promise<boolean>;
@@ -227,6 +233,9 @@ export class HaredoChain<T = unknown> {
 
     async setup() {
         // TODO: put this into a promise, don't let 2 calls
+        if (this.state.skipSetup) {
+            debug(`Skipping setup`);
+        }
         if (this.state.queue) {
             debug(`Asserting ${this.state.queue}`);
             await this.connectionManager.assertQueue(this.state.queue);
