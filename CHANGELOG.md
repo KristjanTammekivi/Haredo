@@ -1,3 +1,24 @@
+### 0.4.0 (2019-06-01)
+
+##### Chores
+
+*  add tslint ([2555a361](https://github.com/KristjanTammekivi/haredo/commit/2555a3613d1e6ad91632ddfc87d0deff768ffb10))
+
+##### New Features
+
+*  take .json into account when publishing ([2be5966c](https://github.com/KristjanTammekivi/haredo/commit/2be5966ce02907296b53efeae2400bbea277ed1d))
+*  remove suppressErroor, increase test coverage ([e55f8ec2](https://github.com/KristjanTammekivi/haredo/commit/e55f8ec22eaf8afbee301ddae66743d119ec6952))
+*  improved logging ([f4a8b831](https://github.com/KristjanTammekivi/haredo/commit/f4a8b83121dbd364231067e6d1e7f671a20c1172))
+
+##### Bug Fixes
+
+*  linter fixes ([ffb15f60](https://github.com/KristjanTammekivi/haredo/commit/ffb15f603c355ccaa192cf9af284ffbc3892fec8))
+
+##### Tests
+
+*  write unit tests for connection manager ([90139ad7](https://github.com/KristjanTammekivi/haredo/commit/90139ad7fba478d4a2bb072cff16b831e973fea6))
+*  add swallowError test ([5d273956](https://github.com/KristjanTammekivi/haredo/commit/5d273956af28c8912876f8ef923257c0108d6423))
+
 #### 0.3.2 (2019-05-31)
 
 ##### Chores
