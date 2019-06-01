@@ -1,9 +1,12 @@
 # Haredo
 
 ![npm type definitions](https://img.shields.io/npm/types/typescript.svg)
+![npm](https://img.shields.io/npm/dw/haredo.svg?color=%2374b9ff)
 [![Build Status](https://travis-ci.com/KristjanTammekivi/Haredo.svg?token=5sH57fp4gyjYbXpM9ZY9&branch=master)](https://travis-ci.com/KristjanTammekivi/Haredo)
 [![Coverage Status](https://coveralls.io/repos/github/KristjanTammekivi/Haredo/badge.svg?branch=master)](https://coveralls.io/github/KristjanTammekivi/Haredo?branch=master)
 [![npm](https://img.shields.io/npm/v/haredo.svg)](https://www.npmjs.com/package/haredo)
+
+![haredo](haredo.png)
 
 Yet another RabbitMQ library
 
