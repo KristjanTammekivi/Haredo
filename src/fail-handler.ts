@@ -13,7 +13,7 @@ export class FailHandler {
     public timeout: number;
     public span: number;
     public failCount: number = 0;
-    public failUntil: number;
+    public failUntil: number = 0;
     public timeouts = [] as NodeJS.Timeout[];
 
     constructor(opts: FailHandlerOpts) {
@@ -41,17 +41,10 @@ export class FailHandler {
 
     getTicket() {
         return new Promise((resolve) => {
-            if (this.failUntil < new Date().getTime()) {
+            if (this.failUntil <= new Date().getTime()) {
                 return resolve();
             }
             setTimeout(resolve, Math.max(this.failUntil - new Date().getTime(), 0));
         });
-    }
-
-    clear() {
-        this.failCount = 0;
-        this.failUntil = new Date().getTime();
-        this.timeouts.forEach(x => clearTimeout(x));
-        this.timeouts = [];
     }
 }

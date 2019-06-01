@@ -12,7 +12,6 @@ const { info } = makeLogger('Haredo');
 
 export interface HaredoOptions {
     connection?: Options.Connect | string;
-    reconnect?: boolean;
     socketOpts?: any;
 }
 
@@ -28,9 +27,9 @@ export class Haredo {
     closed = false;
     private closePromise: Promise<void>;
     emitter = new EventEmitter() as TypedEventEmitter<Events>;
-    constructor(private opts: HaredoOptions = {}) {
+    constructor(private opts: HaredoOptions) {
         this.connectionManager = new ConnectionManager(this.opts.connection, this.opts.socketOpts);
-        this.connectionManager.emitter.on('error', (err) => {
+        this.connectionManager.emitter.on('error', /* istanbul ignore next */ (err) => {
             this.emitter.emit('error', err);
         });
     }

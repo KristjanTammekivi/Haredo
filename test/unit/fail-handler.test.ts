@@ -33,7 +33,20 @@ describe('FailHandler', () => {
         }
         await failHandler.getTicket();
         expect(failHandler.failUntil).to.not.be.above(new Date().getTime());
-        failHandler.clear()
+        // failHandler.clear();
     }).timeout(200);
+    it('should get a ticket instantly after fail threshold is reached', async () => {
+        const failHandler = new FailHandler({
+            failSpan: 5000,
+            failTimeout: 10,
+            failThreshold: 1
+        });
+        failHandler.fail();
+        await failHandler.getTicket();
+        await Promise.race([
+            failHandler.getTicket(),
+            new Promise((resolve, reject) => setTimeout(reject, 0, new Error()))
+        ]);
+    });
 });
 
