@@ -33,13 +33,14 @@ export class ConnectionManager {
     }
 
     async getConnection() {
-        if (this.connectionPromise) {
-            return this.connectionPromise;
-        }
         if (this.closing) {
             const error = new HaredoClosingError();
             this.emitter.emit('error', error);
+            /* istanbul ignore next for some reason throw error seems as uncovered */
             throw error;
+        }
+        if (this.connectionPromise) {
+            return this.connectionPromise;
         }
         this.connectionPromise = this.loopGetConnection();
         return this.connectionPromise;
@@ -49,7 +50,7 @@ export class ConnectionManager {
         while (true) {
             try {
                 const connection = await Promise.resolve(connect(this.connectionOpts, this.socketOpts));
-                connection.on('error', (err) => {
+                connection.on('error', /* istanbul ignore next */ (err) => {
                     error('connection error', err);
                 });
                 connection.on('close', async () => {
@@ -62,7 +63,7 @@ export class ConnectionManager {
                 });
                 this.connection = connection;
                 return connection;
-            } catch (e) {
+            } catch (e) /* istanbul ignore next */ {
                 error('failed to connect', e);
                 await delay(1000);
             }
@@ -74,7 +75,7 @@ export class ConnectionManager {
         debug('creating channel');
         const channel = await connection.createChannel();
         // Without this channel errors will crash the application
-        channel.on('error', (err) => {
+        channel.on('error', /* istanbul ignore next */ (err) => {
             error('Channel error', err);
         });
         return channel;
@@ -84,7 +85,7 @@ export class ConnectionManager {
         const connection = await this.getConnection();
         debug('creating confirm channel');
         const channel = await connection.createConfirmChannel();
-        channel.on('error', (err) => {
+        channel.on('error', /* istanbul ignore next */ (err) => {
             error('ConfirmChannel error', err);
         });
         return channel;
