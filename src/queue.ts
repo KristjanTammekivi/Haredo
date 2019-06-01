@@ -45,12 +45,27 @@ export class Queue<T = unknown> {
         return this.clone({ messageTtl });
     }
     /**
+     * set a maximum number of messages the queue will hold. Old messages
+     * will be discarded/dead lettered to make room for new ones
+     */
+    maxLength(maxLength: number) {
+        return this.clone({ maxLength });
+    }
+    /**
     * the queue will be destroyed after n milliseconds of disuse,
     * where use means having consumers or being declared
     */
     expires(expires: number) {
         return this.clone({ expires });
     }
+    /**
+     * Add a dead letter exchange to route discarded messages to.
+     * A message is discarded for any of 4 reasons
+     * - Message expires
+     * - Queue limit is reached
+     * - Message is rejected (not implemented in Haredo)
+     * - Message is nacked with requeue set to false
+     */
     dead(deadLetterExchange: Exchange | string, deadLetterRoutingKey?: string) {
         if (deadLetterExchange instanceof Exchange) {
             deadLetterExchange = deadLetterExchange.name;
