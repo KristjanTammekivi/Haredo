@@ -4,7 +4,9 @@ import { Exchange } from '../exchange';
 import { PreparedMessage } from '../prepared-message';
 
 export const main = async () => {
-    const haredo = new Haredo();
+    const haredo = new Haredo({
+        connection: 'amqp://localhost:5672/'
+    });
     await haredo.connect();
     interface SimpleMessage {
         test: boolean;
