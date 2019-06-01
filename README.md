@@ -154,6 +154,15 @@ const message = new PreparedMessage().delay(15000).json({ id: 4 }).setRoutingKey
 haredo.exchange(exchange).publish(message); // Now message will be in the exchange for 15 seconds before being routed
 ```
 
+## Unexpected behaviour
+
+### Anonymous queues
+
+When a queue doesn't have a name (when you pass either empty string / null / undefined as a name), RabbitMQ generates a
+name starting with the prefix `amq.` for it automatically. As queues starting with that prefix are reserved, trying to
+assert it will result in an error. Because of this the setup phase of queues that have that name will not be automatically
+set up.
+
 ## Notes
 
 Haredo wraps around [amqplib](https://www.npmjs.com/package/amqplib) and a number of docstrings for methods are either

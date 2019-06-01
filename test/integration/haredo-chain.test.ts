@@ -50,4 +50,10 @@ describe('HaredoChain', () => {
             .confirm()
             .publish('test', 'routingkey');
     });
+    it('should not fail when tryping to publish to the same anonymous queue twice', async () => {
+        const queue = new Queue('');
+        await haredo.queue(queue).confirm().publish('msg');
+        await haredo.queue(queue).confirm().publish('msg');
+        expect(queue.name).to.match(/^amq\./);
+    });
 });

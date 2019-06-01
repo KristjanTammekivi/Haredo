@@ -236,7 +236,7 @@ export class HaredoChain<T = unknown> {
         if (this.state.skipSetup) {
             debug(`Skipping setup`);
         }
-        if (this.state.queue) {
+        if (this.state.queue && !(this.state.queue.name || '').startsWith('amq.')) {
             debug(`Asserting ${this.state.queue}`);
             await this.connectionManager.assertQueue(this.state.queue);
             debug(`Done asserting ${this.state.queue}`);
