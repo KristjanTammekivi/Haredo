@@ -6,7 +6,7 @@ import * as chaiAsPromised from 'chai-as-promised';
 use(chaiAsPromised);
 
 import { Haredo, Queue } from '../../src';
-import { setup, teardown } from './helpers/amqp';
+import { setup, teardown, getSingleMessage } from './helpers/amqp';
 import { EventEmitter } from 'events';
 import { delay } from '../../src/utils';
 import { Connection } from 'amqplib';
@@ -88,6 +88,24 @@ describe('Consumer', () => {
         await haredo.queue(queue).publish('message');
         await delay(50);
         expect(messageHandled).to.be.true;
+    });
+    describe('autoAck', () => {
+        it('should requeue a message when promise rejects', async () => {
+            const queue = new Queue('test');
+            await haredo.queue(queue).publish('test');
+            let messageReceived = false;
+            const consumer = await haredo.queue(queue).subscribe(async (msg) => {
+                messageReceived = true;
+                throw new Error('whoops');
+            });
+            await delay(20);
+            await consumer.cancel();
+            expect(messageReceived).to.be.true;
+            await expect(getSingleMessage(queue.name)).to.eventually.be.fulfilled;
+        });
+    });
+    it('should not requeue if failing to parse json', async () => {
+
     });
 });
 

@@ -1,7 +1,9 @@
 import * as Debug from 'debug';
 import { inspect } from 'util';
 
-const debugLog = Debug('haredo');
+const debugLog = Debug('haredo:debug');
+const errorLog = Debug('haredo:error');
+const infoLog = Debug('haredo:info');
 
 interface Logger {
     (message: string): void;
@@ -14,8 +16,8 @@ interface Loggers {
 }
 
 const loggers: Loggers = {
-    error: debugLog,
-    info: debugLog,
+    error: errorLog,
+    info: infoLog,
     debug: debugLog
 };
 

@@ -9,7 +9,7 @@ import { delay, swallowError } from './utils';
 import { FailHandlerOpts, FailHandler } from './fail-handler';
 import { makeLogger } from './logger';
 
-const { error, info } = makeLogger('Consumer');
+const { debug, error, info } = makeLogger('Consumer');
 
 const CONSUMER_DEFAULTS: ConsumerOpts = {
     autoAck: true,
@@ -42,6 +42,7 @@ export interface ConsumerOpts {
 export interface ConsumerEvents {
     cancel: never;
     error: Error;
+    'message-error': Error;
 }
 
 export class Consumer<T = any> {
@@ -84,7 +85,7 @@ export class Consumer<T = any> {
                         this.messageManager = new MessageManager();
                         await this.start();
                     }
-                } catch (e) {
+                } catch (e) /* istanbul ignore next */ {
                     error('Failed to restart consumer', e);
                     this.emitter.emit('error', e);
                 }
@@ -100,17 +101,18 @@ export class Consumer<T = any> {
             .consume(
                 this.opts.queueName,
                 async (message) => {
+                    /* istanbul ignore if */
                     if (message === null) {
-                        // TODO: consumer got cancelled
-                        // should I do something extra here
+                        // Consumer got cancelled
                         return;
                     }
                     try {
-                        await this.failHandler.getTicket();
                         const messageInstance = new HaredoMessage<T>(message, this.opts.json, this);
-                        if (this.cancelled) {
-                            return this.nack(messageInstance);
+                        /* istanbul ignore if */
+                        if (this.cancelling) {
+                            return this.nack(messageInstance, true);
                         }
+                        await this.failHandler.getTicket();
                         this.messageManager.add(messageInstance);
                         try {
                             await this.cb(messageInstance.data, messageInstance);
@@ -118,13 +120,14 @@ export class Consumer<T = any> {
                                 swallowError(MessageAlreadyHandledError, () =>  messageInstance.ack());
                             }
                         } catch (e) {
-                            this.emitter.emit('error', e);
+                            this.emitter.emit('message-error', e);
                             error('error processing message', e, messageInstance);
                             if (this.opts.autoAck) {
-                                swallowError(MessageAlreadyHandledError, () =>  messageInstance.nack(true));
+                                debug('autonacking message');
+                                swallowError(MessageAlreadyHandledError, () => messageInstance.nack(true));
                             }
                         }
-                    } catch (e) {
+                    } catch (e) /* istanbul ignore next */ {
                         error('Uncaught consumer error', e);
                         this.emitter.emit('error', e);
                     }
@@ -154,6 +157,7 @@ export class Consumer<T = any> {
      * });
      */
     ack(message: HaredoMessage<T>) {
+        /* istanbul ignore if */
         if (!this.channel) {
             throw new ChannelBrokenError(message);
         }
@@ -166,8 +170,9 @@ export class Consumer<T = any> {
      *   haredoMessage.nack(false);
      * });
      */
-    nack(message: HaredoMessage<T>, requeue = true) {
+    nack(message: HaredoMessage<T>, requeue: boolean) {
         this.failHandler.fail();
+        /* istanbul ignore if */
         if (!this.channel) {
             throw new ChannelBrokenError(message);
         }

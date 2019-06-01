@@ -35,17 +35,18 @@ export class HaredoMessage<T = unknown> {
         if (this.isHandled) {
             throw new MessageAlreadyHandledError('A message can only be acked/nacked once');
         }
+        this.consumer.ack(this);
         this.isHandled = true;
         this.isAcked = true;
-        this.consumer.ack(this);
         this.emitter.emit('handled');
     }
     nack(requeue = true) {
         if (this.isHandled) {
             throw new MessageAlreadyHandledError('A message can only be acked/nacked once');
         }
-        this.isHandled = true;
         this.consumer.nack(this, requeue);
+        this.isHandled = true;
+        this.isNacked = true;
         this.emitter.emit('handled');
     }
     toString() {

@@ -108,6 +108,7 @@ export class HaredoChain<T = unknown> {
         return this.clone({ autoAck });
     }
     async subscribe(cb: MessageCallback<T>) {
+        debug(this.state);
         const consumer = new Consumer({
             autoAck: this.state.autoAck,
             fail: {
