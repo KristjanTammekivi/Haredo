@@ -56,4 +56,12 @@ describe('HaredoChain', () => {
         await haredo.queue(queue).confirm().publish('msg');
         expect(queue.name).to.match(/^amq\./);
     });
+    it('should skipSetup when the flag has been set', async () => {
+        const queue = new Queue('test');
+        await haredo.queue(queue).skipSetup().publish('msg');
+        await expect(checkQueue(queue.name)).to.eventually.be.rejected;
+    });
+    it('should not allow publishing to multiple exchanges', async () => {
+        await expect(haredo.exchange('test').exchange('test2').publish({ test: 'msg' })).to.be.rejected;
+    });
 });

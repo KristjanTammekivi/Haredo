@@ -148,9 +148,6 @@ export class HaredoChain<T = unknown> {
         optRoutingKey?: string | Partial<ExtendedPublishType>,
         optPublishSettings?: Partial<ExtendedPublishType>
     ) {
-        if (!this.queue && !this.state.exchanges.length) {
-            throw new HaredoError('Publishing requires a queue or an exchange');
-        }
         if (this.state.exchanges.length > 1) {
             throw new HaredoError(`Can't publish to more than one exchange`);
         }
@@ -186,6 +183,7 @@ export class HaredoChain<T = unknown> {
                         Buffer.from(stringify(message.content)),
                         message.options,
                         (err) => {
+                            /* istanbul ignore if */
                             if (err) {
                                 reject(err);
                             } else {
@@ -193,7 +191,7 @@ export class HaredoChain<T = unknown> {
                             }
                         }
                     );
-                } catch (e) {
+                } catch (e) /* istanbul ignore next */ {
                     reject(e);
                 }
             });
@@ -218,6 +216,7 @@ export class HaredoChain<T = unknown> {
                         message.options,
                         (err) => {
                             // TODO: wrap this error with HaredoError
+                            /* istanbul ignore if */
                             if (err) {
                                 reject(err);
                             } else {
@@ -225,7 +224,7 @@ export class HaredoChain<T = unknown> {
                             }
                         }
                     );
-                } catch (e) {
+                } catch (e) /* istanbul ignore next */ {
                     reject(e);
                 }
             });
