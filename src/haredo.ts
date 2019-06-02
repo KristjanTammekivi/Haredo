@@ -39,6 +39,10 @@ export class Haredo {
         this.emitter.emit('connected');
         return connection;
     }
+    /**
+     * Safely cancel all consumers, wait for messages to be handled and then
+     * close the connection
+     */
     async close() {
         info('Closing');
         this.closing = true;
@@ -53,9 +57,11 @@ export class Haredo {
     /**
      * Start the chain off with a queue.
      */
-    queue<T>(queue: Queue<T> | string) {
+    queue<T>(queue: Queue<T>): HaredoChain<T>;
+    queue<T>(queueName: string, opts?: Partial<Options.AssertQueue>): HaredoChain<T>;
+    queue<T>(queue: Queue<T> | string, opts?: Partial<Options.AssertQueue>) {
         return new HaredoChain<T>(this.connectionManager, {})
-            .queue(queue);
+            .queue(queue as string, opts);
     }
     /**
      * Start the chain off with a exchange. When pattern is omitted it

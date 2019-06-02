@@ -7,6 +7,7 @@ import { ConnectionManager } from './connection-manager';
 import { Consumer, MessageCallback } from './consumer';
 import { PreparedMessage, ExtendedPublishType } from './prepared-message';
 import { Buffer } from 'buffer';
+import { Options } from 'amqplib';
 
 const { debug } = makeLogger('HaredoChain:');
 
@@ -47,9 +48,11 @@ export class HaredoChain<T = unknown> {
     private clone<U = T>(state: Partial<HaredoChainState<U>>) {
         return new HaredoChain<U>(this.connectionManager, Object.assign({}, this.state, state));
     }
-    queue<U = unknown>(queue: Queue<U> | string) {
+    queue<U = unknown>(queue: Queue<U>): HaredoChain<MergeTypes<T, U>>;
+    queue<U = unknown>(queueName: string, opts?: Partial<Options.AssertQueue>): HaredoChain<MergeTypes<T, U>>;
+    queue<U = unknown>(queue: Queue<U> | string, opts: Partial<Options.AssertQueue> = {}) {
         if (!(queue instanceof Queue)) {
-            queue = new Queue<U>(queue);
+            queue = new Queue<U>(queue, opts);
         }
         if (this.state.queue) {
             throw new BadArgumentsError(`Chain can only contain one queue`);
