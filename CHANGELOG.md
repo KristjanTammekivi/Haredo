@@ -1,3 +1,19 @@
+#### 0.4.2 (2019-06-02)
+
+##### Chores
+
+*  fix existing examples ([1b59b9d1](https://github.com/KristjanTammekivi/haredo/commit/1b59b9d19c16c314a6d1286f598a5205c18d1439))
+
+##### New Features
+
+*  don't assert queues starting with 'amq.' ([95b9992a](https://github.com/KristjanTammekivi/haredo/commit/95b9992a98944933c852e5dcd2a7c3b45ccccc12))
+*  add skipSetup option to chains ([81064de0](https://github.com/KristjanTammekivi/haredo/commit/81064de04588c247f2d63687c7d89cb15f887517))
+*  add maxLength setter for queue ([72cff258](https://github.com/KristjanTammekivi/haredo/commit/72cff2580d1f5a3045c79927867529cdde1a6850))
+
+##### Bug Fixes
+
+*  actually skip setup ([8a743cad](https://github.com/KristjanTammekivi/haredo/commit/8a743cadcab0189d5b4b98804dfbc67f5f1325a6))
+
 #### 0.4.1 (2019-06-01)
 
 ##### New Features
