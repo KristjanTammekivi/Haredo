@@ -1,3 +1,14 @@
+## 1.0.0 (2019-06-02)
+
+##### New Features
+
+*  add graceful shutdown example ([fb0e2839](https://github.com/KristjanTammekivi/haredo/commit/fb0e2839eab08f617199e6044e3170ac4ecf2e9c))
+*  make queue shothand take in options ([541a6046](https://github.com/KristjanTammekivi/haredo/commit/541a6046a99c17d2e72c13013a9b65299e6ce6e5))
+
+##### Refactors
+
+*  remove unused consumer defaults ([d9848f74](https://github.com/KristjanTammekivi/haredo/commit/d9848f74c6e709626d5a6e0c348e4d8f05901e92))
+
 #### 0.4.2 (2019-06-02)
 
 ##### Chores
