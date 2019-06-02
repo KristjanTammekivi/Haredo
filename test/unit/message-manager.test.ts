@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { MessageManager, HaredoMessage } from '../../src';
 import { delay, timeout } from '../../src/utils';
 
-describe.only('Unit: MessageManager', () => {
+describe('Unit: MessageManager', () => {
     let message: HaredoMessage;
     let messageManager: MessageManager;
     beforeEach(() => {
