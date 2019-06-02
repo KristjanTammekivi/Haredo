@@ -11,20 +11,6 @@ import { makeLogger } from './logger';
 
 const { debug, error, info } = makeLogger('Consumer');
 
-const CONSUMER_DEFAULTS: ConsumerOpts = {
-    autoAck: true,
-    prefetch: 0,
-    reestablish: false,
-    json: false,
-    queueName: '',
-    fail: {
-        failSpan: 5000,
-        failThreshold: Infinity,
-        failTimeout: 5000
-    },
-    setterUpper: null
-};
-
 export interface MessageCallback<T = unknown> {
     (data: T, messageWrapper?: HaredoMessage<T>): any;
 }
