@@ -33,7 +33,13 @@ export class MessageManager<T = unknown> {
         if (this.isDrained()) {
             return;
         }
-        await promiseMap(this.messages, message => typedEventToPromise(message.emitter, 'handled'));
+        await promiseMap(this.messages, async (message) => {
+            /* istanbul ignore if */
+            if (message.isHandled) {
+                return;
+            }
+            return typedEventToPromise(message.emitter, 'handled');
+        });
     }
     channelBorked() {
         this.messages.forEach((message) => {

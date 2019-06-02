@@ -31,7 +31,11 @@ describe('Unit: Queue', () => {
         const queue = new Queue().messageTtl(200);
         expect(queue.opts.messageTtl).to.eql(200);
     });
-    it('should set queue messageTtl', () => {
+    it('should set queue maxLength', () => {
+        const queue = new Queue().maxLength(50);
+        expect(queue.opts.maxLength).to.eql(50)
+    });
+    it('should set queue dlx', () => {
         const exchange = new Exchange('test');
         const queue = new Queue().dead(exchange, 'item.created');
         expect(queue.opts.deadLetterExchange).to.eql(exchange.name);
