@@ -2,19 +2,33 @@ import { Queue } from '../queue';
 import { Haredo } from '../haredo';
 import { Exchange } from '../exchange';
 import { PreparedMessage } from '../prepared-message';
+import { delay } from 'bluebird';
 
 export const main = async () => {
+    console.log('starting example');
     const haredo = new Haredo({
-        connection: 'amqp://localhost:5672/'
+        connection: 'amqp://guest:guest@localhost:5672/'
     });
     await haredo.connect();
     interface SimpleMessage {
-        test: boolean;
+        time: number;
     }
-    const queue = new Queue<SimpleMessage>('test');
-    const exchange = new Exchange<SimpleMessage>('test').delayed('direct');
-    const message = new PreparedMessage<SimpleMessage>({}).json({ test: true }).delay(15000);
-    await haredo.exchange(exchange).queue(queue).publish(message);
+    const queue = new Queue<SimpleMessage>('my-queue').expires(2000);
+    const exchange = new Exchange<SimpleMessage>('my-delayed-exchange').delayed('direct').autoDelete();
+    const message = new PreparedMessage<SimpleMessage>({}).delay(1000).setRoutingKey('item');
+    await haredo
+        .queue(queue)
+        .exchange(exchange, 'item')
+        .subscribe((msg) => {
+            console.log('Message was delayed', new Date().getTime() - msg.time, 'ms');
+        });
+    while (true) {
+        await haredo
+            .exchange(exchange)
+            .skipSetup()
+            .publish(message.json({ time: new Date().getTime() }));
+        await delay(2000);
+    }
 };
 
-process.nextTick(main);
+process.nextTick(() => main());
