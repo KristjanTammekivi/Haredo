@@ -235,6 +235,7 @@ export class HaredoChain<T = unknown> {
         // TODO: put this into a promise, don't let 2 calls
         if (this.state.skipSetup) {
             debug(`Skipping setup`);
+            return;
         }
         if (this.state.queue && !(this.state.queue.name || '').startsWith('amq.')) {
             debug(`Asserting ${this.state.queue}`);
