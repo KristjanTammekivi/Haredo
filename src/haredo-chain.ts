@@ -48,6 +48,9 @@ export class HaredoChain<T = unknown> {
     private clone<U = T>(state: Partial<HaredoChainState<U>>) {
         return new HaredoChain<U>(this.connectionManager, Object.assign({}, this.state, state));
     }
+    /**
+     * Add a queue to the chain (can only add 1, so choose wisely)
+     */
     queue<U = unknown>(queue: Queue<U>): HaredoChain<MergeTypes<T, U>>;
     queue<U = unknown>(queueName: string, opts?: Partial<Options.AssertQueue>): HaredoChain<MergeTypes<T, U>>;
     queue<U = unknown>(queue: Queue<U> | string, opts: Partial<Options.AssertQueue> = {}) {
@@ -61,6 +64,13 @@ export class HaredoChain<T = unknown> {
             queue,
         });
     }
+    /**
+     * Add an exchange to the chain, pattern is not necessary when
+     * publishing.
+     * '#' - wildcard for zero or more dot-limited words
+     *
+     * '*' - wildcard for a single word
+     */
     exchange<U>(exchange: Exchange<U>): HaredoChain<MergeTypes<T, U>>;
     exchange<U>(exchange: Exchange<U>, pattern?: string): HaredoChain<MergeTypes<T, U>>;
     exchange<U>(
@@ -91,6 +101,11 @@ export class HaredoChain<T = unknown> {
             })
         });
     }
+    /**
+     * Set prefetch count for consuming (ie. amount of messages that will be received in parallel)
+     * 
+     * 0 Means there is no  limit
+     */
     prefetch(prefetch: number) {
         return this.clone({ prefetch });
     }

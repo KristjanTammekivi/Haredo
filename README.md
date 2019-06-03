@@ -31,7 +31,6 @@ For a long time I've been using [tortoise](https://www.npmjs.com/package/tortois
 - Easy to use:
     - Dead Letter
     - Delayed exchanges
-    - Mock
 
 ## Examples
 
