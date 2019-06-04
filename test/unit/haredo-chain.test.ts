@@ -70,4 +70,8 @@ describe('Unit: HaredoChain', () => {
     it('should set default pattern as # when it is not provided', () => {
         expect(chain.exchange('test').state.exchanges[0].pattern).to.eql('#');
     });
+    it('should throw when trying to subscribe without exchange', async () => {
+        const chain = haredo.exchange('');
+        await expect(chain.subscribe(() => {})).to.eventually.be.rejectedWith(BadArgumentsError);
+    });
 });

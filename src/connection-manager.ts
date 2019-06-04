@@ -13,6 +13,7 @@ const { info, error, debug } = makeLogger('ConnectionManager');
 interface Events {
     close: void;
     error: HaredoError;
+    connectionclose: void;
 }
 
 export class ConnectionManager {
@@ -54,6 +55,7 @@ export class ConnectionManager {
                     error('connection error', err);
                 });
                 connection.on('close', async () => {
+                    this.emitter.emit('connectionclose');
                     info('connection closed');
                     this.connectionPromise = undefined;
                     this.connection = undefined;

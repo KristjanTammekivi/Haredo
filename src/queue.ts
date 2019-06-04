@@ -11,8 +11,10 @@ export const DEFAULT_QUEUE_OPTIONS: QueueOptions = Object.freeze({
 
 export class Queue<T = unknown> {
     opts: QueueOptions;
+    anonymous: boolean;
     constructor(public name?: string, opts: Partial<QueueOptions> = { arguments: {} }) {
         this.opts = Object.assign({}, DEFAULT_QUEUE_OPTIONS, opts);
+        this.anonymous = !this.name;
     }
     clone(opts: Partial<QueueOptions> = {}) {
         return new Queue<T>(this.name, Object.assign({}, this.opts, opts));
@@ -91,6 +93,9 @@ export class Queue<T = unknown> {
             this.opts.maxPriority === queue.opts.maxPriority &&
             this.opts.messageTtl === queue.opts.messageTtl &&
             flatObjectIsEqual(this.opts.arguments, queue.opts.arguments);
+    }
+    isPerishable() {
+        return this.opts.autoDelete || this.opts.exclusive || !this.opts.durable || !!this.opts.expires;
     }
 }
 

@@ -89,6 +89,19 @@ describe('Consumer', () => {
         await delay(50);
         expect(messageHandled).to.be.true;
     });
+    it('should clear an anonymous queue name when connection is reestablished', async () => {
+        const queue = new Queue('').exclusive();
+        expect(queue.isPerishable()).to.be.true;
+        await haredo.queue(queue).subscribe(msg => {});
+        const originalName = queue.name;
+        await delay(50);
+        await connection.close();
+        await delay(50);
+        await haredo.connectionManager.getConnection();
+        await delay(50);
+        expect(queue.name).to.not.equal('');
+        expect(queue.name).to.not.equal(originalName);
+    });
     describe('autoAck', () => {
         it('should requeue a message when promise rejects', async () => {
             const queue = new Queue('test');

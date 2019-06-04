@@ -159,8 +159,7 @@ haredo.exchange(exchange).publish(message); // Now message will be in the exchan
 
 When a queue doesn't have a name (when you pass either empty string / null / undefined as a name), RabbitMQ generates a
 name starting with the prefix `amq.` for it automatically. As queues starting with that prefix are reserved, trying to
-assert it will result in an error. Because of this the setup phase of queues that have that name will not be automatically
-set up.
+assert it will result in an error. For this reason, when a connection is closed and queue is perishable (either it is non-durable, exclusive, has an expiry or autoDelete), the queue's name is wiped and a new name will be assigned after setup finishes.
 
 ## Notes
 

@@ -8,6 +8,7 @@ import { ChannelBrokenError, MessageAlreadyHandledError } from './errors';
 import { delay, swallowError } from './utils';
 import { FailHandlerOpts, FailHandler } from './fail-handler';
 import { makeLogger } from './logger';
+import { Queue } from './queue';
 
 const { debug, error, info } = makeLogger('Consumer');
 
@@ -19,7 +20,7 @@ export interface ConsumerOpts {
     prefetch: number;
     autoAck: boolean;
     json: boolean;
-    queueName: string;
+    queue: Queue;
     reestablish: boolean;
     fail: FailHandlerOpts;
     setterUpper: () => Promise<any>;
@@ -85,7 +86,7 @@ export class Consumer<T = any> {
         }
         const consumerInfo = await this.channel
             .consume(
-                this.opts.queueName,
+                this.opts.queue.name,
                 async (message) => {
                     /* istanbul ignore if */
                     if (message === null) {

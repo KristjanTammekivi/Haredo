@@ -103,8 +103,8 @@ export class HaredoChain<T = unknown> {
     }
     /**
      * Set prefetch count for consuming (ie. amount of messages that will be received in parallel)
-     * 
-     * 0 Means there is no  limit
+     *
+     * 0 Means there is no limit
      */
     prefetch(prefetch: number) {
         return this.clone({ prefetch });
@@ -128,7 +128,9 @@ export class HaredoChain<T = unknown> {
         return this.clone({ autoAck });
     }
     async subscribe(cb: MessageCallback<T>) {
-        debug(this.state);
+        if (!this.state.queue) {
+            throw new BadArgumentsError('Queue not set for subscribing');
+        }
         const consumer = new Consumer({
             autoAck: this.state.autoAck,
             fail: {
@@ -138,7 +140,7 @@ export class HaredoChain<T = unknown> {
             },
             json: this.state.json,
             prefetch: this.state.prefetch,
-            queueName: this.state.queue.name,
+            queue: this.state.queue,
             reestablish: this.state.reestablish,
             setterUpper: () => this.setup()
         }, this.connectionManager, cb);
@@ -254,10 +256,18 @@ export class HaredoChain<T = unknown> {
             debug(`Skipping setup`);
             return;
         }
-        if (this.state.queue && !(this.state.queue.name || '').startsWith('amq.')) {
-            debug(`Asserting ${this.state.queue}`);
-            await this.connectionManager.assertQueue(this.state.queue);
-            debug(`Done asserting ${this.state.queue}`);
+        if (this.state.queue) {
+            if (this.state.queue.anonymous && this.state.queue.isPerishable()) {
+                this.connectionManager.emitter.once('connectionclose', () => {
+                    debug('Clearing name for queue', this.state.queue);
+                    this.state.queue.name = '';
+                });
+            }
+            if (!(this.state.queue.name || '').startsWith('amq.')) {
+                debug(`Asserting ${this.state.queue}`);
+                await this.connectionManager.assertQueue(this.state.queue);
+                debug(`Done asserting ${this.state.queue}`);
+            }
         }
         await promiseMap(this.state.exchanges, async (exchangery) => {
             debug(`Asserting ${exchangery.exchange}`);
