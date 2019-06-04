@@ -1,3 +1,20 @@
+### 1.1.0 (2019-06-04)
+
+##### Documentation Changes
+
+*  add some method documentation ([39de148f](https://github.com/KristjanTammekivi/haredo/commit/39de148f6d722952c09a1b5ac961c2420a81547b))
+*  switch out the badges ([373db968](https://github.com/KristjanTammekivi/haredo/commit/373db968192117f097a847c3becda73403bfaf56))
+
+##### New Features
+
+*  modify the behaviour of anonymous queues ([1e9bc6ba](https://github.com/KristjanTammekivi/haredo/commit/1e9bc6ba52595d2cc71d4643259a368203be9986))
+
+##### Tests
+
+*  increase coverage to 100% ([97cb14b4](https://github.com/KristjanTammekivi/haredo/commit/97cb14b4e5d79e5ac180c5a3917b4343a7096277))
+*  reenable other tests ([f1e0d659](https://github.com/KristjanTammekivi/haredo/commit/f1e0d659f6382fcfc620cb697420fead733f80f1))
+*  increase test coverage in queue and message-manager ([618459c0](https://github.com/KristjanTammekivi/haredo/commit/618459c07ae48abad1a560c9d55bbeaa8a08eac6))
+
 ## 1.0.0 (2019-06-02)
 
 ##### New Features
