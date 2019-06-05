@@ -35,7 +35,9 @@ For a long time I've been using [tortoise](https://www.npmjs.com/package/tortois
 
 ## Examples
 
-Note on methods: most methods are chainable and don't mutate, instead they return a clone of the object with the changes applied to it
+Note on methods: most methods are chainable and don't mutate, instead they return a clone of the object with the changes applied to it.
+
+For more examples check out [src/examples](https://github.com/KristjanTammekivi/Haredo/tree/master/src/examples) directory in github
 
 ```typescript
 import { Haredo } from 'haredo';
