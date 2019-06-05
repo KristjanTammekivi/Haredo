@@ -14,6 +14,7 @@ Yet another RabbitMQ library
 - [Goals](#goals)
 - [Examples](#examples)
 - [Notes](#notes)
+- [Unexpected Behaviours](#unexpected-behaviours)
 
 ## Motivation
 
@@ -153,7 +154,7 @@ const message = new PreparedMessage().delay(15000).json({ id: 4 }).setRoutingKey
 haredo.exchange(exchange).publish(message); // Now message will be in the exchange for 15 seconds before being routed
 ```
 
-## Unexpected behaviour
+## Unexpected behaviours
 
 ### Anonymous queues
 
