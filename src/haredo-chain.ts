@@ -109,24 +109,62 @@ export class HaredoChain<T = unknown> {
     prefetch(prefetch: number) {
         return this.clone({ prefetch });
     }
+    /**
+     * Pass in boolean to enable / disable json mode (it's on by default).
+     * When json is enabled, messages that are published without using PreparedMessage
+     * class will be passed through JSON.stringify. When subscribing message data will
+     * be run through JSON.parse
+     */
     json(json = true) {
         return this.clone<typeof json extends false ? string : T>({ json });
     }
+    /**
+     * Reestablish a subscriber when channel / connection closes (on by default)
+     */
     reestablish(reestablish = true) {
         return this.clone({ reestablish });
     }
+    /**
+     * Set the amount of fails the system will allow in {failSpan} milliseconds
+     * before the subscriber waits for {failTimeout} milliseconds until passing
+     * the next message to subscriber callback
+     *
+     * defaults to Infinity
+     */
     failThreshold(failThreshold: number) {
         return this.clone({ failThreshold });
     }
+    /**
+     * Set the failSpan, the amount of time in milliseconds during which {failThreshold}
+     * amount of nacked messages can happen before the subscriber waits {failTimeout}
+     * milliseconds until passing the next message to subscriber callback.
+     *
+     * defaults to 5000
+     */
     failSpan(failSpan: number) {
         return this.clone({ failSpan });
     }
+    /**
+     * Set the failTimeout, the amount of time in milliseconds to wait until
+     * passing the next message to subscriber callback after {failThreshold}
+     * amount of nacked messages happen within {failSpan
+     *
+     * defaults to 5000
+     */
     failTimeout(failTimeout: number) {
         return this.clone({ failTimeout });
     }
+    /**
+     * Autoack (enabled by default) automatically acks/nacks messages when
+     * subscriber callback throws an error or the promise returned from it
+     * gets rejected
+     */
     autoAck(autoAck = true) {
         return this.clone({ autoAck });
     }
+    /**
+     * Subscribe to messages in the queue specified in the chain
+     */
     async subscribe(cb: MessageCallback<T>) {
         if (!this.state.queue) {
             throw new BadArgumentsError('Queue not set for subscribing');
@@ -149,14 +187,27 @@ export class HaredoChain<T = unknown> {
         return consumer;
     }
 
+    /**
+     * Enable publishing using ConfirmChannels
+     *
+     * See [RabbitMq Docs](https://www.rabbitmq.com/confirms.html)
+     */
     confirm(confirm = true) {
         return this.clone({ confirm });
     }
 
+    /**
+     * Don't run setup in queues/exchanges in this chain. Useful for faster publishing
+     *
+     * Use .setup on a chain to do asserts/bindings if they don't already exist
+     */
     skipSetup(skipSetup = true) {
         return this.clone({ skipSetup });
     }
 
+    /**
+     * Publish a message to exchange/queue
+     */
     publish(message: T | PreparedMessage<T>): Promise<boolean>;
     publish(message: T | PreparedMessage<T>, opts?: Partial<ExtendedPublishType>): Promise<boolean>;
     publish(message: T | PreparedMessage<T>, routingKey: string, opts?: Partial<ExtendedPublishType>): Promise<boolean>;
@@ -250,6 +301,9 @@ export class HaredoChain<T = unknown> {
         return channel.sendToQueue(queue.name, Buffer.from(stringify(message.content)), message.options);
     }
 
+    /**
+     * Assert / Bind exchanges/queues. Will be skipped if skipSetup is set in the chain
+     */
     async setup() {
         // TODO: put this into a promise, don't let 2 calls
         if (this.state.skipSetup) {
