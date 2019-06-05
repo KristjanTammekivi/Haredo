@@ -44,9 +44,4 @@ describe('Unit: MessageManager', () => {
         ]);
         await expect(drainPromise).to.eventually.be.fulfilled;
     });
-    it('should set messages as channelBorked on call', () => {
-        messageManager.add(message);
-        messageManager.channelBorked();
-        expect(message.channelBorked).to.be.true;
-    });
 });

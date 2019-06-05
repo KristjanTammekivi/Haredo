@@ -14,7 +14,6 @@ export class HaredoMessage<T = unknown> {
     public isHandled = false;
     public isNacked = false;
     public isAcked = false;
-    public channelBorked = false;
     public emitter = new EventEmitter as TypedEventEmitter<HaredoMessageEvents>;
     constructor(public readonly raw: Message, parseJson: boolean, public readonly consumer: Consumer) {
         this.dataString = raw.content.toString();

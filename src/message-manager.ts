@@ -41,9 +41,4 @@ export class MessageManager<T = unknown> {
             return typedEventToPromise(message.emitter, 'handled');
         });
     }
-    channelBorked() {
-        this.messages.forEach((message) => {
-            message.channelBorked = true;
-        });
-    }
 }
