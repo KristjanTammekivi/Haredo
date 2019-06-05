@@ -1,3 +1,17 @@
+#### 1.1.1 (2019-06-05)
+
+##### Documentation Changes
+
+*  write jsdocs for haredo-chain methods ([6a717a19](https://github.com/KristjanTammekivi/haredo/commit/6a717a1914698e9cbcc6f079122abf34ef87a376))
+
+##### New Features
+
+*  nack w/ no requeue  messages when json parsing on message fails ([1e24a036](https://github.com/KristjanTammekivi/haredo/commit/1e24a036687029ebc8c9a2108f03232beeb2af0d))
+
+##### Refactors
+
+*  remove channel borking on messages ([5151bfa7](https://github.com/KristjanTammekivi/haredo/commit/5151bfa70f32c11afdf21d6fb97c5d69574516bd))
+
 ### 1.1.0 (2019-06-04)
 
 ##### Documentation Changes
