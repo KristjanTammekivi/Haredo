@@ -82,6 +82,8 @@ haredo.exchange(exchange, '#')
 
 ### Subscribing with manual ack/nack
 
+Node: although in this example I set .autoAck(false), it isn't necessary.
+
 ```typescript
 haredo
     .exchange(exchange, '#')
