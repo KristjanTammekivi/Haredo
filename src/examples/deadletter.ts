@@ -23,7 +23,7 @@ export const main = async () => {
         });
     let i = 0;
     while (true) {
-        haredo.queue(mainQueue).skipSetup().publish(`Message #${ i }`);
+        await haredo.queue(mainQueue).skipSetup().publish(`Message #${ i }`);
         await delay(1000);
         i += 1;
     }
