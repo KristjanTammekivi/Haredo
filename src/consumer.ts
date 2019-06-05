@@ -1,10 +1,10 @@
 import { ConnectionManager } from './connection-manager';
 import { HaredoMessage } from './haredo-message';
-import { Channel } from 'amqplib';
+import { Channel, Message } from 'amqplib';
 import { MessageManager } from './message-manager';
 import { TypedEventEmitter } from './events';
 import { EventEmitter } from 'events';
-import { ChannelBrokenError, MessageAlreadyHandledError } from './errors';
+import { ChannelBrokenError, MessageAlreadyHandledError, FailedParsingJsonError } from './errors';
 import { delay, swallowError } from './utils';
 import { FailHandlerOpts, FailHandler } from './fail-handler';
 import { makeLogger } from './logger';
@@ -64,7 +64,6 @@ export class Consumer<T = any> {
         this.channel.once('close', async () => {
             info('channel closed');
             this.channel = null;
-            this.messageManager.channelBorked();
             if (this.opts.reestablish) {
                 await delay(5);
                 try {
@@ -78,7 +77,6 @@ export class Consumer<T = any> {
                 }
                 return;
             }
-            this.messageManager.channelBorked();
             await this.cancel();
         });
         if (this.opts.prefetch) {
@@ -115,6 +113,9 @@ export class Consumer<T = any> {
                             }
                         }
                     } catch (e) /* istanbul ignore next */ {
+                        if (e instanceof FailedParsingJsonError) {
+                            this.nack(message, false);
+                        }
                         error('Uncaught consumer error', e);
                         this.emitter.emit('error', e);
                     }
@@ -146,7 +147,7 @@ export class Consumer<T = any> {
     ack(message: HaredoMessage<T>) {
         /* istanbul ignore if */
         if (!this.channel) {
-            throw new ChannelBrokenError(message);
+            throw new ChannelBrokenError();
         }
         this.channel.ack(message.raw, false);
     }
@@ -157,13 +158,15 @@ export class Consumer<T = any> {
      *   haredoMessage.nack(false);
      * });
      */
-    nack(message: HaredoMessage<T>, requeue: boolean) {
-        this.failHandler.fail();
+    nack(message: HaredoMessage<T> | Message, requeue: boolean) {
+        if (message instanceof HaredoMessage) {
+            this.failHandler.fail();
+        }
         /* istanbul ignore if */
         if (!this.channel) {
-            throw new ChannelBrokenError(message);
+            throw new ChannelBrokenError();
         }
-        this.channel.nack(message.raw, false, requeue);
+        this.channel.nack(message instanceof HaredoMessage ? message.raw : message, false, requeue);
     }
     /**
      * Cancel a consumer, wait for messages to finish processing

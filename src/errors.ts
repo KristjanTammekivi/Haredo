@@ -1,12 +1,10 @@
-import { HaredoMessage } from './haredo-message';
-
 export class HaredoError extends Error {
     name: 'HaredoError';
 }
 
 export class ChannelBrokenError extends HaredoError {
     /* istanbul ignore next */
-    constructor(public haredoMessage: HaredoMessage) {
+    constructor() {
         super('Cannot ack/nack message, channel is already closed');
     }
 }

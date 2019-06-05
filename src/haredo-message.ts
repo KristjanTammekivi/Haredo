@@ -30,6 +30,9 @@ export class HaredoMessage<T = unknown> {
     getHeaders() {
         return this.raw.properties.headers;
     }
+    getHeader(header: string) {
+        return this.getHeaders()[header];
+    }
     ack() {
         if (this.isHandled) {
             throw new MessageAlreadyHandledError('A message can only be acked/nacked once');

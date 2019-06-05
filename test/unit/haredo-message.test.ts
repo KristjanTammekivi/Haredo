@@ -56,6 +56,10 @@ describe('Unit: HaredoMessage', () => {
         const message = new HaredoMessage(messageMock, false, consumerMock);
         expect(message.getHeaders()).to.eql({ 'x-delay': 5000 });
     });
+    it('should return header from getHeader()', () => {
+        const message = new HaredoMessage(messageMock, false, consumerMock);
+        expect(message.getHeader('x-delay')).to.eql(5000);
+    });
     it('should coerce to string', () => {
         const message = new HaredoMessage(messageMock, false, consumerMock);
         expect(message.toString()).to.eql('HaredoMessage {}');

@@ -5,7 +5,7 @@ import { expect, use } from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 use(chaiAsPromised);
 
-import { Haredo, Queue } from '../../src';
+import { Haredo, Queue, Exchange } from '../../src';
 import { setup, teardown, getSingleMessage } from './helpers/amqp';
 import { EventEmitter } from 'events';
 import { delay } from '../../src/utils';
@@ -118,7 +118,15 @@ describe('Consumer', () => {
         });
     });
     it('should not requeue if failing to parse json', async () => {
-
+        const dlx = new Exchange('test.dead', 'fanout');
+        const dlq = new Queue('test.dead');
+        await haredo.exchange(dlx).queue(dlq).setup();
+        const queue = new Queue('test').dead(dlx);
+        const consumer = await haredo.queue(queue).subscribe(() => {});
+        consumer.emitter.on('error', () => {});
+        await haredo.queue(queue).confirm().json(false).publish('{ bad-json');
+        await delay(50);
+        expect((await getSingleMessage(dlq.name)).content).to.equal('{ bad-json');
     });
 });
 
