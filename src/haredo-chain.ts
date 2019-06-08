@@ -8,6 +8,7 @@ import { Consumer, MessageCallback } from './consumer';
 import { PreparedMessage, ExtendedPublishType } from './prepared-message';
 import { Buffer } from 'buffer';
 import { Options } from 'amqplib';
+import { HaredoMessage } from './haredo-message';
 
 const { debug } = makeLogger('HaredoChain:');
 
@@ -28,6 +29,11 @@ export interface HaredoChainState<T> {
     json: boolean;
     confirm: boolean;
     skipSetup: boolean;
+    middleware: Middleware<T>[];
+}
+
+export interface Middleware<T> {
+    (message: HaredoMessage<T>, next: () => Promise<void>): void | Promise<void>;
 }
 
 export class HaredoChain<T = unknown> {
@@ -44,6 +50,7 @@ export class HaredoChain<T = unknown> {
         this.state.json = defaultToTrue(state.json);
         this.state.confirm = state.confirm;
         this.state.skipSetup = state.skipSetup;
+        this.state.middleware = state.middleware || [];
     }
     private clone<U = T>(state: Partial<HaredoChainState<U>>) {
         return new HaredoChain<U>(this.connectionManager, Object.assign({}, this.state, state));
@@ -99,6 +106,18 @@ export class HaredoChain<T = unknown> {
                 exchange,
                 pattern
             })
+        });
+    }
+    /**
+     * Add a middleware to subscriber. Middleware will be invoked with the message instance and
+     * a function that returns a promise which will be resolved after rest of the middleware is
+     * finished. If the "next" function isn't called after middleware finishes executing it is
+     * still executed. If message was acked/nacked during middleware the rest of the callbacks
+     * in the chain are not executed
+     **/
+    use(middleware: Middleware<T> | Middleware<T>[]) {
+        return this.clone({
+            middleware: this.state.middleware.concat(middleware)
         });
     }
     /**
@@ -169,7 +188,7 @@ export class HaredoChain<T = unknown> {
         if (!this.state.queue) {
             throw new BadArgumentsError('Queue not set for subscribing');
         }
-        const consumer = new Consumer({
+        const consumer = new Consumer<T>({
             autoAck: this.state.autoAck,
             fail: {
                 failSpan: this.state.failSpan,
@@ -180,7 +199,8 @@ export class HaredoChain<T = unknown> {
             prefetch: this.state.prefetch,
             queue: this.state.queue,
             reestablish: this.state.reestablish,
-            setterUpper: () => this.setup()
+            setterUpper: () => this.setup(),
+            middleware: this.state.middleware
         }, this.connectionManager, cb);
         this.connectionManager.consumerManager.add(consumer);
         await consumer.start();

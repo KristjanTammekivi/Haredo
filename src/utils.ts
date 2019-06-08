@@ -38,6 +38,9 @@ export const promiseMap = async <T, U>(arr: T[], cb: (obj: T, i: number, arr: T[
     return Promise.all<U>(arr.map(cb));
 };
 
+export const head = <T>(arr: T[]): T => arr[0];
+export const tail = <T>(arr: T[]): T[] => arr.slice(1);
+
 export const delay = (ms: number) => {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);

@@ -5,10 +5,11 @@ import { MessageManager } from './message-manager';
 import { TypedEventEmitter } from './events';
 import { EventEmitter } from 'events';
 import { ChannelBrokenError, MessageAlreadyHandledError, FailedParsingJsonError } from './errors';
-import { delay, swallowError } from './utils';
+import { delay, swallowError, head, tail } from './utils';
 import { FailHandlerOpts, FailHandler } from './fail-handler';
 import { makeLogger } from './logger';
 import { Queue } from './queue';
+import { Middleware } from './haredo-chain';
 
 const { debug, error, info } = makeLogger('Consumer');
 
@@ -16,7 +17,7 @@ export interface MessageCallback<T = unknown> {
     (data: T, messageWrapper?: HaredoMessage<T>): any;
 }
 
-export interface ConsumerOpts {
+export interface ConsumerOpts<T> {
     prefetch: number;
     autoAck: boolean;
     json: boolean;
@@ -24,6 +25,7 @@ export interface ConsumerOpts {
     reestablish: boolean;
     fail: FailHandlerOpts;
     setterUpper: () => Promise<any>;
+    middleware: Middleware<T>[];
 }
 
 export interface ConsumerEvents {
@@ -46,7 +48,7 @@ export class Consumer<T = any> {
     private failHandler: FailHandler;
 
     constructor(
-        private opts: ConsumerOpts,
+        private opts: ConsumerOpts<T>,
         private connectionManager: ConnectionManager,
         private cb: MessageCallback<T>
     ) {
@@ -100,7 +102,7 @@ export class Consumer<T = any> {
                         await this.failHandler.getTicket();
                         this.messageManager.add(messageInstance);
                         try {
-                            await this.cb(messageInstance.data, messageInstance);
+                            await applyMiddleware(this.opts.middleware, this.cb, messageInstance);
                             if (this.opts.autoAck) {
                                 swallowError(MessageAlreadyHandledError, () =>  messageInstance.ack());
                             }
@@ -195,3 +197,22 @@ export class Consumer<T = any> {
         this.cancelled = true;
     }
 }
+
+export const applyMiddleware = async <T>(middleware: Middleware<T>[], cb: MessageCallback<T>, msg: HaredoMessage<T>) => {
+    if (!middleware.length) {
+        await cb(msg.data, msg);
+    } else {
+        let nextWasCalled = false;
+        await head(middleware)(msg, () => {
+            nextWasCalled = true;
+            if (msg.isHandled) {
+                error('Message was handled in the middleware but middleware called next() anyway');
+                return;
+            }
+            return applyMiddleware(tail(middleware), cb, msg);
+        });
+        if (!nextWasCalled && !msg.isHandled) {
+            await applyMiddleware(tail(middleware), cb, msg);
+        }
+    }
+};

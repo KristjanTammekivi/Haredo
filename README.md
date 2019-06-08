@@ -104,6 +104,21 @@ haredo
     });
 ```
 
+### Middleware
+
+```typescript
+haredo
+    .queue(queue)
+    .use(async (msg, next) => {
+        const start = Date.now();
+        await next();
+        console.log('Message handling took', Date.now() - start);
+    })
+    .subscribe(() => {
+        // ...
+    });
+```
+
 ### Type stuff
 
 ```typescript
