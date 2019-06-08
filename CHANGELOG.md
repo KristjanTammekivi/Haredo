@@ -1,3 +1,19 @@
+### 1.2.0 (2019-06-08)
+
+##### Documentation Changes
+
+*  add a note to README.md on manual acks/nacks ([9f386fa9](https://github.com/KristjanTammekivi/haredo/commit/9f386fa971fd0b53977116855f9f460dd9c408db))
+*  add dead letter example ([57614463](https://github.com/KristjanTammekivi/haredo/commit/57614463d26b6b91e3cbecff17a74a75ddba1578))
+*  link to unexpected behaviour in readme ([a1fe91a8](https://github.com/KristjanTammekivi/haredo/commit/a1fe91a809d838fbb0742f862540cfde8c130313))
+
+##### New Features
+
+*  middleware ([948d7c11](https://github.com/KristjanTammekivi/haredo/commit/948d7c11a19d396b197fda84f483f2abadab774f))
+
+##### Bug Fixes
+
+*  linting error for deadletter example ([d1fd0f7c](https://github.com/KristjanTammekivi/haredo/commit/d1fd0f7cbeeaf9fb6cdbbc86e37f9aaa3392f032))
+
 #### 1.1.1 (2019-06-05)
 
 ##### Documentation Changes
