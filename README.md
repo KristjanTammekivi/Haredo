@@ -50,6 +50,7 @@ haredo.connect();
 ### Publishing to exchange
 
 ```typescript
+// Publishing and subscribing automatically sets up the Exchange
 haredo
     .exchange('myexchange', 'topic', { durable: true })
     .publish({ id: 52, status: 'active'}, 'item.created');
@@ -58,6 +59,7 @@ haredo
 ### Publishing to queue
 
 ```typescript
+// Publishing and subscribing automatically sets up the Queue
 haredo.queue('myqueue').publish({ id: 52, status: 'active'});
 ```
 
@@ -65,13 +67,14 @@ haredo.queue('myqueue').publish({ id: 52, status: 'active'});
 
 ```typescript
 const exchange = new Exchange('myexchange', 'topic').durable();
-
-haredo.exchange(exchange).publish(myMessage, routingKey);
+const queue = new Queue('myqueue').messageTtl(5000);
+haredo.exchange(exchange).queue(queue).publish(myMessage, routingKey);
 ```
 
 ### Subscribing
 
 ```typescript
+// This sets up the queue, the exchange and binds the queue to the exchange with the pattern '#' (wildcard)
 haredo.exchange(exchange, '#')
     .queue(queue)
     .subscribe(async data => {
