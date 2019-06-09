@@ -1,3 +1,13 @@
+#### 1.2.1 (2019-06-09)
+
+##### Documentation Changes
+
+*  add extra explanation about automatic setup ([5099b87f](https://github.com/KristjanTammekivi/haredo/commit/5099b87f444026030285b516aea074d37bc1529e))
+
+##### New Features
+
+*  expose Middleware interface from index ([5b67178e](https://github.com/KristjanTammekivi/haredo/commit/5b67178e0522a6333f4842d08f60afd50876624e))
+
 ### 1.2.0 (2019-06-08)
 
 ##### Documentation Changes
