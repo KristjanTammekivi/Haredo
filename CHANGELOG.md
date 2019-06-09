@@ -1,3 +1,9 @@
+#### 1.2.2 (2019-06-09)
+
+##### Documentation Changes
+
+*  add a link to xkcd ([f6b8ecc6](https://github.com/KristjanTammekivi/haredo/commit/f6b8ecc62f4c046b6a39d98ae651aaf7fd7b0e85))
+
 #### 1.2.1 (2019-06-09)
 
 ##### Documentation Changes
