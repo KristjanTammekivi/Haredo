@@ -99,4 +99,4 @@ export class Queue<T = unknown> {
     }
 }
 
-export const padString = (str: string) => ` ${ str } `;
+const padString = (str: string) => ` ${ str } `;

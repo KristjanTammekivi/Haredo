@@ -2,8 +2,15 @@
 export { Queue, QueueOptions } from './queue';
 export { Exchange, ExchangeType, XDelayedType, ExchangeOptions, xDelayedTypeStrings } from './exchange';
 export { Haredo, HaredoOptions } from './haredo';
-export { HaredoChain, AddExchange, HaredoChainState } from './haredo-chain';
-export { HaredoError, BadArgumentsError, ChannelBrokenError, MessageAlreadyHandledError } from './errors';
+export { HaredoChain, AddExchange, HaredoChainState, Middleware } from './haredo-chain';
+export {
+    HaredoError,
+    BadArgumentsError,
+    ChannelBrokenError,
+    MessageAlreadyHandledError,
+    FailedParsingJsonError,
+    HaredoClosingError
+} from './errors';
 export { PreparedMessage, ExtendedPublishType, PreparedMessageOptions } from './prepared-message';
 export { HaredoMessage } from './haredo-message';
 export { Consumer, ConsumerOpts, MessageCallback } from './consumer';
