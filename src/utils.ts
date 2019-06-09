@@ -41,6 +41,10 @@ export const promiseMap = async <T, U>(arr: T[], cb: (obj: T, i: number, arr: T[
 export const head = <T>(arr: T[]): T => arr[0];
 export const tail = <T>(arr: T[]): T[] => arr.slice(1);
 
+export const reject = <T>(arr: T[], cb: (item: T, index: number, arr: T[]) => boolean): T[] => {
+    return arr.filter((...args) => !cb(...args));
+};
+
 export const delay = (ms: number) => {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);

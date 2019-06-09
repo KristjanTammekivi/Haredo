@@ -1,6 +1,6 @@
 import 'mocha';
 import { expect } from 'chai';
-import { Queue, Exchange, Haredo, HaredoChain, BadArgumentsError } from '../../src';
+import { Haredo, HaredoChain, BadArgumentsError } from '../../src';
 import { setup, teardown } from '../integration/helpers/amqp';
 
 describe('Unit: HaredoChain', () => {
@@ -68,7 +68,17 @@ describe('Unit: HaredoChain', () => {
         expect(fn).to.throw(BadArgumentsError);
     });
     it('should set default pattern as # when it is not provided', () => {
-        expect(chain.exchange('test').state.exchanges[0].pattern).to.eql('#');
+        expect(chain.exchange('test').state.exchanges[0].patterns).to.eql(['#']);
+    });
+    it('should not set duplicate exchanges on multiple .exchange calls', () => {
+        chain = chain.exchange('test', 'direct', 'pattern').exchange('test', 'direct', 'pattern')
+        expect(chain.state.exchanges).to.have.lengthOf(1);
+        expect(chain.state.exchanges[0].patterns).to.be.an('array');
+        expect(chain.state.exchanges[0].patterns).to.have.lengthOf(1);
+    });
+    it('should should add a binding to an existing exchangery', () => {
+        chain = chain.exchange('test', 'direct', 'pattern1').exchange('test', 'direct', 'pattern2')
+        expect(chain.state.exchanges[0].patterns).to.eql(['pattern1', 'pattern2']);
     });
     it('should throw when trying to subscribe without exchange', async () => {
         const chain = haredo.exchange('');

@@ -6,6 +6,10 @@ import * as chaiAsPromised from 'chai-as-promised';
 import { Haredo, Queue, Exchange, ExchangeType } from '../../src/index';
 import { setup, teardown, getSingleMessage, checkQueue } from './helpers/amqp';
 import { delay } from '../../src/utils';
+import { spy } from 'sinon';
+
+import * as sinonChai from 'sinon-chai';
+use(sinonChai);
 
 use(chaiAsPromised);
 
@@ -63,5 +67,17 @@ describe('HaredoChain', () => {
     });
     it('should not allow publishing to multiple exchanges', async () => {
         await expect(haredo.exchange('test').exchange('test2').publish({ test: 'msg' })).to.be.rejected;
+    });
+    it('should bind two exchanges', async () => {
+        const exchange = new Exchange('test').direct();
+        const msgcb = spy();
+        await haredo.queue('test')
+            .exchange(exchange, 'pattern1')
+            .exchange(exchange, 'pattern2')
+            .subscribe(msgcb);
+        await haredo.exchange(exchange).publish('message1', 'pattern1');
+        await haredo.exchange(exchange).publish('message1', 'pattern2');
+        await delay(50);
+        expect(msgcb).to.have.been.calledTwice;
     });
 });

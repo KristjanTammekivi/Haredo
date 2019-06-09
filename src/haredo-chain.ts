@@ -1,6 +1,6 @@
 import { Queue } from './queue';
 import { Exchange, ExchangeType, xDelayedTypeStrings, xDelayedTypesArray, ExchangeOptions } from './exchange';
-import { MergeTypes, stringify, promiseMap, defaultToTrue } from './utils';
+import { MergeTypes, stringify, promiseMap, defaultToTrue, reject } from './utils';
 import { BadArgumentsError, HaredoError } from './errors';
 import { makeLogger } from './logger';
 import { ConnectionManager } from './connection-manager';
@@ -14,7 +14,7 @@ const { debug } = makeLogger('HaredoChain:');
 
 export interface AddExchange {
     exchange: Exchange;
-    pattern: string;
+    patterns: string[];
 }
 
 export interface HaredoChainState<T> {
@@ -79,17 +79,18 @@ export class HaredoChain<T = unknown> {
      * '*' - wildcard for a single word
      */
     exchange<U>(exchange: Exchange<U>): HaredoChain<MergeTypes<T, U>>;
-    exchange<U>(exchange: Exchange<U>, pattern?: string): HaredoChain<MergeTypes<T, U>>;
+    exchange<U>(exchange: Exchange<U>, pattern?: string | string[]): HaredoChain<MergeTypes<T, U>>;
     exchange<U>(
         exchange: string,
         type?: ExchangeType | xDelayedTypeStrings,
-        pattern?: string,
+        pattern?: string | string[],
         opts?: Partial<ExchangeOptions>
     ): HaredoChain<MergeTypes<T, U>>;
     exchange<U>(
         exchange: Exchange<U> | string,
+        // tslint:disable-next-line:max-union-size
         typeOrPattern: ExchangeType | xDelayedTypeStrings = ExchangeType.Direct,
-        pattern: string = '#',
+        pattern: string | string[] = '#',
         exchangeOptions: Partial<ExchangeOptions> = {}
     ) {
         if (typeof exchange === 'string') {
@@ -101,10 +102,23 @@ export class HaredoChain<T = unknown> {
         } else {
             pattern = typeOrPattern;
         }
+        const patterns = [].concat(pattern);
+        const findFn = (x: AddExchange) => x.exchange.name === (exchange as Exchange).name;
+        const existingExchangery = this.state.exchanges.find(findFn);
+        if (existingExchangery) {
+            const newPatterns = existingExchangery.patterns
+                .concat(patterns.filter(newPattern => !existingExchangery.patterns.includes(newPattern)));
+            return this.clone({
+                exchanges: reject(this.state.exchanges, findFn).concat({
+                    exchange: existingExchangery.exchange,
+                    patterns: newPatterns
+                })
+            });
+        }
         return this.clone<MergeTypes<T, U>>({
             exchanges: this.state.exchanges.concat({
                 exchange,
-                pattern
+                patterns
             })
         });
     }
@@ -348,8 +362,10 @@ export class HaredoChain<T = unknown> {
             await this.connectionManager.assertExchange(exchangery.exchange);
             if (this.state.queue) {
                 const queue = this.state.queue;
-                debug(`Binding ${queue} to ${exchangery.exchange} using pattern ${exchangery.pattern}`);
-                await this.connectionManager.bindQueue(exchangery.exchange, this.state.queue, exchangery.pattern);
+                await promiseMap(exchangery.patterns, async (pattern) => {
+                    debug(`Binding ${queue} to ${exchangery.exchange} using pattern ${pattern}`);
+                    await this.connectionManager.bindQueue(exchangery.exchange, this.state.queue, pattern);
+                });
             }
             debug(`Done asserting ${exchangery.exchange}`);
         });
