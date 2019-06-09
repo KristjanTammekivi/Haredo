@@ -2,6 +2,17 @@
 
 ##### Documentation Changes
 
+*  document .confirm() in README.md ([cb570b30](https://github.com/KristjanTammekivi/haredo/commit/cb570b30f6407cec1472b4b773594427fe903b66))
+*  add a link to xkcd ([f6b8ecc6](https://github.com/KristjanTammekivi/haredo/commit/f6b8ecc62f4c046b6a39d98ae651aaf7fd7b0e85))
+
+##### New Features
+
+*  add possibility to pass an arr  of patterns ([c6dfe2ba](https://github.com/KristjanTammekivi/haredo/commit/c6dfe2bac1175bca6a58c1f5d66ff3dbf6f6b395))
+
+#### 1.2.2 (2019-06-09)
+
+##### Documentation Changes
+
 *  add a link to xkcd ([f6b8ecc6](https://github.com/KristjanTammekivi/haredo/commit/f6b8ecc62f4c046b6a39d98ae651aaf7fd7b0e85))
 
 #### 1.2.1 (2019-06-09)
