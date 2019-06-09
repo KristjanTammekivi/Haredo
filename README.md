@@ -13,8 +13,18 @@ Yet another RabbitMQ library
 - [Motivation](#motivation)
 - [Goals](#goals)
 - [Examples](#examples)
-- [Notes](#notes)
+  - [Publishing to an exchange](#publishing-to-an-exchange')
+  - [Publishing to a queue](#publishing-to-a-queue')
+  - [Prepared objects](#prepared-objects')
+  - [Subscribing](#subscribing')
+  - [Subscribing with manual ack/nack](#subscribing-with-manual-ack/nack')
+  - [Middleware](#middleware')
+  - [ConfirmChannel publishing](#confirmchannel-publishing)
+  - [TypeScript example](#typescript-example)
+  - [Setting loggers](#setting-loggers)
+  - [Delayed messages](#delayed-messages)
 - [Unexpected Behaviours](#unexpected-behaviours)
+- [Notes](#notes)
 
 ## Motivation
 
@@ -49,7 +59,7 @@ const haredo = new Haredo({
 haredo.connect();
 ```
 
-### Publishing to exchange
+### Publishing to an exchange
 
 ```typescript
 // Publishing and subscribing automatically sets up the Exchange
@@ -58,7 +68,7 @@ haredo
     .publish({ id: 52, status: 'active'}, 'item.created');
 ```
 
-### Publishing to queue
+### Publishing to a queue
 
 ```typescript
 // Publishing and subscribing automatically sets up the Queue
@@ -124,7 +134,17 @@ haredo
     });
 ```
 
-### Type stuff
+### ConfirmChannel publishing
+
+Use .confirm() to use a ConfirmChannel for publishing instead of normal channels. See [amqplib documentation](https://www.squaremobius.net/amqp.node/channel_api.html#confirmchannel) and [RabbitMQ documentation](https://www.rabbitmq.com/confirms.html#publisher-confirms) for more information on the subject.
+
+```typescript
+await haredo.queue(queue)
+    .confirm()
+    .publish('mymessage');
+```
+
+### TypeScript example
 
 ```typescript
 import { ExchangeType } from 'haredo';
