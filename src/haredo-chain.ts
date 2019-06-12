@@ -57,8 +57,17 @@ export class HaredoChain<T = unknown> {
     }
     /**
      * Add a queue to the chain (can only add 1, so choose wisely)
+     *
+     * @param queue instance of Queue
      */
     queue<U = unknown>(queue: Queue<U>): HaredoChain<MergeTypes<T, U>>;
+    /**
+     * Add a queue to the chain (can only add 1, so choose wisely)
+     *
+     * @param queueName name of the queue
+     * @param opts options that will be passed to amqplib
+     * [amqplib#assertQueue](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue)
+     */
     queue<U = unknown>(queueName: string, opts?: Partial<Options.AssertQueue>): HaredoChain<MergeTypes<T, U>>;
     queue<U = unknown>(queue: Queue<U> | string, opts: Partial<Options.AssertQueue> = {}) {
         if (!(queue instanceof Queue)) {
@@ -72,14 +81,31 @@ export class HaredoChain<T = unknown> {
         });
     }
     /**
-     * Add an exchange to the chain, pattern is not necessary when
-     * publishing.
-     * '#' - wildcard for zero or more dot-limited words
-     *
-     * '*' - wildcard for a single word
-     */
+    * Add an exchange to the chain. Pattern defaults to '#'
+    *
+    * @param exchange instance of Exchange
+    */
     exchange<U>(exchange: Exchange<U>): HaredoChain<MergeTypes<T, U>>;
+    /**
+     * Add an exchange to the chain.
+     *
+     * '*' means a single word
+     *
+     * '#' in routing keys means zero or more period separated words
+     *
+     * @param exchange instance of Exchange
+     * @param pattern pattern or array of patterns to bind the queue to
+     */
     exchange<U>(exchange: Exchange<U>, pattern?: string | string[]): HaredoChain<MergeTypes<T, U>>;
+    /**
+     * Add an exchange to the chain.
+     *
+     * @param exchange name of the exchange
+     * @param type exchange type, defaults to Direct
+     * @param pattern binding pattern for the exchange (to bind to a queue)
+     * @param opts exchange options that will be passed to amqplib while asserting
+     * [amqplib#assertExchange](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertExchange)
+     */
     exchange<U>(
         exchange: string,
         type?: ExchangeType | xDelayedTypeStrings,
@@ -128,6 +154,8 @@ export class HaredoChain<T = unknown> {
      * finished. If the "next" function isn't called after middleware finishes executing it is
      * still executed. If message was acked/nacked during middleware the rest of the callbacks
      * in the chain are not executed
+     *
+     * @param middleware function(s) to run before the subscribe callback gets executed
      **/
     use(middleware: Middleware<T> | Middleware<T>[]) {
         return this.clone({
@@ -138,6 +166,8 @@ export class HaredoChain<T = unknown> {
      * Set prefetch count for consuming (ie. amount of messages that will be received in parallel)
      *
      * 0 Means there is no limit
+     *
+     * @param prefetch number of messages to prefetch
      */
     prefetch(prefetch: number) {
         return this.clone({ prefetch });
@@ -241,9 +271,26 @@ export class HaredoChain<T = unknown> {
 
     /**
      * Publish a message to exchange/queue
+     *
+     * @param message message to publish
      */
     publish(message: T | PreparedMessage<T>): Promise<boolean>;
+    /**
+     * Publish a message to exchange/queue
+     *
+     * @param message message to publish
+     * @param opts options for publishing
+     */
     publish(message: T | PreparedMessage<T>, opts?: Partial<ExtendedPublishType>): Promise<boolean>;
+    /**
+     * Publish a message to exchange/queue
+     *
+     * @param message message to publish
+     * @param routingKey routing key
+     * @param opts options to pass to
+     * [amqplib.publish](https://www.squaremobius.net/amqp.node/channel_api.html#channel_publish) or
+     * [amqplib.sendToQueue](https://www.squaremobius.net/amqp.node/channel_api.html#channel_sendToQueue)
+     */
     publish(message: T | PreparedMessage<T>, routingKey: string, opts?: Partial<ExtendedPublishType>): Promise<boolean>;
     async publish(
         message: T | PreparedMessage<T>,

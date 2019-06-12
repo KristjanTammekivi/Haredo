@@ -12,6 +12,13 @@ export const DEFAULT_QUEUE_OPTIONS: QueueOptions = Object.freeze({
 export class Queue<T = unknown> {
     opts: QueueOptions;
     anonymous: boolean;
+    /**
+     * Create a Queue configuration object. Note: this does not assert the queue
+     *
+     * @param name name of the queue, falsey value (including empty string) will make the server generate a name for you
+     * @param opts queue options, passed to assertQueue
+     * [amqplib#assertQueue](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue)
+     */
     constructor(public name?: string, opts: Partial<QueueOptions> = { arguments: {} }) {
         this.opts = Object.assign({}, DEFAULT_QUEUE_OPTIONS, opts);
         this.anonymous = !this.name;

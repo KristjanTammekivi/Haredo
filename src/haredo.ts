@@ -33,6 +33,9 @@ export class Haredo {
             this.emitter.emit('error', err);
         });
     }
+    /**
+     * Start up the connection manager
+     */
     async connect(): Promise<Connection> {
         const connection = await this.connectionManager.getConnection();
         info('connected');
@@ -55,24 +58,44 @@ export class Haredo {
         this.emitter.emit('close');
     }
     /**
-     * Start the chain off with a queue.
+     * Add a queue to the chain
+     *
+     * @param queue instance of Queue
      */
     queue<T>(queue: Queue<T>): HaredoChain<T>;
+    /**
+     * Add a queue to the chain
+     *
+     * @param queueName name of the queue
+     * @param opts options that will be passed to amqplib
+     * [amqplib#assertQueue](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue)
+     */
     queue<T>(queueName: string, opts?: Partial<Options.AssertQueue>): HaredoChain<T>;
     queue<T>(queue: Queue<T> | string, opts?: Partial<Options.AssertQueue>) {
         return new HaredoChain<T>(this.connectionManager, {})
             .queue(queue as string, opts);
     }
     /**
-     * Start the chain off with a exchange. When pattern is omitted it
-     * defaults to '#'
-     *
-     * '#' - wildcard for zero or more dot-limited words
-     *
-     * '*' - wildcard for a single word
+     * Add an exchange to the chain. Pattern defaults to '#'
      */
     exchange<T>(exchange: Exchange<T>): HaredoChain<T>;
+    /**
+     * Add an exchange to the chain.
+     *
+     * '*' means a single word
+     *
+     * '#' in routing keys means zero or more period separated words
+     */
     exchange<T>(exchange: Exchange<T>, pattern?: string): HaredoChain<T>;
+    /**
+     * Add an exchange to the chain.
+     *
+     * @param exchange name of the exchange
+     * @param type exchange type, defaults to Direct
+     * @param pattern binding pattern for the exchange (to bind to a queue)
+     * @param opts exchange options that will be passed to amqplib while asserting
+     * [amqplib#assertExchange](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertExchange)
+     */
     exchange<T>(
         exchange: string,
         type?: ExchangeType | xDelayedTypeStrings,

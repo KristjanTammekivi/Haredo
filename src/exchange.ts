@@ -42,6 +42,7 @@ export class Exchange<T = unknown> {
      * @param name name of the exchange
      * @param type Set the exchange type (direct/topic/headers/fanout/x-delayed-message)
      * @param opts Options that will be passed directly to amqplib
+     * [amqplib#assertExchange](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertExchange)
      */
     constructor(
         public readonly name: string,
