@@ -1,3 +1,9 @@
+#### 1.2.3 (2019-06-12)
+
+##### Documentation Changes
+
+*  add more jsdocs ([8b9f824c](https://github.com/KristjanTammekivi/haredo/commit/8b9f824ce5f98ba9876903bb497e9cd5844acf16))
+
 #### 1.2.2 (2019-06-09)
 
 ##### Documentation Changes
