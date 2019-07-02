@@ -1,3 +1,9 @@
+#### 1.2.4 (2019-07-02)
+
+##### Bug Fixes
+
+*  solve race condition from [#12](https://github.com/KristjanTammekivi/haredo/pull/12) ([48ab2727](https://github.com/KristjanTammekivi/haredo/commit/48ab27273da5a6533c0f6039eab96cdafbc8db7a))
+
 #### 1.2.3 (2019-06-12)
 
 ##### Documentation Changes
