@@ -269,6 +269,42 @@ export class HaredoChain<T = unknown> {
         return this.clone({ skipSetup });
     }
 
+    async rpc(
+        message: T | PreparedMessage<T>,
+        optRoutingKey?: string | Partial<ExtendedPublishType>,
+        optPublishSettings?: Partial<ExtendedPublishType>
+    ) {
+        if (this.state.exchanges.length > 1) {
+            throw new HaredoError(`Can't publish to more than one exchange`);
+        }
+        await this.setup();
+        let routingKey: string;
+        let options: Partial<ExtendedPublishType>;
+        if (typeof optRoutingKey === 'string') {
+            routingKey = optRoutingKey;
+            options = optPublishSettings;
+        } else {
+            options = optRoutingKey;
+        }
+        if (!(message instanceof PreparedMessage)) {
+            const content = this.state.json ? JSON.stringify(message) : message.toString();
+            message = new PreparedMessage<T>({ content, routingKey, options });
+        } else {
+            message = message.clone({ routingKey, options });
+        }
+        await this.connectionManager.rpcService.start();
+        const queueName = this.connectionManager.rpcService.getQueueName();
+        const correlationId = `rpc-${Date.now()}`;
+        message = message.replyTo(queueName).correlationId(correlationId);
+
+        if (this.state.exchanges.length) {
+            await this.publishToExchange(message, this.state.exchanges[0].exchange);
+        } else {
+            await this.publishToQueue(message, this.state.queue);
+        }
+        return this.connectionManager.rpcService.listen(correlationId);
+    }
+
     /**
      * Publish a message to exchange/queue
      *

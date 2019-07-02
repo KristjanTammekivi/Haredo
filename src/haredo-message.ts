@@ -8,12 +8,16 @@ export interface HaredoMessageEvents {
     handled: void;
 }
 
-export class HaredoMessage<T = unknown> {
+export class HaredoMessage<T = unknown, U = unknown> {
     public data: T;
     public dataString: string;
     public isHandled = false;
     public isNacked = false;
     public isAcked = false;
+    public isRespondedTo = false;
+    public canReply: boolean;
+    public haveReplied = false;
+    public messageReply: U;
     public emitter = new EventEmitter as TypedEventEmitter<HaredoMessageEvents>;
     constructor(public readonly raw: Message, parseJson: boolean, public readonly consumer: Consumer) {
         this.dataString = raw.content.toString();
@@ -26,6 +30,7 @@ export class HaredoMessage<T = unknown> {
         } else {
             this.data = this.dataString as any;
         }
+        this.canReply = raw.properties.correlationId && raw.properties.replyTo;
     }
     getHeaders() {
         return this.raw.properties.headers;
@@ -50,6 +55,16 @@ export class HaredoMessage<T = unknown> {
         this.isHandled = true;
         this.isNacked = true;
         this.emitter.emit('handled');
+    }
+    reply(message: U) {
+        if (!this.canReply) {
+            return Promise.resolve();
+        }
+        if (this.haveReplied) {
+            return Promise.resolve();
+        }
+        this.messageReply = message;
+        return this.consumer.reply(this.raw.properties.replyTo, this.raw.properties.correlationId, message);
     }
     toString() {
         return `HaredoMessage ${ this.dataString }`;
