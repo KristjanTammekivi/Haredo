@@ -27,6 +27,8 @@ export class ConnectionManager {
     socketOpts: any;
     private publishChannel: Channel;
     private publishConfirmChannel: ConfirmChannel;
+    private publishChannelPromise: Promise<Channel>;
+    private publishConfirmChannelPromise: Promise<ConfirmChannel>;
     public emitter = new EventEmitter() as TypedEventEmitter<Events>;
     constructor(opts: string | Options.Connect = 'amqp://localhost:5672', socketOpts: any = {}) {
         this.connectionOpts = opts;
@@ -97,7 +99,12 @@ export class ConnectionManager {
         if (this.publishChannel) {
             return this.publishChannel;
         }
-        this.publishChannel = await this.getChannel();
+        if (this.publishChannelPromise) {
+            return this.publishChannelPromise;
+        }
+        this.publishChannelPromise = this.getChannel();
+        this.publishChannel = await this.publishChannelPromise;
+        this.publishChannelPromise = undefined;
         this.publishChannel.on('close', () => {
             debug('publishchannel was closed');
             this.publishChannel = undefined;
@@ -109,7 +116,12 @@ export class ConnectionManager {
         if (this.publishConfirmChannel) {
             return this.publishConfirmChannel;
         }
-        this.publishConfirmChannel = await this.getConfirmChannel();
+        if (this.publishConfirmChannelPromise) {
+            return this.publishConfirmChannelPromise;
+        }
+        this.publishConfirmChannelPromise = this.getConfirmChannel();
+        this.publishConfirmChannel = await this.publishConfirmChannelPromise;
+        this.publishConfirmChannelPromise = undefined;
         this.publishConfirmChannel.on('close', () => {
             debug('publishconfirmchannel was closed');
             this.publishConfirmChannel = undefined;

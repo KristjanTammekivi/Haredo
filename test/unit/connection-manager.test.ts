@@ -16,12 +16,15 @@ describe('Unit: ConnectionManager', () => {
     let connectionMock: { [key: string]: sinon.SinonSpy | sinon.SinonStub };
     let connectStub: sinon.SinonStub;
     let confirmChannelMock: any;
+    let channelMock: any;
     beforeEach(async () => {
         confirmChannelMock = new EventEmitter();
+        channelMock = new EventEmitter();
         connectionMock = {
             close: sinon.stub(() => { return delay(10); }) as any,
             on: sinon.spy(),
-            createConfirmChannel: sinon.stub().returns(confirmChannelMock)
+            createConfirmChannel: sinon.stub().returns(confirmChannelMock),
+            createChannel: sinon.stub().returns(channelMock)
         };
         connectStub = sinon.stub().returns(connectionMock);
         ({ ConnectionManager } = await rewiremock.module(() => import('../../src/connection-manager'), () => {
@@ -64,6 +67,19 @@ describe('Unit: ConnectionManager', () => {
         const channel1 = await manager.getConfirmChannelForPublishing();
         const channel2 = await manager.getConfirmChannelForPublishing();
         expect(channel1).to.equal(channel2);
+        expect(connectionMock.createConfirmChannel.callCount).to.equal(1);
+    });
+    it('should not create two publisher channels in a race condition', async () => {
+        const manager = new ConnectionManager();
+        await Promise.all([
+            manager.getChannelForPublishing(),
+            manager.getChannelForPublishing(),
+        ]);
+        expect(connectionMock.createChannel.callCount).to.equal(1);
+        await Promise.all([
+            manager.getConfirmChannelForPublishing(),
+            manager.getConfirmChannelForPublishing(),
+        ]);
         expect(connectionMock.createConfirmChannel.callCount).to.equal(1);
     });
 });
