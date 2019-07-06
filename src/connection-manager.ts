@@ -130,11 +130,19 @@ export class ConnectionManager {
     }
 
     async assertQueue(queue: Queue) {
-        const channel = await this.getChannel();
-        const reply = await channel.assertQueue(queue.name, queue.opts);
-        queue.name = reply.queue;
-        await channel.close();
-        return reply;
+        if (queue.anonymous && queue.isPerishable()) {
+            this.emitter.once('connectionclose', () => {
+                debug('Clearing name for queue', queue);
+                queue.name = '';
+            });
+        }
+        if (!(queue.name || '').startsWith('amq.')) {
+            const channel = await this.getChannel();
+            const reply = await channel.assertQueue(queue.name, queue.opts);
+            queue.name = reply.queue;
+            await channel.close();
+            return reply;
+        }
     }
 
     async assertExchange(exchange: Exchange) {

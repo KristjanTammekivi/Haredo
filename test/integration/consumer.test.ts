@@ -96,7 +96,7 @@ describe('Consumer', () => {
     it('should clear an anonymous queue name when connection is reestablished', async () => {
         const queue = new Queue('').exclusive();
         expect(queue.isPerishable()).to.be.true;
-        await haredo.queue(queue).subscribe(msg => {});
+        await haredo.queue(queue).exchange('test').subscribe(msg => {});
         const originalName = queue.name;
         await delay(50);
         await connection.close();
