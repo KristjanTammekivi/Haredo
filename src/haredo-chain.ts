@@ -294,7 +294,7 @@ export class HaredoChain<T = unknown> {
         }
         await this.connectionManager.rpcService.start();
         const queueName = this.connectionManager.rpcService.getQueueName();
-        const correlationId = `rpc-${Date.now()}`;
+        const correlationId = this.connectionManager.rpcService.generateCorrelationId();
         message = message.replyTo(queueName).correlationId(correlationId);
 
         if (this.state.exchanges.length) {

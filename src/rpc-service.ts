@@ -38,4 +38,7 @@ export class RpcService {
             this.toResolve[correlationId] = { resolve, reject };
         });
     }
+    public  generateCorrelationId() {
+        return `rpc-${Date.now()}-${Math.random().toString(36).split('.')[1]}`;
+    }
 }
