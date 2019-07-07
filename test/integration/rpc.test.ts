@@ -8,7 +8,7 @@ import { setup, teardown, verifyQueue, getSingleMessage, publishMessage } from '
 import { delay } from '../../src/utils';
 use(chaiAsPromised);
 
-describe.only('RPC', () => {
+describe('RPC', () => {
     let haredo: Haredo
     beforeEach(async () => {
         await setup();

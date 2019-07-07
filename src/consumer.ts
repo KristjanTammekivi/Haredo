@@ -14,7 +14,7 @@ import { Middleware, HaredoChain } from './haredo-chain';
 const { debug, error, info } = makeLogger('Consumer');
 
 export interface MessageCallback<T = unknown, U = unknown> {
-    (data: T, messageWrapper?: HaredoMessage<T>): U;
+    (data: T, messageWrapper?: HaredoMessage<T>): U | Promise<U>;
 }
 
 export interface ConsumerOpts<T> {
@@ -213,7 +213,7 @@ export const applyMiddleware = async <T>(middleware: Middleware<T>[], cb: Messag
     if (!middleware.length) {
         const response = await cb(msg.data, msg);
         if (response !== undefined) {
-            msg.reply(response);
+            await msg.reply(response);
         }
     } else {
         let nextWasCalled = false;
