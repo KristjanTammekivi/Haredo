@@ -1,3 +1,10 @@
+#### 1.2.6 (2019-07-07)
+
+##### Bug Fixes
+
+*  lint error ([d7408701](https://github.com/KristjanTammekivi/haredo/commit/d7408701a374f758b872cd7708aca7188dcf8424))
+*  emit connected event even when haredo.connect is not called ([289f00a2](https://github.com/KristjanTammekivi/haredo/commit/289f00a28705be6a72051b48363cf2ab6f553f96))
+
 #### 1.2.5 (2019-07-07)
 
 ##### Bug Fixes
