@@ -32,14 +32,16 @@ export class Haredo {
         this.connectionManager.emitter.on('error', /* istanbul ignore next */ (err) => {
             this.emitter.emit('error', err);
         });
+        this.connectionManager.emitter.on('connected', () => {
+            info('connected');
+            this.emitter.emit('connected');
+        });
     }
     /**
      * Start up the connection manager
      */
     async connect(): Promise<Connection> {
         const connection = await this.connectionManager.getConnection();
-        info('connected');
-        this.emitter.emit('connected');
         return connection;
     }
     /**

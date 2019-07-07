@@ -6,7 +6,6 @@ export const main = async () => {
     const haredo = new Haredo({
         connection: 'amqp://guest:guest@localhost:5672/'
     });
-    await haredo.connect();
     await haredo.queue('mydoublebindedqueue', { autoDelete: true })
         .exchange('exchange1', 'direct', ['item.created', 'item.updated'], { autoDelete: true })
         .exchange('exchange2', 'topic', 'item.*', { autoDelete: true })

@@ -14,6 +14,7 @@ interface Events {
     close: void;
     error: HaredoError;
     connectionclose: void;
+    connected: Connection;
 }
 
 export class ConnectionManager {
@@ -66,6 +67,7 @@ export class ConnectionManager {
                     }
                 });
                 this.connection = connection;
+                this.emitter.emit('connected', connection);
                 return connection;
             } catch (e) /* istanbul ignore next */ {
                 error('failed to connect', e);

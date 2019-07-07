@@ -9,7 +9,6 @@ export const main = async () => {
     const haredo = new Haredo({
         connection: 'amqp://guest:guest@localhost:5672/'
     });
-    await haredo.connect();
     interface SimpleMessage {
         time: number;
     }

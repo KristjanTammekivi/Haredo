@@ -7,7 +7,6 @@ export const main = async () => {
     const haredo = new Haredo({
         connection: 'amqp://guest:guest@localhost:5672/'
     });
-    await haredo.connect();
     const queue = new Queue<{ test: number }>('test').expires(2000);
     await haredo
         .queue(queue)

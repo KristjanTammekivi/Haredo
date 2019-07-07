@@ -8,7 +8,6 @@ export const main = async () => {
     const haredo = new Haredo({
         connection: 'amqp://guest:guest@localhost:5672/'
     });
-    await haredo.connect();
     const dlx = new Exchange('dlxexampledeadexchange', 'fanout');
     const dlq = new Queue('dlxexampledeadqueue');
     const mainQueue = new Queue('dlxexample').dead(dlx);

@@ -9,7 +9,6 @@ export const main = async () => {
     const haredo = new Haredo({
         connection: 'amqp://guest:guest@localhost:5672/'
     });
-    await haredo.connect();
     await haredo.queue('graceful-shutdown-example', { expires: 2000 }).publish({ time: Date.now() });
     await haredo.queue('graceful-shutdown-example', { expires: 2000 }).subscribe(async (msg) => {
         console.log('Message received');
