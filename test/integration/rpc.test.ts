@@ -5,7 +5,7 @@ import { expect, use } from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import { Haredo, Queue } from '../../src/index';
 import { setup, teardown, verifyQueue, getSingleMessage, publishMessage } from './helpers/amqp';
-import { delay } from '../../src/utils';
+import { delay, timeout } from '../../src/utils';
 use(chaiAsPromised);
 
 describe('RPC', () => {
@@ -43,5 +43,20 @@ describe('RPC', () => {
         });
         const result = await haredo.queue(queue).rpc([3, 4]);
         expect(result).to.equal(12);
+    });
+    it('should reply when a value is returned from the callback', async () => {
+        const queue = new Queue<[number, number]>('testqueue');
+        await haredo.queue(queue).autoReply().subscribe(data => {
+            return data[0] * data[1];
+        });
+        const result = await haredo.queue(queue).rpc([2, 3]);
+        expect(result).to.equal(6);
+    });
+    it('should not autoreply when it has not been enabled', async () => {
+        const queue = new Queue<[number, number]>('testqueue');
+        await haredo.queue(queue).autoReply().subscribe(data => {
+            return data[0] * data[1];
+        });
+        await expect(Promise.all([timeout(200), haredo.queue(queue).rpc([6, 8])])).to.eventually.be.rejected;
     });
 });

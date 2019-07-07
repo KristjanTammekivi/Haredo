@@ -63,6 +63,7 @@ export class HaredoMessage<T = unknown, U = unknown> {
         if (this.haveReplied) {
             return Promise.resolve();
         }
+        this.haveReplied = true;
         this.messageReply = message;
         return this.consumer.reply(this.raw.properties.replyTo, this.raw.properties.correlationId, message);
     }

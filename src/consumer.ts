@@ -20,6 +20,7 @@ export interface MessageCallback<T = unknown, U = unknown> {
 export interface ConsumerOpts<T> {
     prefetch: number;
     autoAck: boolean;
+    autoReply: boolean;
     json: boolean;
     queue: Queue;
     reestablish: boolean;
@@ -103,6 +104,9 @@ export class Consumer<T = unknown, U = unknown> {
                         this.messageManager.add(messageInstance);
                         try {
                             await applyMiddleware(this.opts.middleware, this.cb, messageInstance);
+                            if (this.opts.autoReply && messageInstance.messageReply !== undefined) {
+                                await messageInstance.reply(messageInstance.messageReply);
+                            }
                             if (this.opts.autoAck) {
                                 swallowError(MessageAlreadyHandledError, () =>  messageInstance.ack());
                             }
@@ -214,7 +218,7 @@ export const applyMiddleware = async <T>(middleware: Middleware<T>[], cb: Messag
         // tslint:disable-next-line:no-invalid-await
         const response = await cb(msg.data, msg);
         if (response !== undefined) {
-            await msg.reply(response);
+            msg.messageReply = response;
         }
     } else {
         let nextWasCalled = false;
