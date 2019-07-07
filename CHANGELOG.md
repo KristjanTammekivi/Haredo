@@ -1,3 +1,9 @@
+#### 1.2.5 (2019-07-07)
+
+##### Bug Fixes
+
+*  don't assert anonymous queues when there is a binding ([4fcb2b1e](https://github.com/KristjanTammekivi/haredo/commit/4fcb2b1ec177fe897e578df6ba93233ea07ead95))
+
 #### 1.2.4 (2019-07-02)
 
 ##### Bug Fixes
