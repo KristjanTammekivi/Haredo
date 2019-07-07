@@ -392,17 +392,9 @@ export class HaredoChain<T = unknown> {
             return;
         }
         if (this.state.queue) {
-            if (this.state.queue.anonymous && this.state.queue.isPerishable()) {
-                this.connectionManager.emitter.once('connectionclose', () => {
-                    debug('Clearing name for queue', this.state.queue);
-                    this.state.queue.name = '';
-                });
-            }
-            if (!(this.state.queue.name || '').startsWith('amq.')) {
-                debug(`Asserting ${this.state.queue}`);
-                await this.connectionManager.assertQueue(this.state.queue);
-                debug(`Done asserting ${this.state.queue}`);
-            }
+            debug(`Asserting ${this.state.queue}`);
+            await this.connectionManager.assertQueue(this.state.queue);
+            debug(`Done asserting ${this.state.queue}`);
         }
         await promiseMap(this.state.exchanges, async (exchangery) => {
             debug(`Asserting ${exchangery.exchange}`);
