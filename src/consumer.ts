@@ -211,6 +211,7 @@ export class Consumer<T = unknown, U = unknown> {
 
 export const applyMiddleware = async <T>(middleware: Middleware<T>[], cb: MessageCallback<T>, msg: HaredoMessage<T>) => {
     if (!middleware.length) {
+        // tslint:disable-next-line:no-invalid-await
         const response = await cb(msg.data, msg);
         if (response !== undefined) {
             await msg.reply(response);
