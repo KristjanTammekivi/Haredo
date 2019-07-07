@@ -41,8 +41,7 @@ export class Haredo {
      * Start up the connection manager
      */
     async connect(): Promise<Connection> {
-        const connection = await this.connectionManager.getConnection();
-        return connection;
+        return this.connectionManager.getConnection();
     }
     /**
      * Safely cancel all consumers, wait for messages to be handled and then
