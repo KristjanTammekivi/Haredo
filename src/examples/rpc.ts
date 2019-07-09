@@ -13,9 +13,11 @@ export const main = async () => {
         console.log('Calculating sum', data.join(' + '));
         return (data.reduce((acc, item) => acc + item));
     });
+    let i = 1;
     while (true) {
         const result = await haredo.queue(queue)
-            .rpc([1, 2, 3]);
+            .rpc([i - 1, i, i + 1]);
+        i += 1;
         console.log('Sum is', result);
         await delay(2000);
     }
