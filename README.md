@@ -139,8 +139,9 @@ haredo
 await haredo
     .queue(queue)
     .autoReply()
-    .subscribe((message) => {
-        return factorial(message);
+    .subscribe((data, message) => {
+        // Or use message.reply(factorial(data)) if autoReply is turned off
+        return factorial(data);
     });
 
 const result = await haredo
