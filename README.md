@@ -56,7 +56,6 @@ import { Haredo } from 'haredo';
 const haredo = new Haredo({
     connection: 'amqp://localhost:5672/'
 });
-haredo.connect();
 ```
 
 ### Publishing to an exchange
@@ -132,6 +131,21 @@ haredo
     .subscribe(() => {
         // ...
     });
+```
+
+### RPC
+
+```typescript
+await haredo
+    .queue(queue)
+    .autoReply()
+    .subscribe((message) => {
+        return factorial(message);
+    });
+
+const result = await haredo
+    .queue(queue)
+    .rpc(27);
 ```
 
 ### ConfirmChannel publishing
