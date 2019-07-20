@@ -61,7 +61,7 @@ describe('Consumer', () => {
                 });
             await consumer.channel.close();
             await haredo.queue('test').publish({});
-            await delay(50);
+            await delay(100);
             await consumer.cancel();
             expect(messageWasHandled).to.be.true;
         });

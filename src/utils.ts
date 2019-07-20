@@ -82,4 +82,5 @@ export const swallowError = <T>(error: { new(): Error}, fn: () => T): T | undefi
 type notany = object | string | number | undefined | null;
 export type MergeTypes<T, U> = T extends notany ? U extends notany ? T | U : T : U;
 
-export const defaultToTrue = (bool: boolean) => bool === undefined ? true : bool;
+export const defaultToTrue = (value: boolean) => defaultTo(value, true);
+export const defaultTo = <T>(value: T, backup: T) => value === undefined ? backup : value;

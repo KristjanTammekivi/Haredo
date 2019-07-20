@@ -82,6 +82,6 @@ describe('Unit: HaredoChain', () => {
     });
     it('should throw when trying to subscribe without exchange', async () => {
         const chain = haredo.exchange('');
-        await expect(chain.subscribe(() => {})).to.eventually.be.rejectedWith(BadArgumentsError);
+        await expect(chain.subscribe(() => {})).to.be.rejectedWith(BadArgumentsError);
     });
 });

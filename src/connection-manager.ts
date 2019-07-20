@@ -7,6 +7,7 @@ import { delay } from './utils';
 import { HaredoError, HaredoClosingError } from './errors';
 import { EventEmitter } from 'events';
 import { TypedEventEmitter } from './events';
+import { RpcService } from './rpc-service';
 
 const { info, error, debug } = makeLogger('ConnectionManager');
 
@@ -31,9 +32,12 @@ export class ConnectionManager {
     private publishChannelPromise: Promise<Channel>;
     private publishConfirmChannelPromise: Promise<ConfirmChannel>;
     public emitter = new EventEmitter() as TypedEventEmitter<Events>;
+    public rpcService: RpcService;
+
     constructor(opts: string | Options.Connect = 'amqp://localhost:5672', socketOpts: any = {}) {
         this.connectionOpts = opts;
         this.socketOpts = socketOpts;
+        this.rpcService = new RpcService(this);
     }
 
     async getConnection() {

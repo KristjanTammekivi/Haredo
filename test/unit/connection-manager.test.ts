@@ -60,7 +60,7 @@ describe('Unit: ConnectionManager', () => {
         const manager = new ConnectionManager();
         await manager.getConnection();
         await manager.close();
-        await expect(manager.getConnection()).to.eventually.be.rejectedWith(HaredoClosingError);
+        await expect(manager.getConnection()).to.be.rejectedWith(HaredoClosingError);
     });
     it('should return existing confirmChannel when getConfirmChannelForPublishing is called', async () => {
         const manager = new ConnectionManager();

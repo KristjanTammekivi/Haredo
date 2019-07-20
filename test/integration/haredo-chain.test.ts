@@ -39,7 +39,7 @@ describe('HaredoChain', () => {
             });
         await delay(50);
         await consumer.cancel();
-        await expect(checkQueue('test.dead')).to.eventually.not.be.rejected;
+        await expect(checkQueue('test.dead')).to.not.be.rejected;
         await expect(getSingleMessage('test.dead').then(x => x.content)).to.eventually.eql('"message"');
     });
     it('should publish via confirm channel to queue', async () => {
@@ -63,7 +63,7 @@ describe('HaredoChain', () => {
     it('should skipSetup when the flag has been set', async () => {
         const queue = new Queue('test');
         await haredo.queue(queue).skipSetup().publish('msg');
-        await expect(checkQueue(queue.name)).to.eventually.be.rejected;
+        await expect(checkQueue(queue.name)).to.be.rejected;
     });
     it('should not allow publishing to multiple exchanges', async () => {
         await expect(haredo.exchange('test').exchange('test2').publish({ test: 'msg' })).to.be.rejected;

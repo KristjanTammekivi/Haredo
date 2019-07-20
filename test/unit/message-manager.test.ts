@@ -9,7 +9,8 @@ describe('Unit: MessageManager', () => {
     beforeEach(() => {
         messageManager = new MessageManager();
         message = new HaredoMessage({
-            content: Buffer.from('')
+            content: Buffer.from(''),
+            properties: {}
         } as any, false, {} as any);
     });
     it('should return length', () => {

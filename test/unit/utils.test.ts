@@ -21,7 +21,7 @@ describe('utils', () => {
     });
     describe('swallowRejection', () => {
         it('should swallow specified error', async () => {
-            await expect(swallowRejection(HaredoError, Promise.reject(new HaredoError()))).to.eventually.not.be.rejected;
+            await expect(swallowRejection(HaredoError, Promise.reject(new HaredoError()))).to.not.be.rejected;
         });
         it('should reject non-specified errors', async () => {
             await expect(swallowRejection(BadArgumentsError, Promise.reject(new HaredoError('test')))).to.be.rejectedWith('test');

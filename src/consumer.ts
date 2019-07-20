@@ -9,17 +9,18 @@ import { delay, swallowError, head, tail } from './utils';
 import { FailHandlerOpts, FailHandler } from './fail-handler';
 import { makeLogger } from './logger';
 import { Queue } from './queue';
-import { Middleware } from './haredo-chain';
+import { Middleware, HaredoChain } from './haredo-chain';
 
 const { debug, error, info } = makeLogger('Consumer');
 
-export interface MessageCallback<T = unknown> {
-    (data: T, messageWrapper?: HaredoMessage<T>): any;
+export interface MessageCallback<T = unknown, U = unknown> {
+    (data: T, messageWrapper?: HaredoMessage<T>): U | Promise<U>;
 }
 
 export interface ConsumerOpts<T> {
     prefetch: number;
     autoAck: boolean;
+    autoReply: boolean;
     json: boolean;
     queue: Queue;
     reestablish: boolean;
@@ -34,7 +35,7 @@ export interface ConsumerEvents {
     'message-error': Error;
 }
 
-export class Consumer<T = any> {
+export class Consumer<T = unknown, U = unknown> {
     public channel: Channel;
     private prefetch: number;
     public cancelling = false;
@@ -103,6 +104,9 @@ export class Consumer<T = any> {
                         this.messageManager.add(messageInstance);
                         try {
                             await applyMiddleware(this.opts.middleware, this.cb, messageInstance);
+                            if (this.opts.autoReply && messageInstance.messageReply !== undefined) {
+                                await messageInstance.reply(messageInstance.messageReply);
+                            }
                             if (this.opts.autoAck) {
                                 swallowError(MessageAlreadyHandledError, () =>  messageInstance.ack());
                             }
@@ -171,6 +175,16 @@ export class Consumer<T = any> {
         this.channel.nack(message instanceof HaredoMessage ? message.raw : message, false, requeue);
     }
     /**
+     * reply to a message
+     */
+    async reply(replyTo: string, correlationId: string, message: U) {
+        await new HaredoChain(this.connectionManager, {})
+            .queue(replyTo)
+            .skipSetup()
+            .json(this.opts.json)
+            .publish(message, { correlationId });
+    }
+    /**
      * Cancel a consumer, wait for messages to finish processing
      * and then close the channel
      */
@@ -200,7 +214,11 @@ export class Consumer<T = any> {
 
 export const applyMiddleware = async <T>(middleware: Middleware<T>[], cb: MessageCallback<T>, msg: HaredoMessage<T>) => {
     if (!middleware.length) {
-        await cb(msg.data, msg);
+        // tslint:disable-next-line:no-invalid-await
+        const response = await cb(msg.data, msg);
+        if (response !== undefined) {
+            msg.messageReply = response;
+        }
     } else {
         let nextWasCalled = false;
         await head(middleware)(msg, () => {

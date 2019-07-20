@@ -56,7 +56,6 @@ import { Haredo } from 'haredo';
 const haredo = new Haredo({
     connection: 'amqp://localhost:5672/'
 });
-haredo.connect();
 ```
 
 ### Publishing to an exchange
@@ -132,6 +131,27 @@ haredo
     .subscribe(() => {
         // ...
     });
+```
+
+### RPC
+
+#### Warning
+
+I don't use RPC in my day-to-day life so this isn't as well tested as the rest of the library. Use with caution and
+be sure to report any issues to [github](https://github.com/KristjanTammekivi/Haredo/issues)
+
+```typescript
+await haredo
+    .queue(queue)
+    .autoReply()
+    .subscribe((data, message) => {
+        // Or use message.reply(factorial(data)) if autoReply is turned off
+        return factorial(data);
+    });
+
+const result = await haredo
+    .queue(queue)
+    .rpc(27);
 ```
 
 ### ConfirmChannel publishing

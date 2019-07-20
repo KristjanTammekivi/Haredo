@@ -1,6 +1,6 @@
 import { Queue } from './queue';
 import { Exchange, ExchangeType, xDelayedTypeStrings, xDelayedTypesArray, ExchangeOptions } from './exchange';
-import { MergeTypes, stringify, promiseMap, defaultToTrue, reject } from './utils';
+import { MergeTypes, stringify, promiseMap, defaultToTrue, reject, defaultTo } from './utils';
 import { BadArgumentsError, HaredoError } from './errors';
 import { makeLogger } from './logger';
 import { ConnectionManager } from './connection-manager';
@@ -30,6 +30,7 @@ export interface HaredoChainState<T> {
     confirm: boolean;
     skipSetup: boolean;
     middleware: Middleware<T>[];
+    autoReply: boolean;
 }
 
 export interface Middleware<T> {
@@ -40,6 +41,7 @@ export class HaredoChain<T = unknown> {
     state: Partial<HaredoChainState<T>> = {};
     constructor(public connectionManager: ConnectionManager, state: Partial<HaredoChainState<T>>) {
         this.state.autoAck = defaultToTrue(state.autoAck);
+        this.state.autoReply = defaultTo(state.autoReply, false);
         this.state.queue = state.queue;
         this.state.exchanges = [].concat(state.exchanges || []);
         this.state.prefetch = state.prefetch || 0;
@@ -226,6 +228,16 @@ export class HaredoChain<T = unknown> {
         return this.clone({ autoAck });
     }
     /**
+     * Autoreply (disabled by default) automatically replies to messages
+     * where message callback in subscriber returns a non-undefined value
+     * (Only if message has replyTo and a correlationId)
+     *
+     * [RPC tutorial](https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html)
+     */
+    autoReply(autoReply = true) {
+        return this.clone({ autoReply });
+    }
+    /**
      * Subscribe to messages in the queue specified in the chain
      */
     async subscribe(cb: MessageCallback<T>) {
@@ -234,6 +246,7 @@ export class HaredoChain<T = unknown> {
         }
         const consumer = new Consumer<T>({
             autoAck: this.state.autoAck,
+            autoReply: this.state.autoReply,
             fail: {
                 failSpan: this.state.failSpan,
                 failThreshold: this.state.failThreshold,
@@ -267,6 +280,54 @@ export class HaredoChain<T = unknown> {
      */
     skipSetup(skipSetup = true) {
         return this.clone({ skipSetup });
+    }
+
+    /**
+     * Publish message and wait for a reply
+     *
+     * Read more at [RabbitMQ Docs](https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html)
+     *
+     * Warning
+     * -------
+     * I don't use RPC in my day-to-day life so this isn't as well tested as the rest of the library. Use with caution and
+     * be sure to report any issues to [KristjanTammekivi/Haredo](https://github.com/KristjanTammekivi/Haredo/issues)
+     */
+
+    async rpc(
+        message: T | PreparedMessage<T>,
+        optRoutingKey?: string | Partial<ExtendedPublishType>,
+        optPublishSettings?: Partial<ExtendedPublishType>
+    ) {
+        /* istanbul ignore if */
+        if (this.state.exchanges.length > 1) {
+            throw new HaredoError(`Can't publish to more than one exchange`);
+        }
+        await this.setup();
+        let routingKey: string;
+        let options: Partial<ExtendedPublishType>;
+        if (typeof optRoutingKey === 'string') {
+            routingKey = optRoutingKey;
+            options = optPublishSettings;
+        } else {
+            options = optRoutingKey;
+        }
+        if (!(message instanceof PreparedMessage)) {
+            const content = this.state.json ? JSON.stringify(message) : message.toString();
+            message = new PreparedMessage<T>({ content, routingKey, options });
+        } else {
+            message = message.clone({ routingKey, options });
+        }
+        await this.connectionManager.rpcService.start();
+        const queueName = this.connectionManager.rpcService.getQueueName();
+        const correlationId = this.connectionManager.rpcService.generateCorrelationId();
+        message = message.replyTo(queueName).correlationId(correlationId);
+
+        if (this.state.exchanges.length) {
+            await this.publishToExchange(message, this.state.exchanges[0].exchange);
+        } else {
+            await this.publishToQueue(message, this.state.queue);
+        }
+        return this.connectionManager.rpcService.listen(correlationId);
     }
 
     /**
