@@ -135,6 +135,11 @@ haredo
 
 ### RPC
 
+#### Warning
+
+I don't use RPC in my day-to-day life so this isn't as well tested as the rest of the library. Use with caution and
+be sure to report any issues to [github](https://github.com/KristjanTammekivi/Haredo/issues)
+
 ```typescript
 await haredo
     .queue(queue)

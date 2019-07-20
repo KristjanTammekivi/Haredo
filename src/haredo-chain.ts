@@ -282,6 +282,17 @@ export class HaredoChain<T = unknown> {
         return this.clone({ skipSetup });
     }
 
+    /**
+     * Publish message and wait for a reply
+     *
+     * Read more at [RabbitMQ Docs](https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html)
+     *
+     * Warning
+     * -------
+     * I don't use RPC in my day-to-day life so this isn't as well tested as the rest of the library. Use with caution and
+     * be sure to report any issues to [KristjanTammekivi/Haredo](https://github.com/KristjanTammekivi/Haredo/issues)
+     */
+
     async rpc(
         message: T | PreparedMessage<T>,
         optRoutingKey?: string | Partial<ExtendedPublishType>,
