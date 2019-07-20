@@ -1,3 +1,30 @@
+### 1.3.0 (2019-07-20)
+
+##### Chores
+
+*  remove .only from rpc tests ([7fc0f7f7](https://github.com/KristjanTammekivi/haredo/commit/7fc0f7f767766d21432cec539dc6c7c8b485b1a3))
+
+##### Documentation Changes
+
+*  add some documentation/warnings on RPC ([e313e6c1](https://github.com/KristjanTammekivi/haredo/commit/e313e6c13bcd31209596b62e617b81f044cfcb24))
+*  add an extra tidbit about manual reply ([489e0677](https://github.com/KristjanTammekivi/haredo/commit/489e06771e2be77ac0d7e880b0a58d46b4bb41ec))
+*  add RPC to README ([396a0315](https://github.com/KristjanTammekivi/haredo/commit/396a031539dc5b4cc500f9771e5541d69073d857))
+
+##### New Features
+
+*  add an option for autoReply ([c7123f9f](https://github.com/KristjanTammekivi/haredo/commit/c7123f9f4ebfcfea8073237fc148ae1c2632359f))
+*  initial implementation of RPC ([6353d344](https://github.com/KristjanTammekivi/haredo/commit/6353d344e8f96a19320858b4bff29fdbe2de55d7))
+
+##### Bug Fixes
+
+*  fix tests with eventually.rejected ([45d46da2](https://github.com/KristjanTammekivi/haredo/commit/45d46da2f6c1fdfe43f0714f14cea13f129a5359))
+*  linting error which isn't an error ([a5c9b1e5](https://github.com/KristjanTammekivi/haredo/commit/a5c9b1e57723809d0bbd01d11edf83da350dde2e))
+
+##### Tests
+
+*  increase rpc code coverage ([5d957d29](https://github.com/KristjanTammekivi/haredo/commit/5d957d2985237216f48c1d67e9b6633e483d6a2c))
+*  add tests to cover rpc ([7dd9b628](https://github.com/KristjanTammekivi/haredo/commit/7dd9b628173488b59a71a39718fd6f2f184d9f5d))
+
 #### 1.2.6 (2019-07-07)
 
 ##### Bug Fixes
