@@ -181,7 +181,6 @@ export class Consumer<T = unknown, U = unknown> {
         await new HaredoChain(this.connectionManager, {})
             .queue(replyTo)
             .skipSetup()
-            .confirm()
             .json(this.opts.json)
             .publish(message, { correlationId });
     }

@@ -287,6 +287,7 @@ export class HaredoChain<T = unknown> {
         optRoutingKey?: string | Partial<ExtendedPublishType>,
         optPublishSettings?: Partial<ExtendedPublishType>
     ) {
+        /* istanbul ignore if */
         if (this.state.exchanges.length > 1) {
             throw new HaredoError(`Can't publish to more than one exchange`);
         }

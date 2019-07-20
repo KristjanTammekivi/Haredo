@@ -5,10 +5,10 @@ import { HaredoChain } from './haredo-chain';
 
 export class RpcService {
     private queue = new Queue().exclusive();
-    private consumer: Consumer;
+    public consumer: Consumer;
     private toResolve = {} as { [correlationId: string]: { resolve: Function, reject: Function } };
     private chain: HaredoChain;
-    private startPromise: Promise<any>;
+    private startPromise: Promise<Consumer>;
     public started = false;
     public closing = false;
     constructor(private connectionManager: ConnectionManager) {
@@ -38,6 +38,7 @@ export class RpcService {
             delete this.toResolve[message.raw.properties.correlationId];
         });
         this.consumer.emitter.on('cancel', () => this.stop());
+        return this.consumer;
     }
     async listen<T = any>(correlationId: string): Promise<T> {
         return new Promise<T>((resolve, reject) => {

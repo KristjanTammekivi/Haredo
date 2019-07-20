@@ -51,10 +51,6 @@ export class ConnectionManager {
         return this.connectionPromise;
     }
 
-    async startRpc() {
-        await this.rpcService.start();
-    }
-
     private async loopGetConnection () {
         while (true) {
             try {
