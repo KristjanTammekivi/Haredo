@@ -1,6 +1,0 @@
-node_modules
-dist
-.nyc_output
-coverage
-docs
-yarn-error.log

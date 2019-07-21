@@ -69,7 +69,7 @@ export const swallowRejection = async <T>(error: { new(): Error }, promise: Prom
     }
 };
 
-export const swallowError = <T>(error: { new(): Error}, fn: () => T): T | undefined => {
+export const swallowError = <T>(error: { new(): Error }, fn: () => T): T | undefined => {
     try {
         return fn();
     } catch (e) {
@@ -84,3 +84,21 @@ export type MergeTypes<T, U> = T extends notany ? U extends notany ? T | U : T :
 
 export const defaultToTrue = (value: boolean) => defaultTo(value, true);
 export const defaultTo = <T>(value: T, backup: T) => value === undefined ? backup : value;
+
+export const pick = <T, K extends keyof T>(item: T, ...keys: K[]) => {
+    const pickedItem = {} as Pick<T, K>;
+    for (const key of keys) {
+        pickedItem[key] = item[key];
+    }
+    return pickedItem;
+};
+
+export const omit = <T, K extends keyof T>(item: T, ...keys: K[]) => {
+    const omittedItem = {} as Omit<T, K>;
+    for (const [key, value] of Object.entries(item)) {
+        if (!keys.includes(key as K)) {
+            omittedItem[key as Exclude<keyof T, K>] = value;
+        }
+    }
+    return omittedItem;
+};

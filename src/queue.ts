@@ -106,4 +106,4 @@ export class Queue<TPublish = unknown, TReply = unknown> {
     }
 }
 
-const padString = (str: string) => ` ${ str } `;
+const padString = (str: string) => ` ${str} `;

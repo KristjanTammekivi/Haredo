@@ -22,7 +22,7 @@ const loggers: Loggers = {
 };
 
 export const format = (messages: any[]) => {
-    return  messages
+    return messages
         .map((message) => {
             if (typeof message === 'object') {
                 return inspect(message);
