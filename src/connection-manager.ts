@@ -1,6 +1,6 @@
 import { Connection, connect, Options, Channel } from 'amqplib';
 import { HaredoClosingError } from './errors';
-import { makeEmitter } from './events';
+import { makeEmitter, TypedEventEmitter } from './events';
 import { makeLogger } from './loggers';
 import { delay } from './utils';
 
@@ -13,6 +13,8 @@ export interface Events {
 }
 
 export interface ConnectionManager {
+    emitter: TypedEventEmitter<Events>;
+    close: () => Promise<void>;
     getConnection(): Promise<Connection>;
     getChannel(): Promise<Channel>;
 }
@@ -66,6 +68,7 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
         getConnection,
         close: () => {
             closing = true;
+            return Promise.resolve();
         },
         getChannel: async () => {
             const connection = await getConnection();

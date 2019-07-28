@@ -14,7 +14,7 @@ const XDELAYEDTYPEKEY = 'x-delayed-type';
 
 export type xDelayedTypeStrings = 'direct' | 'fanout' | 'topic' | 'headers';
 
-type exchangeTypeStrings = 'direct' | 'fanout' | 'topic' | 'headers' | 'x-delayed-message';
+export type exchangeTypeStrings = 'direct' | 'fanout' | 'topic' | 'headers' | 'x-delayed-message';
 
 export type XDelayedType = ExchangeType.Direct |
     ExchangeType.Fanout |

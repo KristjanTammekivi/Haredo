@@ -1,10 +1,10 @@
 import { Options } from 'amqplib';
 import { Queue } from './queue';
-import { Exchange, xDelayedTypeStrings, ExchangeType, ExchangeOptions } from './exchange';
+import { Exchange, xDelayedTypeStrings, ExchangeType, ExchangeOptions, exchangeTypeStrings } from './exchange';
 
 import { HaredoChainState } from './state';
-import { MergeTypes, stringify } from './utils';
-import { makeConnectionManager } from './connection-manager';
+import { MergeTypes } from './utils';
+import { makeConnectionManager, ConnectionManager } from './connection-manager';
 
 export interface HaredoOptions {
     connection?: Options.Connect | string;
@@ -30,15 +30,15 @@ export const fullChain = <TMessage>(state: Partial<HaredoChainState<TMessage>>):
         queue: addQueue(queueChain)(state),
         exchange: addExchange(fullChain)(state),
         json: addJson(fullChain)(state)
-    };
+    } as FullChain<TMessage>;
 };
 
 export const queueChain = <TMessage>(state: Partial<HaredoChainState<TMessage>>): QueueChain<TMessage> => {
     return {
-        exchange: addExchange(queueChain)(state),
+        bindExchange: addExchangeBinding(queueChain)(state),
         json: addJson(queueChain)(state),
         publish: publishToQueue<TMessage>(state)
-    };
+    } as QueueChain<TMessage>;
 };
 
 export const publishToQueue = <TMessage>(state: Partial<HaredoChainState<TMessage>>) =>
@@ -60,11 +60,25 @@ export const addQueue = <T extends ChainFunction>(chain: T) =>
 
 export const addExchange = <T extends ChainFunction>(chain: T) =>
     (state: Partial<HaredoChainState>) =>
-        (exchange: Exchange | string, typeOrPattern: string) => {
+        (exchange: Exchange | string, type: ExchangeType | exchangeTypeStrings, opts: Partial<ExchangeOptions> = {}) => {
             if (typeof exchange === 'string') {
-                if ()
+                exchange = new Exchange(exchange, type, opts);
             }
-            return chain(merge(state, { exchanges: [{ exchange, patterns: [pattern] }] }));
+            return chain(merge(state, { exchange }));
+        };
+
+export const addExchangeBinding = <T extends ChainFunction>(chain: T) =>
+    (state: Partial<HaredoChainState>) =>
+        (
+            exchange: Exchange | string,
+            pattern: string | string[],
+            type: ExchangeType | exchangeTypeStrings,
+            opts: Partial<ExchangeOptions> = {}
+        ) => {
+            if (typeof exchange === 'string') {
+                exchange = new Exchange(exchange, type, opts);
+            }
+            return chain(merge(state, { exchanges: [{ exchange, patterns: [].concat(pattern) }] }));
         };
 
 export const addJson = <T extends ChainFunction>(chain: T) =>
@@ -76,7 +90,8 @@ export const merge = <T>(base: T, top: T): T => {
     return Object.assign({}, base, top);
 };
 
-interface GeneralChainMethods<T> {
+interface GeneralChainMembers<T> {
+    connectionManager: ConnectionManager;
     // autoAck(autoAck: boolean): T;
     // autoReply(autoReply: boolean): T;
     // confirm(confirm: boolean): T;
@@ -90,13 +105,9 @@ interface GeneralChainMethods<T> {
     // use(middleware: Middleware<T> | Middleware<T>[]): T;
 }
 
-export interface Chain<TMessage> extends GeneralChainMethods<Chain<TMessage>> {
+export interface Chain<TMessage> extends GeneralChainMembers<Chain<TMessage>> {
     queue: (queue: Queue) => Omit<Chain<TMessage>, 'exchange'>;
     exchange: (exchange: Exchange, pattern: string) => Chain<TMessage>;
-}
-
-export interface ExchangeMethod<T> {
-    exchange(exchange: Exchange, pattern: string): T;
 }
 
 export interface QueuePublishMethod<TMessage = unknown> {
@@ -107,19 +118,13 @@ export interface ExchangePublishMethod<TMessage = unknown> {
     publish(message: TMessage, routingKey: string): Promise<boolean>;
 }
 
-interface ExchangeAddOptions {
-    options: ExchangeOptions;
-    type: ExchangeType | xDelayedTypeStrings;
-}
-
 export interface FullChain<TMessage> extends
-    GeneralChainMethods<FullChain<TMessage>>,
-    ExchangeMethod<ExchangeChain<TMessage>>{
+    GeneralChainMembers<FullChain<TMessage>>{
 
     queue<TCustom = unknown>(queue: Queue<TCustom>): QueueChain<MergeTypes<TMessage, TCustom>>;
 
     /**
-    * Add an exchange to the chain. Pattern defaults to '#'
+    * Create an exchange based chain
     *
     * @param exchange instance of Exchange
     */
@@ -127,54 +132,93 @@ export interface FullChain<TMessage> extends
     /**
      * Add an exchange to the chain.
      *
-     * '*' means a single word
-     *
-     * '#' in routing keys means zero or more period separated words
-     *
-     * @param exchange instance of Exchange
-     * @param pattern pattern or array of patterns to bind the queue to
-     */
-    exchange<TCustom = unknown>(exchange: Exchange<TCustom>, pattern?: string | string[]): ExchangeChain<MergeTypes<T, TCustom>>;
-    /**
-     * Add an exchange to the chain.
-     *
      * @param exchange name of the exchange
      * @param type exchange type, defaults to Direct
-     * @param pattern binding pattern for the exchange (to bind to a queue)
      * @param opts exchange options that will be passed to amqplib while asserting
      * [amqplib#assertExchange](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertExchange)
      */
     exchange<TCustom = unknown>(
         exchange: string,
         type?: ExchangeType | xDelayedTypeStrings,
-        opts?: {
-            pattern?: string | string[];
-            options?: Partial<ExchangeOptions>;
-        };
+        opts?: Partial<ExchangeOptions>
     ): ExchangeChain<MergeTypes<TMessage, TCustom>>;
 
 }
 
 export interface ExchangeChain<TMessage> extends
-    GeneralChainMethods<ExchangeChain<TMessage>>,
-    ExchangeMethod<MultiExchangeChain<TMessage>> {
-
-    queue<TCustom = unknown>(queue: Queue<TCustom>): QueueChain<MergeTypes<TMessage, TCustom>>;
-    exchange<TCustom = unknown>(exchange: Exchange<TCustom>): MultiExchangeChain<TMessage>;
-
+    GeneralChainMembers<ExchangeChain<TMessage>> {
+    /**
+     * Bind an exchange to the first exchange.
+     *
+     * For patterns there are two wildcards:
+     * * `*` - one word
+     * * `#` - zero or more words
+     * A word is dot(period) delimited
+     *
+     * @param exchange Exchange to bind
+     * @param pattern Pattern(s) to use
+     */
+    bindExchange<TCustom = unknown>(
+        exchange: Exchange<TCustom>,
+        pattern: string | string[]
+    ): ExchangeChain<MergeTypes<TMessage, TCustom>>;
+    /**
+     * Bind an exchange to the first exchange.
+     *
+     * For patterns there are two wildcards:
+     * * `*` - one word
+     * * `#` - zero or more words
+     * A word is dot(period) delimited
+     *
+     * @param exchange Name of the exchange to bind
+     * @param pattern Pattern(s) to use
+     * @param type Type of the exchange
+     * @param opts Options to pass to amqplib for asserting
+     */
+    bindExchange<TCustom = unknown>(
+        exchange: string,
+        pattern: string | string[],
+        type: ExchangeType | exchangeTypeStrings,
+        opts?: Partial<ExchangeOptions>): ExchangeChain<MergeTypes<TMessage, TCustom>>;
 }
 
 export interface QueueChain<TMessage> extends
-    GeneralChainMethods<QueueChain<TMessage>>,
+    GeneralChainMembers<QueueChain<TMessage>>,
     QueuePublishMethod<TMessage> {
 
-    exchange<TCustom = unknown>(exchange: Exchange<TCustom>): QueueChain<MergeTypes<TMessage, TCustom>>;
+    /**
+     * Bind an exchange to the queue.
+     *
+     * For patterns there are two wildcards:
+     * * `*` - one word
+     * * `#` - zero or more words
+     * A word is dot(period) delimited
+     *
+     * @param exchange Exchange to bind
+     * @param pattern Pattern(s) to use
+     */
+    bindExchange<TCustom = unknown>(
+        exchange: Exchange<TCustom>,
+        pattern: string | string[]
+    ): QueueChain<MergeTypes<TMessage, TCustom>>;
+    /**
+     * Bind an exchange to the queue.
+     *
+     * For patterns there are two wildcards:
+     * * `*` - one word
+     * * `#` - zero or more words
+     * A word is dot(period) delimited
+     *
+     * @param exchange Name of the exchange to bind
+     * @param pattern Pattern(s) to use
+     * @param type Type of the exchange
+     * @param opts Options to pass to amqplib for asserting
+     */
+    bindExchange<TCustom = unknown>(
+        exchange: string,
+        pattern: string | string[],
+        type: ExchangeType | exchangeTypeStrings,
+        opts?: Partial<ExchangeOptions>): QueueChain<MergeTypes<TMessage, TCustom>>;
 
-}
-
-export interface MultiExchangeChain<TMessage> extends
-    GeneralChainMethods<MultiExchangeChain<TMessage>> {
-
-    queue<TCustom = unknown>(queue: Queue<TCustom>): QueueChain<MergeTypes<TMessage, TCustom>>;
-    exchange<TCustom = unknown>(exchange: Exchange<TCustom>): MultiExchangeChain<TMessage>;
+    subscribe<TCustom>(cb: SubscribeCallback): Promise<Consumer>
 }

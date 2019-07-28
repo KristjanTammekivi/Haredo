@@ -15,8 +15,9 @@ export interface StateExchangeCollection {
 export interface HaredoChainState<T = unknown> {
     autoAck: boolean;
     prefetch: number;
-    queue: Queue<T>;
+    queue: Queue;
     exchanges: StateExchangeCollection[];
+    exchange: Exchange;
     failThreshold: number;
     failSpan: number;
     failTimeout: number;
