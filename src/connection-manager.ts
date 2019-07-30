@@ -40,6 +40,9 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
 
     const loopGetConnection = async () => {
         while (true) {
+            if (closing) {
+                throw new HaredoClosingError();
+            }
             try {
                 connection = await Promise.resolve(connect(connectionOpts, socketOpts));
                 connection.on('error', /* istanbul ignore next */(err) => {
@@ -66,9 +69,12 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     return {
         emitter,
         getConnection,
-        close: () => {
+        close: async () => {
             closing = true;
-            return Promise.resolve();
+            try {
+                await connectionPromise;
+            } catch {}
+            await (connection && connection.close());
         },
         getChannel: async () => {
             const connection = await getConnection();

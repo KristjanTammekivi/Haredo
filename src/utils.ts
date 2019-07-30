@@ -102,3 +102,9 @@ export const omit = <T, K extends keyof T>(item: T, ...keys: K[]) => {
     }
     return omittedItem;
 };
+
+export const attempt = <T>(cb: () => T): T | undefined => {
+    try {
+        return cb();
+    } catch {}
+};

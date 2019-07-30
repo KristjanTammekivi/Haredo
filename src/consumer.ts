@@ -1,5 +1,5 @@
 import { makeLogger } from './loggers';
-import { HaredoMessage } from './haredo-message';
+import { HaredoMessage, makeHaredoMessage } from './haredo-message';
 import { Queue } from './queue';
 import { Middleware } from './state';
 import { Channel, Replies } from 'amqplib';
@@ -7,6 +7,8 @@ import { ConnectionManager } from './connection-manager';
 import { delay } from 'bluebird';
 import { MessageManager } from './message-manager';
 import { makeEmitter } from './events';
+import { ChannelBrokenError } from './errors';
+import { initialChain } from './haredo';
 
 const { debug, error, info } = makeLogger('Consumer');
 
@@ -22,7 +24,7 @@ export interface ConsumerOpts {
     queue: Queue;
     reestablish: boolean;
     setup: () => Promise<any>;
-    middleware: Middleware<unknown>[]
+    middleware: Middleware<unknown>[];
 }
 
 export interface ConsumerEvents {
@@ -36,11 +38,15 @@ export interface Consumer {
     prefetch: (prefetch: number) => Replies.Empty;
 }
 
-export const makeConsumer = async (connectionManager: ConnectionManager, opts: ConsumerOpts): Promise<Consumer> => {
+export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
+    connectionManager: ConnectionManager,
+    opts: ConsumerOpts
+): Promise<Consumer> => {
     let channel: Channel;
     let cancelling = false;
     let messageManager = new MessageManager();
-    const emitter = makeEmitter<ConsumerEvents>;
+    let consumerTag: string;
+    const emitter = makeEmitter<ConsumerEvents>();
     const cancel = async () => {
         cancelling = true;
     };
@@ -71,17 +77,39 @@ export const makeConsumer = async (connectionManager: ConnectionManager, opts: C
         if (opts.prefetch) {
             await setPrefetch(opts.prefetch);
         }
-        const consumerInfo = await channel.consume(opts.queue.name, async (message) => {
+        ({ consumerTag } = await channel.consume(opts.queue.name, async (message) => {
             if (message === null) {
                 return;
             }
             try {
-                if (this.cancelling) {
+                if (cancelling) {
                     return;
                 }
-                const messageInstance = new HaredoMessage<T>(message, opts.json);
+                const messageInstance = makeHaredoMessage<TMessage, TReply>(message, opts.json, {
+                    ack: () => {
+                        if (!channel) {
+                            throw new ChannelBrokenError();
+                        }
+                        channel.ack(message);
+                    },
+                    nack: (requeue = true) => {
+                        if (!channel) {
+                            throw new ChannelBrokenError();
+                        }
+                        channel.nack(message, false, requeue);
+                    },
+                    reply: async (reply) => {
+                        await initialChain({ connectionManager })
+                            .queue(message.properties.replyTo)
+                            .publish(reply, {
+                                correlationId: message.properties.correlationId
+                            });
+                    }
+                });
+            } catch {
+
             }
-        });
+        }));
     };
     await start();
     return {

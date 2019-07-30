@@ -16,7 +16,7 @@ export interface HaredoChainState<T = unknown> {
     autoAck: boolean;
     prefetch: number;
     queue: Queue;
-    exchanges: StateExchangeCollection[];
+    bindings: StateExchangeCollection[];
     exchange: Exchange;
     failThreshold: number;
     failSpan: number;
@@ -35,7 +35,7 @@ export const defaultState = <T>(newState: Partial<HaredoChainState<T>>) => {
         autoAck: defaultToTrue(newState.autoAck),
         autoReply: defaultTo(newState.autoReply, false),
         queue: newState.queue,
-        exchanges: [].concat(newState.exchanges || []),
+        bindings: [].concat(newState.bindings || []),
         prefetch: newState.prefetch || 0,
         reestablish: defaultToTrue(newState.reestablish),
         failSpan: newState.failSpan,
