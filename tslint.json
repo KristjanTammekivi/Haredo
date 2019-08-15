@@ -4,10 +4,7 @@
         "tslint-sonarts"
     ],
     "rules": {
-        "max-line-length": [
-            true,
-            140
-        ],
+        "max-line-length": false,
         "trailing-comma": false,
         "indent": [
             true,

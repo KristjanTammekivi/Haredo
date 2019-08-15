@@ -3,9 +3,9 @@ import { Queue } from './queue';
 import { Exchange, xDelayedTypeStrings, ExchangeType, ExchangeOptions, exchangeTypeStrings } from './exchange';
 
 import { HaredoChainState } from './state';
-import { MergeTypes, promiseMap } from './utils';
+import { MergeTypes, promiseMap, merge } from './utils';
 import { makeConnectionManager } from './connection-manager';
-import { MessageCallback, Consumer } from './consumer';
+import { MessageCallback, Consumer, makeConsumer } from './consumer';
 
 export interface HaredoOptions {
     connection?: Options.Connect | string;
@@ -26,8 +26,8 @@ export const haredo = (opts: HaredoOptions) => {
     };
 };
 
-export interface ChainFunction {
-    (state: Partial<HaredoChainState>): any;
+export interface ChainFunction<TMessage = unknown> {
+    (state: Partial<HaredoChainState<TMessage>>): any;
 }
 
 export const initialChain = <TMessage>(state: Partial<HaredoChainState<TMessage>>): InitialChain<TMessage> => {
@@ -58,28 +58,48 @@ const addSetup = (state: Partial<HaredoChainState>) => async () => {
     }
 };
 
-export const chainMethods = <TChain extends ChainFunction>(chain: TChain) =>
-    (state: Partial<HaredoChainState<unknown>>): GeneralChainMembers<TChain> => ({
-        json: (json = true) => chain({ json }),
-        setup: addSetup(state)
-    });
+export const chainMethods = <TChain extends ChainFunction, TMessage>(chain: TChain) =>
+    (state: Partial<HaredoChainState<TMessage>>): GeneralChainMembers<TChain> => {
+        const json = addJson(chain)(state);
+        return {
+            json,
+            setup: addSetup(state)
+        };
+    };
+
+type ExchangeChainFunction<TMessage> = (state: Partial<HaredoChainState<TMessage>>) => ExchangeChain<TMessage>;
 
 export const exchangeChain = <TMessage>(state: Partial<HaredoChainState<TMessage>>): ExchangeChain<TMessage> => {
+    const bindExchange = addExchangeBinding(exchangeChain as ExchangeChainFunction<TMessage>)(state);
     return {
-        ...chainMethods(exchangeChain)(state),
-        json: addJson(queueChain)(state),
+        bindExchange,
+        ...chainMethods(exchangeChain as ExchangeChainFunction<TMessage>)(state),
         publish: publishToExchange<TMessage>(state),
-        bindExchange: addExchangeBinding(exchangeChain)(state)
-    } as ExchangeChain<TMessage>;
+    };
 };
 
+type QueueChainFunction<TMessage> = (state: Partial<HaredoChainState<TMessage>>) => QueueChain<TMessage>;
+
 export const queueChain = <TMessage>(state: Partial<HaredoChainState<TMessage>>): QueueChain<TMessage> => {
+    const bindExchange = addExchangeBinding(queueChain as QueueChainFunction<TMessage>)(state);
     return {
-        ...chainMethods(queueChain)(state),
-        bindExchange: addExchangeBinding(queueChain)(state),
-        json: addJson(queueChain)(state),
-        publish: publishToQueue<TMessage>(state)
-    } as QueueChain<TMessage>;
+        bindExchange,
+        ...chainMethods(queueChain as QueueChainFunction<TMessage>)(state),
+        publish: publishToQueue<TMessage>(state),
+        subscribe: async <TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>, unknown>) => {
+            await addSetup(state)();
+            return makeConsumer(state.connectionManager, {
+                autoAck: state.autoReply,
+                json: state.json,
+                middleware: state.middleware,
+                autoReply: state.autoReply,
+                prefetch: state.prefetch,
+                queue: state.queue,
+                reestablish: state.reestablish,
+                setup: addSetup(state)
+            });
+        }
+    };
 };
 
 export const publishToQueue = <TMessage>(state: Partial<HaredoChainState<TMessage>>) =>
@@ -114,47 +134,38 @@ export const addExchange = <T extends ChainFunction>(chain: T) =>
             return chain(merge(state, { exchange }));
         };
 
-export const addExchangeBinding = <T extends ChainFunction>(chain: T) =>
-    (state: Partial<HaredoChainState>) =>
-        (
-            exchange: Exchange | string,
+export const addExchangeBinding = <TMessage, TChain extends ChainFunction<TMessage>, TCustom, TCustomChain extends ChainFunction<TCustom>>(chain: TChain) =>
+    (state: Partial<HaredoChainState<TMessage>>) =>
+        <TCustom>(
+            exchange: Exchange<TCustom> | string,
             pattern: string | string[],
-            type: ExchangeType | exchangeTypeStrings,
+            type?: ExchangeType | exchangeTypeStrings,
             opts: Partial<ExchangeOptions> = {}
         ) => {
             if (typeof exchange === 'string') {
                 exchange = new Exchange(exchange, type, opts);
             }
-            return chain(merge(state, { bindings: [{ exchange, patterns: [].concat(pattern) }] }));
+            return chain(merge(state, { bindings: [{ exchange, patterns: [].concat(pattern) }] })) as ReturnType<TChain> | ReturnType<TCustomChain>;
         };
 
 export const addJson = <T extends ChainFunction>(chain: T) =>
     (state: Partial<HaredoChainState>) =>
         (json = true) =>
-            chain(merge(state, { json }));
+            chain(merge(state, { json })) as ReturnType<T>;
 
-export const merge = <T>(base: T, top: T): T => {
-    return Object.assign({}, base, top);
-};
-
-interface GeneralChainMembers<T> {
+interface GeneralChainMembers<TChain extends ChainFunction> {
     // autoAck(autoAck: boolean): T;
     // autoReply(autoReply: boolean): T;
     // confirm(confirm: boolean): T;
     // failSpan(failSpan: number): T;
     // failThreshold(failThreshold: number): T;
     // failTimeout(failTimeout: number): T;
-    json(json: boolean): T;
+    json(json: boolean): ReturnType<TChain>;
     setup(): Promise<void>;
     // prefetch(prefetch: number): T;
     // reestablish(reestablish: boolean): T;
     // skipSetup(skipSetup: boolean): T;
     // use(middleware: Middleware<T> | Middleware<T>[]): T;
-}
-
-export interface Chain<TMessage> extends GeneralChainMembers<Chain<TMessage>> {
-    queue: (queue: Queue) => Omit<Chain<TMessage>, 'exchange'>;
-    exchange: (exchange: Exchange, pattern: string) => Chain<TMessage>;
 }
 
 export interface QueuePublishMethod<TMessage = unknown> {
@@ -201,11 +212,11 @@ export interface InitialChain<TMessage> {
 }
 
 export interface ExchangeChain<TMessage> extends
-    GeneralChainMembers<ExchangeChain<TMessage>>,
+    GeneralChainMembers<(state: HaredoChainState<TMessage>) => ExchangeChain<TMessage>>,
     ExchangePublishMethod<TMessage> {
 
     /**
-     * Bind an exchange to the queue.
+     * Bind an exchange to the main exchange.
      *
      * For patterns there are two wildcards:
      * * `*` - one word
@@ -218,9 +229,9 @@ export interface ExchangeChain<TMessage> extends
     bindExchange<TCustom = unknown>(
         exchange: Exchange<TCustom>,
         pattern: string | string[]
-    ): QueueChain<MergeTypes<TMessage, TCustom>>;
+    ): ExchangeChain<MergeTypes<TMessage, TCustom>>;
     /**
-     * Bind an exchange to the queue.
+     * Bind an exchange to the main exchange.
      *
      * For patterns there are two wildcards:
      * * `*` - one word
@@ -236,12 +247,12 @@ export interface ExchangeChain<TMessage> extends
         exchange: string,
         pattern: string | string[],
         type: ExchangeType | exchangeTypeStrings,
-        opts?: Partial<ExchangeOptions>): QueueChain<MergeTypes<TMessage, TCustom>>;
+        opts?: Partial<ExchangeOptions>): ExchangeChain<MergeTypes<TMessage, TCustom>>;
 
 }
 
 export interface QueueChain<TMessage> extends
-    GeneralChainMembers<QueueChain<TMessage>>,
+    GeneralChainMembers<(state: HaredoChainState<TMessage>) => QueueChain<TMessage>>,
     QueuePublishMethod<TMessage> {
 
     /**
@@ -278,5 +289,5 @@ export interface QueueChain<TMessage> extends
         type: ExchangeType | exchangeTypeStrings,
         opts?: Partial<ExchangeOptions>): QueueChain<MergeTypes<TMessage, TCustom>>;
 
-    subscribe<TCustom>(cb: MessageCallback<TCustom>): Promise<Consumer>;
+    subscribe<TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>>): Promise<Consumer>;
 }

@@ -108,3 +108,7 @@ export const attempt = <T>(cb: () => T): T | undefined => {
         return cb();
     } catch {}
 };
+
+export const merge = <T>(base: T, top: T): T => {
+    return Object.assign({}, base, top);
+};
