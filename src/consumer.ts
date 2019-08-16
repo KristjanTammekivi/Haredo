@@ -24,7 +24,7 @@ export interface ConsumerOpts {
     queue: Queue;
     reestablish: boolean;
     setup: () => Promise<any>;
-    middleware: Middleware<unknown>[];
+    middleware: Middleware<unknown, unknown>[];
 }
 
 export interface ConsumerEvents {
@@ -39,6 +39,7 @@ export interface Consumer {
 }
 
 export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
+    cb: MessageCallback<TMessage, TReply>,
     connectionManager: ConnectionManager,
     opts: ConsumerOpts
 ): Promise<Consumer> => {

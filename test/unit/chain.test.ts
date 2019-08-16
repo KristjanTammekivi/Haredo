@@ -13,7 +13,7 @@ describe.only('chain', () => {
         });
     });
     it('should concatenate middleware arrays on multiple .use calls', () => {
-        const middleware: Middleware<any>[] = [
+        const middleware: Middleware<unknown, unknown>[] = [
             function test1() {},
             function test2() {},
         ];

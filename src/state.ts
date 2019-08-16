@@ -2,9 +2,10 @@ import { Exchange } from './exchange';
 import { Queue } from './queue';
 import { defaultToTrue, defaultTo } from './utils';
 import { ConnectionManager } from './connection-manager';
+import { HaredoMessage } from './haredo-message';
 
-export interface Middleware<T> {
-    (message: any, next: () => Promise<void>): void | Promise<void>;
+export interface Middleware<TMessage, TReply> {
+    (message: HaredoMessage<TMessage, TReply>, next: () => Promise<void>): void | Promise<void>;
 }
 
 export interface StateExchangeCollection {
@@ -12,7 +13,7 @@ export interface StateExchangeCollection {
     patterns: string[];
 }
 
-export interface HaredoChainState<T = unknown> {
+export interface HaredoChainState<TMessage = unknown, TReply = unknown> {
     autoAck: boolean;
     prefetch: number;
     queue: Queue;
@@ -25,12 +26,12 @@ export interface HaredoChainState<T = unknown> {
     json: boolean;
     confirm: boolean;
     skipSetup: boolean;
-    middleware: Middleware<T>[];
+    middleware: Middleware<TMessage, TReply>[];
     autoReply: boolean;
     connectionManager: ConnectionManager;
 }
 
-export const defaultState = <T>(newState: Partial<HaredoChainState<T>>) => {
+export const defaultState = <TMessage, TReply>(newState: Partial<HaredoChainState<TMessage, TReply>>) => {
     return {
         autoAck: defaultToTrue(newState.autoAck),
         autoReply: defaultTo(newState.autoReply, false),

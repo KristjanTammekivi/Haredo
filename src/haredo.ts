@@ -12,7 +12,7 @@ export interface HaredoOptions {
     socketOpts?: any;
 }
 
-export interface Haredo extends InitialChain<unknown> {
+export interface Haredo extends InitialChain<unknown, unknown> {
     close: () => Promise<void>;
 }
 
@@ -30,11 +30,11 @@ export interface ChainFunction<TMessage = unknown> {
     (state: Partial<HaredoChainState<TMessage>>): any;
 }
 
-export const initialChain = <TMessage>(state: Partial<HaredoChainState<TMessage>>): InitialChain<TMessage> => {
+export const initialChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMessage>>): InitialChain<TMessage, TReply> => {
     return {
         queue: addQueue(queueChain)(state),
         exchange: addExchange(exchangeChain)(state)
-    } as InitialChain<TMessage>;
+    } as InitialChain<TMessage, TReply>;
 };
 
 const addSetup = (state: Partial<HaredoChainState>) => async () => {
@@ -74,30 +74,30 @@ export const chainMethods = <TChain extends ChainFunction, TMessage>(chain: TCha
         };
     };
 
-type ExchangeChainFunction<TMessage> = (state: Partial<HaredoChainState<TMessage>>) => ExchangeChain<TMessage>;
+type ExchangeChainFunction<TMessage, TReply> = (state: Partial<HaredoChainState<TMessage>>) => ExchangeChain<TMessage, TReply>;
 
-export const exchangeChain = <TMessage>(state: Partial<HaredoChainState<TMessage>>): ExchangeChain<TMessage> => {
-    const bindExchange = addExchangeBinding(exchangeChain as ExchangeChainFunction<TMessage>)(state);
+export const exchangeChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMessage>>): ExchangeChain<TMessage, TReply> => {
+    const bindExchange = addExchangeBinding(exchangeChain as ExchangeChainFunction<TMessage, TReply>)(state);
     return {
         bindExchange,
         getState: () => state,
-        ...chainMethods(exchangeChain as ExchangeChainFunction<TMessage>)(state),
+        ...chainMethods(exchangeChain as ExchangeChainFunction<TMessage, TReply>)(state),
         publish: publishToExchange<TMessage>(state),
     };
 };
 
-type QueueChainFunction<TMessage> = (state: Partial<HaredoChainState<TMessage>>) => QueueChain<TMessage>;
+type QueueChainFunction<TMessage, TReply> = (state: Partial<HaredoChainState<TMessage, TReply>>) => QueueChain<TMessage, TReply>;
 
-export const queueChain = <TMessage>(state: Partial<HaredoChainState<TMessage>>): QueueChain<TMessage> => {
-    const bindExchange = addExchangeBinding(queueChain as QueueChainFunction<TMessage>)(state);
+export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMessage>>): QueueChain<TMessage, TReply> => {
+    const bindExchange = addExchangeBinding(queueChain as QueueChainFunction<TMessage, TReply>)(state);
     return {
         bindExchange,
-        ...chainMethods(queueChain as QueueChainFunction<TMessage>)(state),
+        ...chainMethods(queueChain as QueueChainFunction<TMessage, TReply>)(state),
         publish: publishToQueue<TMessage>(state),
         getState: () => state,
         subscribe: async <TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>, unknown>) => {
             await addSetup(state)();
-            return makeConsumer(state.connectionManager, {
+            return makeConsumer(cb, state.connectionManager, {
                 autoAck: state.autoReply,
                 json: state.json,
                 middleware: state.middleware,
@@ -132,7 +132,7 @@ export const queueChain = <TMessage>(state: Partial<HaredoChainState<TMessage>>)
         skipSetup: (skipSetup = false) => {
             return queueChain(merge(state, { skipSetup }));
         },
-        use: (...middleware: Middleware<TMessage>[]) => {
+        use: (...middleware: Middleware<TMessage, TReply>[]) => {
             return queueChain(merge(state, { middleware: (state.middleware || []).concat(middleware) }));
         }
     };
@@ -142,7 +142,7 @@ export const publishToQueue = <TMessage>(state: Partial<HaredoChainState<TMessag
     async (message: TMessage, opts: Options.Publish) => {
         const channel = await state.connectionManager.getChannel();
         await addSetup(state)();
-        return channel.sendToQueue(state.queue.name, Buffer.from(JSON.stringify(message)));
+        return channel.sendToQueue(state.queue.name, Buffer.from(JSON.stringify(message)), opts);
     };
 
 export const publishToExchange = <TMessage>(state: Partial<HaredoChainState<TMessage>>) =>
@@ -203,25 +203,32 @@ export interface ExchangePublishMethod<TMessage = unknown> {
     publish(message: TMessage, routingKey: string): Promise<boolean>;
 }
 
-export interface InitialChain<TMessage> {
+export interface InitialChain<TMessage, TReply> {
 
     /**
      * Create a queue based chain
      */
-    queue<TCustom = unknown>(queue: Queue<TCustom>): QueueChain<MergeTypes<TMessage, TCustom>>;
+    queue<TCustomMessage = unknown, TCustomReply = unknown>(
+        queue: Queue<TCustomMessage, TCustomReply>
+    ): QueueChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
     /**
      * Create a queue based chain
      * @param queue name of the queue
      * @param opts optional parameters to pass to [amqplib#AssertQueue](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue)
      */
-    queue<TCustom = unknown>(queue: string, opts?: Options.AssertQueue): QueueChain<MergeTypes<TMessage, TCustom>>;
+    queue<TCustomMessage = unknown, TCustomReply = unknown>(
+        queue: string,
+        opts?: Options.AssertQueue
+    ): QueueChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
 
     /**
     * Create an exchange based chain
     *
     * @param exchange instance of Exchange
     */
-    exchange<TCustom = unknown>(exchange: Exchange<TCustom>): ExchangeChain<MergeTypes<TMessage, TCustom>>;
+    exchange<TCustomMessage = unknown, TCustomReply = unknown>(
+        exchange: Exchange<TCustomMessage>
+    ): ExchangeChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
     /**
      * Add an exchange to the chain.
      *
@@ -230,16 +237,16 @@ export interface InitialChain<TMessage> {
      * @param opts exchange options that will be passed to amqplib while asserting
      * [amqplib#assertExchange](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertExchange)
      */
-    exchange<TCustom = unknown>(
+    exchange<TCustomMessage = unknown, TCustomReply = unknown>(
         exchange: string,
         type?: ExchangeType | xDelayedTypeStrings,
         opts?: Partial<ExchangeOptions>
-    ): ExchangeChain<MergeTypes<TMessage, TCustom>>;
+    ): ExchangeChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
 
 }
 
-export interface ExchangeChain<TMessage> extends
-    GeneralChainMembers<(state: HaredoChainState<TMessage>) => ExchangeChain<TMessage>>,
+export interface ExchangeChain<TMessage, TReply> extends
+    GeneralChainMembers<(state: HaredoChainState<TMessage>) => ExchangeChain<TMessage, TReply>>,
     ExchangePublishMethod<TMessage> {
 
     getState(): Partial<HaredoChainState<TMessage>>;
@@ -255,10 +262,10 @@ export interface ExchangeChain<TMessage> extends
      * @param exchange Exchange to bind
      * @param pattern Pattern(s) to use
      */
-    bindExchange<TCustom = unknown>(
-        exchange: Exchange<TCustom>,
+    bindExchange<TCustomMessage = unknown, TCustomReply = unknown>(
+        exchange: Exchange<TCustomMessage>,
         pattern: string | string[]
-    ): ExchangeChain<MergeTypes<TMessage, TCustom>>;
+    ): ExchangeChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
     /**
      * Bind an exchange to the main exchange.
      *
@@ -272,16 +279,16 @@ export interface ExchangeChain<TMessage> extends
      * @param type Type of the exchange
      * @param opts Options to pass to amqplib for asserting
      */
-    bindExchange<TCustom = unknown>(
+    bindExchange<TCustomMessage = unknown, TCustomReply = unknown>(
         exchange: string,
         pattern: string | string[],
         type: ExchangeType | exchangeTypeStrings,
-        opts?: Partial<ExchangeOptions>): ExchangeChain<MergeTypes<TMessage, TCustom>>;
+        opts?: Partial<ExchangeOptions>): ExchangeChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
 
 }
 
-export interface QueueChain<TMessage> extends
-    GeneralChainMembers<(state: HaredoChainState<TMessage>) => QueueChain<TMessage>>,
+export interface QueueChain<TMessage, TReply> extends
+    GeneralChainMembers<(state: HaredoChainState<TMessage, TReply>) => QueueChain<TMessage, TReply>>,
     QueuePublishMethod<TMessage> {
 
     getState(): Partial<HaredoChainState<TMessage>>;
@@ -297,10 +304,10 @@ export interface QueueChain<TMessage> extends
      * @param exchange Exchange to bind
      * @param pattern Pattern(s) to use
      */
-    bindExchange<TCustom = unknown>(
-        exchange: Exchange<TCustom>,
+    bindExchange<TCustomMessage = unknown, TCustomReply = unknown>(
+        exchange: Exchange<TCustomMessage>,
         pattern: string | string[]
-    ): QueueChain<MergeTypes<TMessage, TCustom>>;
+    ): QueueChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
     /**
      * Bind an exchange to the queue.
      *
@@ -314,20 +321,20 @@ export interface QueueChain<TMessage> extends
      * @param type Type of the exchange
      * @param opts Options to pass to amqplib for asserting
      */
-    bindExchange<TCustom = unknown>(
+    bindExchange<TCustomMessage = unknown, TCustomReply = unknown>(
         exchange: string,
         pattern: string | string[],
         type: ExchangeType | exchangeTypeStrings,
-        opts?: Partial<ExchangeOptions>): QueueChain<MergeTypes<TMessage, TCustom>>;
+        opts?: Partial<ExchangeOptions>): QueueChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
 
-    autoAck(autoAck: boolean): QueueChain<TMessage>;
-    prefetch(prefetch: number): QueueChain<TMessage>;
-    reestablish(reestablish: boolean): QueueChain<TMessage>;
+    autoAck(autoAck: boolean): QueueChain<TMessage, TReply>;
+    prefetch(prefetch: number): QueueChain<TMessage, TReply>;
+    reestablish(reestablish: boolean): QueueChain<TMessage, TReply>;
     subscribe<TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>>): Promise<Consumer>;
-    autoReply(autoReply: boolean): QueueChain<TMessage>;
-    failSpan(failSpan: number): QueueChain<TMessage>;
-    failThreshold(failThreshold: number): QueueChain<TMessage>;
-    failTimeout(failTimeout: number): QueueChain<TMessage>;
-    skipSetup(skipSetup: boolean): QueueChain<TMessage>;
-    use(middleware: Middleware<TMessage> | Middleware<TMessage>[]): QueueChain<TMessage>;
+    autoReply(autoReply: boolean): QueueChain<TMessage, TReply>;
+    failSpan(failSpan: number): QueueChain<TMessage, TReply>;
+    failThreshold(failThreshold: number): QueueChain<TMessage, TReply>;
+    failTimeout(failTimeout: number): QueueChain<TMessage, TReply>;
+    skipSetup(skipSetup: boolean): QueueChain<TMessage, TReply>;
+    use(middleware: Middleware<TMessage, TReply> | Middleware<TMessage, TReply>[]): QueueChain<TMessage, TReply>;
 }
