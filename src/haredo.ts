@@ -2,7 +2,7 @@ import { Options } from 'amqplib';
 import { Queue } from './queue';
 import { Exchange, xDelayedTypeStrings, ExchangeType, ExchangeOptions, exchangeTypeStrings } from './exchange';
 
-import { HaredoChainState } from './state';
+import { HaredoChainState, Middleware } from './state';
 import { MergeTypes, promiseMap, merge } from './utils';
 import { makeConnectionManager } from './connection-manager';
 import { MessageCallback, Consumer, makeConsumer } from './consumer';
@@ -39,6 +39,10 @@ export const initialChain = <TMessage>(state: Partial<HaredoChainState<TMessage>
 
 const addSetup = (state: Partial<HaredoChainState>) => async () => {
     const channel = await state.connectionManager.getChannel();
+    let channelIsClosed = false;
+    channel.on('close', () => {
+        channelIsClosed = true;
+    });
     try {
         if (state.queue) {
             await channel.assertQueue(state.queue.name, state.queue.opts);
@@ -48,13 +52,16 @@ const addSetup = (state: Partial<HaredoChainState>) => async () => {
         }
         if (state.bindings) {
             await promiseMap(state.bindings, async (binding) => {
+                await channel.assertExchange(binding.exchange.name, binding.exchange.type, binding.exchange.opts);
                 await promiseMap(binding.patterns, async (pattern) => {
                     await channel.bindQueue(state.queue.name, binding.exchange.name, pattern);
                 });
             });
         }
     } finally {
-        await channel.close();
+        if (!channelIsClosed) {
+            await channel.close();
+        }
     }
 };
 
@@ -73,6 +80,7 @@ export const exchangeChain = <TMessage>(state: Partial<HaredoChainState<TMessage
     const bindExchange = addExchangeBinding(exchangeChain as ExchangeChainFunction<TMessage>)(state);
     return {
         bindExchange,
+        getState: () => state,
         ...chainMethods(exchangeChain as ExchangeChainFunction<TMessage>)(state),
         publish: publishToExchange<TMessage>(state),
     };
@@ -86,6 +94,7 @@ export const queueChain = <TMessage>(state: Partial<HaredoChainState<TMessage>>)
         bindExchange,
         ...chainMethods(queueChain as QueueChainFunction<TMessage>)(state),
         publish: publishToQueue<TMessage>(state),
+        getState: () => state,
         subscribe: async <TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>, unknown>) => {
             await addSetup(state)();
             return makeConsumer(state.connectionManager, {
@@ -98,6 +107,33 @@ export const queueChain = <TMessage>(state: Partial<HaredoChainState<TMessage>>)
                 reestablish: state.reestablish,
                 setup: addSetup(state)
             });
+        },
+        autoAck: (autoAck = true) => {
+            return queueChain(merge(state, { autoAck }));
+        },
+        prefetch: (prefetch = 0) => {
+            return queueChain(merge(state, { prefetch }));
+        },
+        reestablish: (reestablish = true) => {
+            return queueChain(merge(state, { reestablish }));
+        },
+        autoReply: (autoReply = true) => {
+            return queueChain(merge(state, { autoReply }));
+        },
+        failSpan: (failSpan = 5000) => {
+            return queueChain(merge(state, { failSpan }));
+        },
+        failThreshold: (failThreshold = Infinity) => {
+            return queueChain(merge(state, { failThreshold }));
+        },
+        failTimeout: (failTimeout = 5000) => {
+            return queueChain(merge(state, { failTimeout }));
+        },
+        skipSetup: (skipSetup = false) => {
+            return queueChain(merge(state, { skipSetup }));
+        },
+        use: (...middleware: Middleware<TMessage>[]) => {
+            return queueChain(merge(state, { middleware: (state.middleware || []).concat(middleware) }));
         }
     };
 };
@@ -154,18 +190,9 @@ export const addJson = <T extends ChainFunction>(chain: T) =>
             chain(merge(state, { json })) as ReturnType<T>;
 
 interface GeneralChainMembers<TChain extends ChainFunction> {
-    // autoAck(autoAck: boolean): T;
-    // autoReply(autoReply: boolean): T;
     // confirm(confirm: boolean): T;
-    // failSpan(failSpan: number): T;
-    // failThreshold(failThreshold: number): T;
-    // failTimeout(failTimeout: number): T;
     json(json: boolean): ReturnType<TChain>;
     setup(): Promise<void>;
-    // prefetch(prefetch: number): T;
-    // reestablish(reestablish: boolean): T;
-    // skipSetup(skipSetup: boolean): T;
-    // use(middleware: Middleware<T> | Middleware<T>[]): T;
 }
 
 export interface QueuePublishMethod<TMessage = unknown> {
@@ -215,6 +242,8 @@ export interface ExchangeChain<TMessage> extends
     GeneralChainMembers<(state: HaredoChainState<TMessage>) => ExchangeChain<TMessage>>,
     ExchangePublishMethod<TMessage> {
 
+    getState(): Partial<HaredoChainState<TMessage>>;
+
     /**
      * Bind an exchange to the main exchange.
      *
@@ -255,6 +284,8 @@ export interface QueueChain<TMessage> extends
     GeneralChainMembers<(state: HaredoChainState<TMessage>) => QueueChain<TMessage>>,
     QueuePublishMethod<TMessage> {
 
+    getState(): Partial<HaredoChainState<TMessage>>;
+
     /**
      * Bind an exchange to the queue.
      *
@@ -289,5 +320,14 @@ export interface QueueChain<TMessage> extends
         type: ExchangeType | exchangeTypeStrings,
         opts?: Partial<ExchangeOptions>): QueueChain<MergeTypes<TMessage, TCustom>>;
 
+    autoAck(autoAck: boolean): QueueChain<TMessage>;
+    prefetch(prefetch: number): QueueChain<TMessage>;
+    reestablish(reestablish: boolean): QueueChain<TMessage>;
     subscribe<TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>>): Promise<Consumer>;
+    autoReply(autoReply: boolean): QueueChain<TMessage>;
+    failSpan(failSpan: number): QueueChain<TMessage>;
+    failThreshold(failThreshold: number): QueueChain<TMessage>;
+    failTimeout(failTimeout: number): QueueChain<TMessage>;
+    skipSetup(skipSetup: boolean): QueueChain<TMessage>;
+    use(middleware: Middleware<TMessage> | Middleware<TMessage>[]): QueueChain<TMessage>;
 }

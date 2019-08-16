@@ -1,6 +1,6 @@
 import { connect, Connection, Options } from 'amqplib';
 import { stringify } from '../../../src/utils';
-import { ExchangeType } from '../../../src/exchange';
+import { ExchangeType, exchangeTypeStrings } from '../../../src/exchange';
 
 let connection: Connection;
 
@@ -23,7 +23,7 @@ export const createVhost = async () => {
     });
 };
 
-export const checkExchange = async (name: string, type: ExchangeType, opts?: Options.AssertExchange) => {
+export const checkExchange = async (name: string, type: ExchangeType | exchangeTypeStrings, opts?: Options.AssertExchange) => {
     const channel = await getChannel();
     await channel.checkExchange(name);
     if (opts) {
