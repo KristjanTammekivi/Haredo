@@ -31,7 +31,9 @@ export interface HaredoChainState<TMessage = unknown, TReply = unknown> {
     connectionManager: ConnectionManager;
 }
 
-export const defaultState = <TMessage, TReply>(newState: Partial<HaredoChainState<TMessage, TReply>>) => {
+export const defaultState = <TMessage, TReply>(
+    newState: Partial<HaredoChainState<TMessage, TReply>>
+): Partial<HaredoChainState<TMessage, TReply>> => {
     return {
         autoAck: defaultToTrue(newState.autoAck),
         autoReply: defaultTo(newState.autoReply, false),

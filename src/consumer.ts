@@ -6,14 +6,15 @@ import { Channel, Replies } from 'amqplib';
 import { ConnectionManager } from './connection-manager';
 import { delay } from 'bluebird';
 import { MessageManager } from './message-manager';
-import { makeEmitter } from './events';
+import { makeEmitter, TypedEventEmitter } from './events';
 import { ChannelBrokenError } from './errors';
 import { initialChain } from './haredo';
+import { head, tail } from './utils';
 
 const { debug, error, info } = makeLogger('Consumer');
 
 export interface MessageCallback<TMessage = unknown, TReply = unknown> {
-    (data: TMessage, messageWrapper?: HaredoMessage<TMessage>): Promise<TReply | void> | TReply | void;
+    (message: HaredoMessage<TMessage>): Promise<TReply | void> | TReply | void;
 }
 
 export interface ConsumerOpts {
@@ -28,13 +29,16 @@ export interface ConsumerOpts {
 }
 
 export interface ConsumerEvents {
-    cancel: never;
+    close: never;
     error: Error;
     'message-error': Error;
 }
 
 export interface Consumer {
-    cancel: () => Promise<void>;
+    emitter: TypedEventEmitter<ConsumerEvents>;
+    isClosing: boolean;
+    isClosed: boolean;
+    close: () => Promise<void>;
     prefetch: (prefetch: number) => Replies.Empty;
 }
 
@@ -44,12 +48,15 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
     opts: ConsumerOpts
 ): Promise<Consumer> => {
     let channel: Channel;
-    let cancelling = false;
     let messageManager = new MessageManager();
     let consumerTag: string;
     const emitter = makeEmitter<ConsumerEvents>();
-    const cancel = async () => {
-        cancelling = true;
+    const close = async () => {
+        consumer.isClosing = true;
+        if (consumerTag && channel) {
+            await channel.cancel(consumerTag);
+        }
+        consumer.isClosed = true;
     };
     const setPrefetch = (prefetch: number) => {
         return channel.prefetch(prefetch, true);
@@ -63,7 +70,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
             if (opts.reestablish) {
                 await delay(5);
                 try {
-                    if (!cancelling) {
+                    if (!consumer.isClosing) {
                         messageManager = new MessageManager();
                         await start();
                     }
@@ -71,19 +78,16 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                     error('Failed to restart consumer', e);
                     emitter.emit('error', e);
                 }
-                return;
             }
-            await cancel();
+            await close();
         });
-        if (opts.prefetch) {
-            await setPrefetch(opts.prefetch);
-        }
+        await setPrefetch(opts.prefetch || 0);
         ({ consumerTag } = await channel.consume(opts.queue.name, async (message) => {
             if (message === null) {
                 return;
             }
             try {
-                if (cancelling) {
+                if (consumer.isClosing) {
                     return;
                 }
                 const messageInstance = makeHaredoMessage<TMessage, TReply>(message, opts.json, {
@@ -107,14 +111,41 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                             });
                     }
                 });
-            } catch {
-
+                await applyMiddleware(opts.middleware, cb, messageInstance);
+            } catch (e) {
+                console.error(e);
             }
         }));
     };
-    await start();
-    return {
-        cancel,
+    const consumer = {
+        close,
+        emitter,
+        isClosed: false,
+        isClosing: false,
         prefetch: setPrefetch
     };
+    await start();
+    return consumer;
+};
+
+export const applyMiddleware = async <TMessage, TReply>(middleware: Middleware<TMessage, TReply>[], cb: MessageCallback<TMessage, TReply>, msg: HaredoMessage<TMessage, TReply>) => {
+    if (!middleware.length) {
+        const response = await cb(msg);
+        if (typeof response !== 'undefined') {
+            await msg.reply(response);
+        }
+    } else {
+        let nextWasCalled = false;
+        await head(middleware)(msg, () => {
+            nextWasCalled = true;
+            if (msg.isHandled) {
+                error('Message was handled in the middleware but middleware called next() anyway');
+                return;
+            }
+            return applyMiddleware(tail(middleware), cb, msg);
+        });
+        if (!nextWasCalled && !msg.isHandled) {
+            await applyMiddleware(tail(middleware), cb, msg);
+        }
+    }
 };

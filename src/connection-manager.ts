@@ -2,7 +2,8 @@ import { Connection, connect, Options, Channel } from 'amqplib';
 import { HaredoClosingError } from './errors';
 import { makeEmitter, TypedEventEmitter } from './events';
 import { makeLogger } from './loggers';
-import { delay } from './utils';
+import { delay, promiseMap } from './utils';
+import { Consumer } from './consumer';
 
 const { info, error, debug } = makeLogger('ConnectionManager');
 
@@ -13,6 +14,7 @@ export interface Events {
 }
 
 export interface ConnectionManager {
+    addConsumer: (consumer: Consumer) => void;
     emitter: TypedEventEmitter<Events>;
     close: () => Promise<void>;
     getConnection(): Promise<Connection>;
@@ -24,6 +26,20 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     let connectionPromise: Promise<Connection>;
     let closing = false;
     const emitter = makeEmitter<Events>();
+    let consumers = [] as Consumer[];
+
+    const addConsumer = (consumer: Consumer) => {
+        consumers = consumers.concat(consumer);
+        consumer.emitter.on('close', () => {
+            consumers = consumers.filter(x => x === consumer);
+        });
+    };
+
+    const closeConsumers = async () => {
+        await promiseMap(consumers, async (consumer) => {
+            await consumer.close();
+        });
+    };
 
     const getConnection = async () => {
         if (closing) {
@@ -67,6 +83,7 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     };
 
     return {
+        addConsumer,
         emitter,
         getConnection,
         close: async () => {
@@ -74,6 +91,7 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
             try {
                 await connectionPromise;
             } catch {}
+            await closeConsumers();
             await (connection && connection.close());
         },
         getChannel: async () => {

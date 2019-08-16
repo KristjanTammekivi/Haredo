@@ -2,7 +2,7 @@ import { Options } from 'amqplib';
 import { Queue } from './queue';
 import { Exchange, xDelayedTypeStrings, ExchangeType, ExchangeOptions, exchangeTypeStrings } from './exchange';
 
-import { HaredoChainState, Middleware } from './state';
+import { HaredoChainState, Middleware, defaultState } from './state';
 import { MergeTypes, promiseMap, merge } from './utils';
 import { makeConnectionManager } from './connection-manager';
 import { MessageCallback, Consumer, makeConsumer } from './consumer';
@@ -19,7 +19,7 @@ export interface Haredo extends InitialChain<unknown, unknown> {
 export const haredo = (opts: HaredoOptions) => {
     const connectionManager = makeConnectionManager(opts.connection, opts.socketOpts);
     return {
-        ...initialChain({ connectionManager }),
+        ...initialChain(merge(defaultState<unknown, unknown>({}), { connectionManager })),
         close: async () => {
             await connectionManager.close();
         }
@@ -66,13 +66,11 @@ const addSetup = (state: Partial<HaredoChainState>) => async () => {
 };
 
 export const chainMethods = <TChain extends ChainFunction, TMessage>(chain: TChain) =>
-    (state: Partial<HaredoChainState<TMessage>>): GeneralChainMembers<TChain> => {
-        const json = addJson(chain)(state);
-        return {
-            json,
-            setup: addSetup(state)
-        };
-    };
+    (state: Partial<HaredoChainState<TMessage>>): GeneralChainMembers<TChain> => ({
+        json: addJson(chain)(state),
+        setup: addSetup(state),
+        confirm: addConfirm(chain)(state)
+    });
 
 type ExchangeChainFunction<TMessage, TReply> = (state: Partial<HaredoChainState<TMessage>>) => ExchangeChain<TMessage, TReply>;
 
@@ -97,7 +95,7 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
         getState: () => state,
         subscribe: async <TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>, unknown>) => {
             await addSetup(state)();
-            return makeConsumer(cb, state.connectionManager, {
+            const consumer = await makeConsumer(cb, state.connectionManager, {
                 autoAck: state.autoReply,
                 json: state.json,
                 middleware: state.middleware,
@@ -107,6 +105,8 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
                 reestablish: state.reestablish,
                 setup: addSetup(state)
             });
+            state.connectionManager.addConsumer(consumer);
+            return consumer;
         },
         autoAck: (autoAck = true) => {
             return queueChain(merge(state, { autoAck }));
@@ -129,7 +129,7 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
         failTimeout: (failTimeout = 5000) => {
             return queueChain(merge(state, { failTimeout }));
         },
-        skipSetup: (skipSetup = false) => {
+        skipSetup: (skipSetup = true) => {
             return queueChain(merge(state, { skipSetup }));
         },
         use: (...middleware: Middleware<TMessage, TReply>[]) => {
@@ -184,13 +184,18 @@ export const addExchangeBinding = <TMessage, TChain extends ChainFunction<TMessa
             return chain(merge(state, { bindings: [{ exchange, patterns: [].concat(pattern) }] })) as ReturnType<TChain> | ReturnType<TCustomChain>;
         };
 
+const addConfirm = <T extends ChainFunction>(chain: T) =>
+    (state: Partial<HaredoChainState>) =>
+        (confirm = false) =>
+            chain(merge(state, { confirm })) as ReturnType<T>;
+
 export const addJson = <T extends ChainFunction>(chain: T) =>
     (state: Partial<HaredoChainState>) =>
         (json = true) =>
             chain(merge(state, { json })) as ReturnType<T>;
 
 interface GeneralChainMembers<TChain extends ChainFunction> {
-    // confirm(confirm: boolean): T;
+    confirm(confirm: boolean): ReturnType<TChain>;
     json(json: boolean): ReturnType<TChain>;
     setup(): Promise<void>;
 }

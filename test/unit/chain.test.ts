@@ -4,7 +4,7 @@ import { initialChain, queueChain } from '../../src/haredo';
 import { expect } from 'chai';
 import { Middleware } from '../../src/state';
 
-describe.only('chain', () => {
+describe('chain', () => {
     it('Should have base methods', () => {
         const chain = initialChain({});
         const props = ['exchange', 'queue'] as (keyof typeof chain)[];
@@ -19,5 +19,5 @@ describe.only('chain', () => {
         ];
         const chain = queueChain({}).use(middleware[0]).use(middleware[1]);
         expect(chain.getState().middleware).to.eql(middleware);
-    })
+    });
 });
