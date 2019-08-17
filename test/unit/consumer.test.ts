@@ -14,7 +14,7 @@ import { eventToPromise } from '../integration/consumer.test';
 
 use(sinonChai);
 
-describe.only('consumer', () => {
+describe('unit/consumer', () => {
     let consumer: Consumer;
     let cbSpy = spy();
     let channelMock: Omit<Channel, 'consume'> & {
@@ -25,7 +25,8 @@ describe.only('consumer', () => {
             new EventEmitter() as Channel,
             {
                 consume: stub().resolves({ consumerTag: 'testtag' }),
-                cancel: stub().resolves()
+                cancel: stub().resolves(),
+                prefetch: stub().resolves()
             }
         );
         consumer = await makeConsumer(cbSpy, { getChannel: async () => channelMock as any } as ConnectionManager, {

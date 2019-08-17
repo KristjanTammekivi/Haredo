@@ -1,4 +1,4 @@
-import { Options } from 'amqplib';
+import { Options, Channel, ConfirmChannel } from 'amqplib';
 import { Queue } from './queue';
 import { Exchange, xDelayedTypeStrings, ExchangeType, ExchangeOptions, exchangeTypeStrings } from './exchange';
 
@@ -6,6 +6,7 @@ import { HaredoChainState, Middleware, defaultState } from './state';
 import { MergeTypes, promiseMap, merge } from './utils';
 import { makeConnectionManager } from './connection-manager';
 import { MessageCallback, Consumer, makeConsumer } from './consumer';
+import { MessageChain, isMessageChain, messageChain, mergeMessageState } from './prepared-message';
 
 export interface HaredoOptions {
     connection?: Options.Connect | string;
@@ -81,6 +82,7 @@ export const exchangeChain = <TMessage, TReply>(state: Partial<HaredoChainState<
         getState: () => state,
         ...chainMethods(exchangeChain as ExchangeChainFunction<TMessage, TReply>)(state),
         publish: publishToExchange<TMessage>(state),
+        rpc: rpcToExchange<TMessage, TReply>(state)
     };
 };
 
@@ -92,6 +94,7 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
         bindExchange,
         ...chainMethods(queueChain as QueueChainFunction<TMessage, TReply>)(state),
         publish: publishToQueue<TMessage>(state),
+        rpc: rpcToQueue<TMessage, TReply>(state),
         getState: () => state,
         subscribe: async <TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>, unknown>) => {
             await addSetup(state)();
@@ -138,18 +141,75 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
     };
 };
 
-export const publishToQueue = <TMessage>(state: Partial<HaredoChainState<TMessage>>) =>
+export const rpcToQueue = <TMessage, TReply>(state: Partial<HaredoChainState<TMessage, TReply>>) =>
     async (message: TMessage, opts: Options.Publish) => {
-        const channel = await state.connectionManager.getChannel();
+        let channel: ConfirmChannel | Channel;
+        if (state.confirm) {
+            channel = await state.connectionManager.getConfirmChannel();
+        } else {
+            channel = await state.connectionManager.getChannel();
+        }
         await addSetup(state)();
         return channel.sendToQueue(state.queue.name, Buffer.from(JSON.stringify(message)), opts);
     };
 
-export const publishToExchange = <TMessage>(state: Partial<HaredoChainState<TMessage>>) =>
-    async (message: TMessage, routingKey?: string, opts?: Options.Publish) => {
-        const channel = await state.connectionManager.getChannel();
+export const rpcToExchange = <TMessage, TReply>(state: Partial<HaredoChainState<TMessage, TReply>>) =>
+    async (message: string | TMessage | MessageChain<TMessage>, routingKey?: string, options: Options.Publish = {}) => {
+        const preppedMessage = prepMessage(state, message, routingKey, options).getState();
+        let channel: ConfirmChannel | Channel;
+        if (state.confirm) {
+            channel = await state.connectionManager.getConfirmChannel();
+        } else {
+            channel = await state.connectionManager.getChannel();
+        }
         await addSetup(state)();
-        return channel.publish(state.exchange.name, routingKey, Buffer.from(JSON.stringify(message)), opts);
+        return channel.publish(state.exchange.name, preppedMessage.routingKey, Buffer.from(preppedMessage.content), preppedMessage.options);
+    };
+
+const prepMessage = <TMessage, TReply>(
+    state: Partial<HaredoChainState<TMessage, TReply>>,
+    message: string | TMessage | MessageChain<TMessage>,
+    routingKey?: string,
+    options: Options.Publish = {}
+): MessageChain<TMessage> => {
+    if (!isMessageChain(message)) {
+        if (state.json) {
+            message = messageChain({}).json(message);
+        } else {
+            message = messageChain({}).rawContent(message as string);
+        }
+    }
+    if (routingKey) {
+        message = message.routingKey(routingKey);
+    }
+    message = messageChain(mergeMessageState(message.getState(), { options }));
+    return message;
+};
+
+export const publishToQueue = <TMessage>(state: Partial<HaredoChainState<TMessage>>) =>
+    async (message: TMessage | MessageChain<TMessage>, options: Options.Publish = {}) => {
+        const preppedMessage = prepMessage(state, message, undefined, options).getState();
+        let channel: ConfirmChannel | Channel;
+        if (state.confirm) {
+            channel = await state.connectionManager.getConfirmChannel();
+        } else {
+            channel = await state.connectionManager.getChannel();
+        }
+        await addSetup(state)();
+        return channel.sendToQueue(state.queue.name, Buffer.from(preppedMessage.content), preppedMessage.options);
+    };
+
+export const publishToExchange = <TMessage>(state: Partial<HaredoChainState<TMessage>>) =>
+    async (message: TMessage | MessageChain<TMessage> | string, routingKey: string, options?: Options.Publish) => {
+        const preppedMessage = prepMessage(state, message, routingKey, options).getState();
+        let channel: ConfirmChannel | Channel;
+        if (state.confirm) {
+            channel = await state.connectionManager.getConfirmChannel();
+        } else {
+            channel = await state.connectionManager.getChannel();
+        }
+        await addSetup(state)();
+        return channel.publish(state.exchange.name, preppedMessage.routingKey, Buffer.from(preppedMessage.content), preppedMessage.options);
     };
 
 export const addQueue = <T extends ChainFunction>(chain: T) =>
@@ -200,12 +260,14 @@ interface GeneralChainMembers<TChain extends ChainFunction> {
     setup(): Promise<void>;
 }
 
-export interface QueuePublishMethod<TMessage = unknown> {
-    publish(message: TMessage, publishOpts?: Options.Publish): Promise<boolean>;
+export interface QueuePublishMethod<TMessage = unknown, TReply = unknown> {
+    publish(message: TMessage | MessageChain<TMessage> | string, publishOpts?: Options.Publish): Promise<boolean>;
+    rpc(message: TMessage | MessageChain<TMessage> | string, publishOpts?: Options.Publish): Promise<TReply>;
 }
 
-export interface ExchangePublishMethod<TMessage = unknown> {
-    publish(message: TMessage, routingKey: string): Promise<boolean>;
+export interface ExchangePublishMethod<TMessage = unknown, TReply = unknown> {
+    publish(message: TMessage | MessageChain<TMessage> | string, routingKey: string, publishOpts?: Options.Publish): Promise<boolean>;
+    rpc(message: TMessage | MessageChain<TMessage> | string, routingKey: string, publishOpts?: Options.Publish): Promise<TReply>;
 }
 
 export interface InitialChain<TMessage, TReply> {

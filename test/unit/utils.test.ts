@@ -3,7 +3,7 @@ import 'mocha';
 import { expect } from 'chai';
 import { merge } from '../../src/utils';
 
-describe('utils', () => {
+describe('unit/utils', () => {
     describe('merge', () => {
         it('should clone objects', () => {
             const base = {};

@@ -2,7 +2,7 @@ import { Haredo, haredo } from '../../src/haredo';
 import { setup, teardown, checkQueue, checkExchange } from './helpers/amqp';
 import { ExchangeType } from '../../src/exchange';
 
-describe('setup', () => {
+describe('integration/setup', () => {
     let rabbit: Haredo;
     beforeEach(async () => {
         await setup();

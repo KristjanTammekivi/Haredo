@@ -1,4 +1,4 @@
-import { Connection, connect, Options, Channel } from 'amqplib';
+import { Connection, connect, Options, Channel, ConfirmChannel } from 'amqplib';
 import { HaredoClosingError } from './errors';
 import { makeEmitter, TypedEventEmitter } from './events';
 import { makeLogger } from './loggers';
@@ -19,6 +19,7 @@ export interface ConnectionManager {
     close: () => Promise<void>;
     getConnection(): Promise<Connection>;
     getChannel(): Promise<Channel>;
+    getConfirmChannel(): Promise<ConfirmChannel>;
 }
 
 export const makeConnectionManager = (connectionOpts: string | Options.Connect, socketOpts: any): ConnectionManager => {
@@ -97,9 +98,13 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
         getChannel: async () => {
             const connection = await getConnection();
             const channel = await connection.createChannel();
-            channel.on('error', (err) => {
-
-            });
+            channel.on('error', (err) => {});
+            return channel;
+        },
+        getConfirmChannel: async () => {
+            const connection = await getConnection();
+            const channel = await connection.createConfirmChannel();
+            channel.on('error', (err) => {});
             return channel;
         }
     };

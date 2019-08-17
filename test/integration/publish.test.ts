@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import { ExchangeType, Exchange } from '../../src/exchange';
 import { Queue } from '../../src/queue';
 
-describe('publishing', () => {
+describe('integration/publish', () => {
     let rabbit: Haredo;
     beforeEach(async () => {
         await setup();
@@ -40,5 +40,8 @@ describe('publishing', () => {
         await rabbit.queue(queue).bindExchange(exchange, '*').publish('message');
         const msg = await getSingleMessage(queue.name);
         expect(msg.content).to.equal(JSON.stringify('message'));
+    });
+    it('should publish via confirmChannel', async () => {
+        await rabbit.queue('test').confirm(true).publish('test');
     });
 });

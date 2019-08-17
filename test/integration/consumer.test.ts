@@ -11,7 +11,7 @@ import { EventEmitter } from 'events';
 use(sinonChai);
 use(chaiAsPromised);
 
-describe('consuming', () => {
+describe('integration/consuming', () => {
     let rabbit: Haredo;
     beforeEach(async () => {
         await setup();
