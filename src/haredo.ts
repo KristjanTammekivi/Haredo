@@ -272,7 +272,7 @@ export const addExchangeBinding = <TMessage, TChain extends ChainFunction<TMessa
 
 const addConfirm = <T extends ChainFunction>(chain: T) =>
     (state: Partial<HaredoChainState>) =>
-        (confirm = false) =>
+        (confirm = true) =>
             chain(merge(state, { confirm })) as ReturnType<T>;
 
 export const addJson = <T extends ChainFunction>(chain: T) =>
@@ -281,8 +281,26 @@ export const addJson = <T extends ChainFunction>(chain: T) =>
             chain(merge(state, { json })) as ReturnType<T>;
 
 interface GeneralChainMembers<TChain extends ChainFunction> {
-    confirm(confirm: boolean): ReturnType<TChain>;
+    /**
+     * Enable publishing using ConfirmChannels
+     *
+     * See [RabbitMq Docs](https://www.rabbitmq.com/confirms.html)
+     *
+     * @param confirm defaults to true
+     */
+    confirm(confirm?: boolean): ReturnType<TChain>;
+    /**
+     * Enable json mode (it's enabled by default).
+     * When json is enabled, messages that are published without using prepared message objects
+     * will be passed through JSON.stringify. When subscribing message data will
+     * be run through JSON.parse
+     *
+     * @param json defaults to true
+     */
     json(json: boolean): ReturnType<TChain>;
+    /**
+     * Assert / Bind exchanges/queues. Will be skipped if skipSetup is set in the chain
+     */
     setup(): Promise<void>;
 }
 
@@ -342,7 +360,10 @@ export interface ExchangeChain<TMessage, TReply> extends
     GeneralChainMembers<(state: HaredoChainState<TMessage>) => ExchangeChain<TMessage, TReply>>,
     ExchangePublishMethod<TMessage> {
 
-    getState(): Partial<HaredoChainState<TMessage>>;
+    /**
+     * Return the state of the chain for inspection
+     */
+    getState(): Partial<HaredoChainState<TMessage, TReply>>;
 
     /**
      * Bind an exchange to the main exchange.
@@ -384,6 +405,9 @@ export interface QueueChain<TMessage, TReply> extends
     GeneralChainMembers<(state: HaredoChainState<TMessage, TReply>) => QueueChain<TMessage, TReply>>,
     QueuePublishMethod<TMessage> {
 
+    /**
+     * Return the state of the chain for inspection
+     */
     getState(): Partial<HaredoChainState<TMessage>>;
 
     /**
@@ -420,17 +444,92 @@ export interface QueueChain<TMessage, TReply> extends
         type: ExchangeType | exchangeTypeStrings,
         opts?: Partial<ExchangeOptions>): QueueChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
 
+    /**
+     * Enable noAck on the consumer. When noAck is set the broker will dequeue
+     * messages when they are sent down the wire.
+     *
+     * @param noAck defaults to true
+     */
     noAck(noAck?: boolean): QueueChain<TMessage, TReply>;
+    /**
+     * Set the consumer priority. Lower priority consumers will receive messages only when higher
+     * priority consumers are busy.
+     *
+     * Requires [Consumer priorities](https://www.rabbitmq.com/consumer-priority.html) extension to be enabled
+     */
     priority(priority: number): QueueChain<TMessage, TReply>;
+    /**
+     * When exclusive is set to true, the broker won't allow anyone else consume from this queue
+     * @param exclusive defaults to true
+     */
     exclusive(exclusive?: boolean): QueueChain<TMessage, TReply>;
+    /**
+     * Autoack (enabled by default) automatically acks/nacks messages when
+     * subscriber callback throws an error or the promise returned from it
+     * gets rejected.
+     *
+     * @param autoAck defaults to true
+     */
     autoAck(autoAck?: boolean): QueueChain<TMessage, TReply>;
+    /**
+     * Set prefetch count for consuming (ie. amount of messages that will be received in parallel)
+     * 0 Means there is no limit
+     *
+     * @param prefetch number of messages to prefetch
+     */
     prefetch(prefetch: number): QueueChain<TMessage, TReply>;
+    /**
+     * Reestablish a subscriber when channel / connection closes (enabled by default)
+     *
+     * @param reestablish defaults to true
+     */
     reestablish(reestablish?: boolean): QueueChain<TMessage, TReply>;
+    /**
+     * Subscribe to messages in the queue specified in the chain
+     */
     subscribe<TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>>): Promise<Consumer>;
+    /**
+     * Autoreply (enabled by default) automatically replies to messages
+     * where message callback in subscriber returns a non-undefined value
+     * (Only if message has replyTo and a correlationId)
+     *
+     * [RPC tutorial](https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html)
+     * 
+     * @param autoReply defaults to true
+     */
     autoReply(autoReply?: boolean): QueueChain<TMessage, TReply>;
+    /**
+     * Set the failSpan, the amount of time in milliseconds during which {failThreshold}
+     * amount of nacked messages can happen before the subscriber waits {failTimeout}
+     * milliseconds until passing the next message to subscriber callback.
+     *
+     * @param failSpan defaults to 5000
+     */
     failSpan(failSpan: number): QueueChain<TMessage, TReply>;
+    /**
+     * Set the amount of fails the system will allow in {failSpan} milliseconds
+     * before the subscriber waits for {failTimeout} milliseconds until passing
+     * the next message to subscriber callback
+     *
+     * @param failThreshold  defaults to Infinity
+     */
     failThreshold(failThreshold: number): QueueChain<TMessage, TReply>;
+    /**
+     * Set the failTimeout, the amount of time in milliseconds to wait until
+     * passing the next message to subscriber callback after {failThreshold}
+     * amount of nacked messages happen within {failSpan
+     *
+     * @param failTimeout defaults to 5000
+     */
     failTimeout(failTimeout: number): QueueChain<TMessage, TReply>;
+    /**
+     * Don't run automatic setup. Useful for faster publishing.
+     *
+     * @param skipSetup defaults to true
+     */
     skipSetup(skipSetup?: boolean): QueueChain<TMessage, TReply>;
+    /**
+     * Add middleware to the subscription
+     */
     use(middleware: Middleware<TMessage, TReply> | Middleware<TMessage, TReply>[]): QueueChain<TMessage, TReply>;
 }

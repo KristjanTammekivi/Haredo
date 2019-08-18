@@ -5,6 +5,11 @@ import { ConnectionManager } from './connection-manager';
 import { HaredoMessage } from './haredo-message';
 
 export interface Middleware<TMessage, TReply> {
+    /**
+     * @param message The received message
+     * @param next A function that returns a promise for the next item in the callback stack.
+     * If you don't call it and don't ack/nack the message then it will be called for you
+     */
     (message: HaredoMessage<TMessage, TReply>, next: () => Promise<void>): void | Promise<void>;
 }
 

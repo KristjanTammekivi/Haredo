@@ -35,7 +35,7 @@ describe('integration/rpc', () => {
         await rabbit.queue('test').subscribe(() => {
             return 'world';
         });
-        const reply = await rabbit.queue('test').rpc('hello');
+        const reply = await rabbit.queue('test').confirm().rpc('hello');
         expect(reply).to.equal('world');
     });
     it('should rpc to exchange', async () => {
@@ -45,7 +45,6 @@ describe('integration/rpc', () => {
         const result = await rabbit
             .exchange('testexchange', 'topic')
             .rpc('hello', 'rk');
-        console.log(result);
         expect(result).to.equal('world');
     });
 });

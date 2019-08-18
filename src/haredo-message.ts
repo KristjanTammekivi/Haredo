@@ -6,7 +6,7 @@ export interface HaredoMessageEvents {
 }
 
 export interface HaredoMessage<TMessage = unknown, TReply = unknown>
-    extends Methods<TReply>, MessageProperties,  MessageFields {
+    extends Methods<TReply> {
     emitter: TypedEventEmitter<HaredoMessageEvents>;
     raw: Message;
     data: TMessage;
@@ -16,6 +16,26 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown>
     isAcked: () => boolean;
     isReplied: () => boolean;
     headers: MessagePropertyHeaders;
+
+    contentType?: string;
+    contentEncoding?: string;
+    deliveryMode?: 1 | 2;
+    priority?: number;
+    correlationId?: string;
+    replyTo?: string;
+    expiration?: number;
+    messageId?: string;
+    timestamp?: number;
+    type?: string;
+    userId?: string;
+    appId?: string;
+
+    messageCount?: number;
+    consumerTag?: string;
+    deliveryTag: number;
+    redelivered: boolean;
+    exchange: string;
+    routingKey: string;
 }
 
 interface Methods<TReply = unknown> {
@@ -75,7 +95,6 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
         },
         headers: raw.properties.headers,
         appId: raw.properties.appId,
-        clusterId: raw.properties.clusterId,
         consumerTag: raw.fields.consumerTag,
         contentEncoding: raw.properties.contentEncoding,
         contentType: raw.properties.contentType,

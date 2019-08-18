@@ -71,9 +71,9 @@ export class Queue<TPublish = unknown, TReply = unknown> {
      * Add a dead letter exchange to route discarded messages to.
      * A message is discarded for any of 4 reasons
      * - Message expires
-     * - Queue limit is reached
      * - Message is rejected (not implemented in Haredo)
      * - Message is nacked with requeue set to false
+     * - Queue limit is reached
      */
     dead(deadLetterExchange: Exchange | string, deadLetterRoutingKey?: string) {
         if (deadLetterExchange instanceof Exchange) {
