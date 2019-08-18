@@ -7,6 +7,7 @@ import { MergeTypes, promiseMap, merge } from './utils';
 import { makeConnectionManager } from './connection-manager';
 import { MessageCallback, Consumer, makeConsumer } from './consumer';
 import { MessageChain, isMessageChain, messageChain, mergeMessageState } from './prepared-message';
+import { generateCorrelationId } from './rpc';
 
 export interface HaredoOptions {
     connection?: Options.Connect | string;
@@ -39,14 +40,18 @@ export const initialChain = <TMessage, TReply>(state: Partial<HaredoChainState<T
 };
 
 const addSetup = (state: Partial<HaredoChainState>) => async () => {
+    if (state.skipSetup) {
+        return;
+    }
     const channel = await state.connectionManager.getChannel();
     let channelIsClosed = false;
     channel.on('close', () => {
         channelIsClosed = true;
     });
     try {
-        if (state.queue) {
-            await channel.assertQueue(state.queue.name, state.queue.opts);
+        if (typeof state.queue !== 'undefined') {
+            const queueData = await channel.assertQueue(state.queue.name, state.queue.opts);
+            state.queue.name = queueData.queue;
         }
         if (state.exchange) {
             await channel.assertExchange(state.exchange.name, state.exchange.type, state.exchange.opts);
@@ -97,7 +102,6 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
         rpc: rpcToQueue<TMessage, TReply>(state),
         getState: () => state,
         subscribe: async <TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>, unknown>) => {
-            await addSetup(state)();
             const consumer = await makeConsumer(cb, state.connectionManager, {
                 autoAck: state.autoReply,
                 json: state.json,
@@ -137,6 +141,15 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
         },
         use: (...middleware: Middleware<TMessage, TReply>[]) => {
             return queueChain(merge(state, { middleware: (state.middleware || []).concat(middleware) }));
+        },
+        noAck: (noAck = true) => {
+            return queueChain(merge(state, { noAck }));
+        },
+        priority: (priority: number) => {
+            return queueChain(merge(state, { priority }));
+        },
+        exclusive: (exclusive = true) => {
+            return queueChain(merge(state, { exclusive }));
         }
     };
 };
@@ -150,7 +163,14 @@ export const rpcToQueue = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
             channel = await state.connectionManager.getChannel();
         }
         await addSetup(state)();
-        return channel.sendToQueue(state.queue.name, Buffer.from(JSON.stringify(message)), opts);
+        const correlationId = generateCorrelationId();
+        const response = await state.connectionManager.rpc(correlationId);
+        const preppedMessage = prepMessage(state, message, undefined, opts)
+            .correlationId(correlationId)
+            .replyTo(response.queue)
+            .getState();
+        await channel.sendToQueue(state.queue.name, Buffer.from(preppedMessage.content), preppedMessage.options);
+        return response.promise;
     };
 
 export const rpcToExchange = <TMessage, TReply>(state: Partial<HaredoChainState<TMessage, TReply>>) =>
@@ -163,7 +183,10 @@ export const rpcToExchange = <TMessage, TReply>(state: Partial<HaredoChainState<
             channel = await state.connectionManager.getChannel();
         }
         await addSetup(state)();
-        return channel.publish(state.exchange.name, preppedMessage.routingKey, Buffer.from(preppedMessage.content), preppedMessage.options);
+        const correlationId = generateCorrelationId();
+        const responsePromise = state.connectionManager.rpc<TReply>(correlationId);
+        await channel.publish(state.exchange.name, preppedMessage.routingKey, Buffer.from(preppedMessage.content), preppedMessage.options);
+        return responsePromise;
     };
 
 const prepMessage = <TMessage, TReply>(
@@ -394,14 +417,17 @@ export interface QueueChain<TMessage, TReply> extends
         type: ExchangeType | exchangeTypeStrings,
         opts?: Partial<ExchangeOptions>): QueueChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
 
-    autoAck(autoAck: boolean): QueueChain<TMessage, TReply>;
+    noAck(noAck?: boolean): QueueChain<TMessage, TReply>;
+    priority(priority: number): QueueChain<TMessage, TReply>;
+    exclusive(exclusive?: boolean): QueueChain<TMessage, TReply>;
+    autoAck(autoAck?: boolean): QueueChain<TMessage, TReply>;
     prefetch(prefetch: number): QueueChain<TMessage, TReply>;
-    reestablish(reestablish: boolean): QueueChain<TMessage, TReply>;
+    reestablish(reestablish?: boolean): QueueChain<TMessage, TReply>;
     subscribe<TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>>): Promise<Consumer>;
-    autoReply(autoReply: boolean): QueueChain<TMessage, TReply>;
+    autoReply(autoReply?: boolean): QueueChain<TMessage, TReply>;
     failSpan(failSpan: number): QueueChain<TMessage, TReply>;
     failThreshold(failThreshold: number): QueueChain<TMessage, TReply>;
     failTimeout(failTimeout: number): QueueChain<TMessage, TReply>;
-    skipSetup(skipSetup: boolean): QueueChain<TMessage, TReply>;
+    skipSetup(skipSetup?: boolean): QueueChain<TMessage, TReply>;
     use(middleware: Middleware<TMessage, TReply> | Middleware<TMessage, TReply>[]): QueueChain<TMessage, TReply>;
 }

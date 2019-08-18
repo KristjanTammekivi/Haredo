@@ -29,6 +29,9 @@ export interface HaredoChainState<TMessage = unknown, TReply = unknown> {
     middleware: Middleware<TMessage, TReply>[];
     autoReply: boolean;
     connectionManager: ConnectionManager;
+    priority: number;
+    noAck: boolean;
+    exclusive: boolean;
 }
 
 export const defaultState = <TMessage, TReply>(

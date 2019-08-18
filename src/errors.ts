@@ -25,3 +25,5 @@ export class FailedParsingJsonError extends HaredoError {
         super('Failed to parse JSON for message');
     }
 }
+
+export class TimeoutError extends Error { }

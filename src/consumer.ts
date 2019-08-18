@@ -106,12 +106,13 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                     reply: async (reply) => {
                         await initialChain({ connectionManager })
                             .queue(message.properties.replyTo)
+                            .skipSetup()
                             .publish(reply, {
                                 correlationId: message.properties.correlationId
                             });
                     }
                 });
-                await applyMiddleware(opts.middleware, cb, messageInstance);
+                await applyMiddleware(opts.middleware || [], cb, messageInstance);
             } catch (e) {
                 console.error(e);
             }

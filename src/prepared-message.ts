@@ -110,7 +110,7 @@ export interface MessageChain<TMessage = unknown> {
 }
 
 export const isMessageChain = (msg: any): msg is MessageChain => {
-    return 'getState' in msg;
+    return msg && !!msg.getState;
 };
 
 export const messageChain = <TMessage>(state: Partial<MessageChainState<TMessage>> = {}): MessageChain<TMessage> => {

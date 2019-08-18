@@ -4,6 +4,8 @@ import { makeEmitter, TypedEventEmitter } from './events';
 import { makeLogger } from './loggers';
 import { delay, promiseMap } from './utils';
 import { Consumer } from './consumer';
+import { StartRpc, startRpc } from './rpc';
+import { initialChain } from './haredo';
 
 const { info, error, debug } = makeLogger('ConnectionManager');
 
@@ -20,6 +22,7 @@ export interface ConnectionManager {
     getConnection(): Promise<Connection>;
     getChannel(): Promise<Channel>;
     getConfirmChannel(): Promise<ConfirmChannel>;
+    rpc<TReply>(correlationId: string, timeout?: number): Promise<{ promise: Promise<TReply>, queue: string }>;
 }
 
 export const makeConnectionManager = (connectionOpts: string | Options.Connect, socketOpts: any): ConnectionManager => {
@@ -28,6 +31,7 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     let closing = false;
     const emitter = makeEmitter<Events>();
     let consumers = [] as Consumer[];
+    let rpcPromise: Promise<StartRpc>;
 
     const addConsumer = (consumer: Consumer) => {
         consumers = consumers.concat(consumer);
@@ -53,6 +57,40 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
             connectionPromise = loopGetConnection();
         }
         return connectionPromise;
+    };
+
+    const cm: Partial<ConnectionManager> = {
+        addConsumer,
+        emitter,
+        getConnection,
+        close: async () => {
+            closing = true;
+            try {
+                await connectionPromise;
+            } catch { }
+            await closeConsumers();
+            await (connection && connection.close());
+        },
+        getChannel: async () => {
+            const connection = await getConnection();
+            const channel = await connection.createChannel();
+            channel.on('error', (err) => { });
+            return channel;
+        },
+        getConfirmChannel: async () => {
+            const connection = await getConnection();
+            const channel = await connection.createConfirmChannel();
+            channel.on('error', (err) => { });
+            return channel;
+        }
+    };
+
+    const rpc = async <TReply>(correlationId: string, timeout?: number) => {
+        if (!rpcPromise) {
+            rpcPromise = startRpc(initialChain({ connectionManager: cm as ConnectionManager }));
+        }
+        const rpc = await rpcPromise;
+        return rpc.add<TReply>(correlationId, timeout);
     };
 
     const loopGetConnection = async () => {
@@ -83,29 +121,7 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
         }
     };
 
-    return {
-        addConsumer,
-        emitter,
-        getConnection,
-        close: async () => {
-            closing = true;
-            try {
-                await connectionPromise;
-            } catch {}
-            await closeConsumers();
-            await (connection && connection.close());
-        },
-        getChannel: async () => {
-            const connection = await getConnection();
-            const channel = await connection.createChannel();
-            channel.on('error', (err) => {});
-            return channel;
-        },
-        getConfirmChannel: async () => {
-            const connection = await getConnection();
-            const channel = await connection.createConfirmChannel();
-            channel.on('error', (err) => {});
-            return channel;
-        }
-    };
+    cm.rpc = rpc;
+
+    return cm as ConnectionManager;
 };

@@ -3,6 +3,7 @@ import { setup, teardown, getSingleMessage, checkQueue, checkExchange } from './
 import { expect } from 'chai';
 import { ExchangeType, Exchange } from '../../src/exchange';
 import { Queue } from '../../src/queue';
+import { delay } from '../../src/utils';
 
 describe('integration/publish', () => {
     let rabbit: Haredo;
@@ -41,7 +42,15 @@ describe('integration/publish', () => {
         const msg = await getSingleMessage(queue.name);
         expect(msg.content).to.equal(JSON.stringify('message'));
     });
+    it('should not publish in json if json is switched off', async () => {
+        await rabbit.queue('test').json(false).publish('test');
+        await delay(20);
+        const msg = await getSingleMessage('test');
+        expect(msg.content).to.equal('test');
+    });
     it('should publish via confirmChannel', async () => {
         await rabbit.queue('test').confirm(true).publish('test');
+        const msg = await getSingleMessage('test');
+        expect(msg.content).to.equal('"test"');
     });
 });

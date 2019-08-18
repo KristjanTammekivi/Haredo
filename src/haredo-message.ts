@@ -1,11 +1,12 @@
-import { Message, MessagePropertyHeaders } from 'amqplib';
+import { Message, MessagePropertyHeaders, MessageProperties, MessageFields } from 'amqplib';
 import { makeEmitter, TypedEventEmitter } from './events';
 
 export interface HaredoMessageEvents {
     handled: void;
 }
 
-export interface HaredoMessage<TMessage = unknown, TReply = unknown> extends Methods<TReply> {
+export interface HaredoMessage<TMessage = unknown, TReply = unknown>
+    extends Methods<TReply>, MessageProperties,  MessageFields {
     emitter: TypedEventEmitter<HaredoMessageEvents>;
     raw: Message;
     data: TMessage;
@@ -72,6 +73,25 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
             state.isReplied = true;
             return methods.reply(message);
         },
-        headers: raw.properties.headers
+        headers: raw.properties.headers,
+        appId: raw.properties.appId,
+        clusterId: raw.properties.clusterId,
+        consumerTag: raw.fields.consumerTag,
+        contentEncoding: raw.properties.contentEncoding,
+        contentType: raw.properties.contentType,
+        correlationId: raw.properties.correlationId,
+        deliveryMode: raw.properties.deliveryMode,
+        deliveryTag: raw.fields.deliveryTag,
+        exchange: raw.fields.exchange,
+        expiration: raw.properties.expiration,
+        messageCount: raw.fields.messageCount,
+        messageId: raw.properties.messageId,
+        priority: raw.properties.priority,
+        redelivered: raw.fields.redelivered,
+        replyTo: raw.properties.replyTo,
+        routingKey: raw.fields.routingKey,
+        timestamp: raw.properties.timestamp,
+        type: raw.properties.type,
+        userId: raw.properties.userId
     };
 };
