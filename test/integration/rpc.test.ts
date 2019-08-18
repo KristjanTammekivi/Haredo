@@ -38,4 +38,14 @@ describe('integration/rpc', () => {
         const reply = await rabbit.queue('test').rpc('hello');
         expect(reply).to.equal('world');
     });
+    it('should rpc to exchange', async () => {
+        await rabbit.queue('test')
+            .bindExchange('testexchange', '*', 'topic')
+            .subscribe(() => 'world');
+        const result = await rabbit
+            .exchange('testexchange', 'topic')
+            .rpc('hello', 'rk');
+        console.log(result);
+        expect(result).to.equal('world');
+    });
 });

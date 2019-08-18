@@ -46,7 +46,7 @@ export class Exchange<T = unknown> {
      */
     constructor(
         public readonly name: string,
-        public readonly type: ExchangeType | exchangeTypeStrings = 'direct',
+        public readonly type: ExchangeType | exchangeTypeStrings,
         public readonly opts: Partial<ExchangeOptions> = { arguments: {} }) {
         if (
             type === ExchangeType.Delayed &&

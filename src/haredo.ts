@@ -164,18 +164,17 @@ export const rpcToQueue = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
         }
         await addSetup(state)();
         const correlationId = generateCorrelationId();
-        const response = await state.connectionManager.rpc(correlationId);
+        const { promise, queue } = await state.connectionManager.rpc(correlationId);
         const preppedMessage = prepMessage(state, message, undefined, opts)
             .correlationId(correlationId)
-            .replyTo(response.queue)
+            .replyTo(queue)
             .getState();
         await channel.sendToQueue(state.queue.name, Buffer.from(preppedMessage.content), preppedMessage.options);
-        return response.promise;
+        return  promise;
     };
 
 export const rpcToExchange = <TMessage, TReply>(state: Partial<HaredoChainState<TMessage, TReply>>) =>
     async (message: string | TMessage | MessageChain<TMessage>, routingKey?: string, options: Options.Publish = {}) => {
-        const preppedMessage = prepMessage(state, message, routingKey, options).getState();
         let channel: ConfirmChannel | Channel;
         if (state.confirm) {
             channel = await state.connectionManager.getConfirmChannel();
@@ -184,9 +183,13 @@ export const rpcToExchange = <TMessage, TReply>(state: Partial<HaredoChainState<
         }
         await addSetup(state)();
         const correlationId = generateCorrelationId();
-        const responsePromise = state.connectionManager.rpc<TReply>(correlationId);
+        const { promise, queue } = await state.connectionManager.rpc<TReply>(correlationId);
+        const preppedMessage = prepMessage(state, message, routingKey, options)
+            .correlationId(correlationId)
+            .replyTo(queue)
+            .getState();
         await channel.publish(state.exchange.name, preppedMessage.routingKey, Buffer.from(preppedMessage.content), preppedMessage.options);
-        return responsePromise;
+        return promise;
     };
 
 const prepMessage = <TMessage, TReply>(
@@ -329,7 +332,7 @@ export interface InitialChain<TMessage, TReply> {
      */
     exchange<TCustomMessage = unknown, TCustomReply = unknown>(
         exchange: string,
-        type?: ExchangeType | xDelayedTypeStrings,
+        type: ExchangeType | xDelayedTypeStrings,
         opts?: Partial<ExchangeOptions>
     ): ExchangeChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
 
