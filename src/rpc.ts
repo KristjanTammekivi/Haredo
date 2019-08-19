@@ -5,7 +5,7 @@ import { Queue } from './queue';
 
 export interface StartRpc {
     consumer: Consumer;
-    add: <TReply>(correlationId: string, timeout?: number) => { promise: Promise<TReply>, queue: string } ;
+    add: <TReply>(correlationId: string) => { promise: Promise<TReply>, queue: string } ;
 }
 
 export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, TReply>): Promise<StartRpc> => {
@@ -22,14 +22,11 @@ export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, 
                     delete openListeners[correlationId];
                 }
             }),
-        add: (correlationId: string, timeout?: number) => {
+        add: (correlationId: string) => {
             return {
                 queue: queue.name,
                 promise: new Promise((resolve, reject) => {
                     openListeners[correlationId] = { resolve, reject };
-                    if (timeout) {
-                        setTimeout(reject, timeout, new TimeoutError());
-                    }
                 })
             };
         }

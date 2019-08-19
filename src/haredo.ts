@@ -297,7 +297,7 @@ interface GeneralChainMembers<TChain extends ChainFunction> {
      *
      * @param json defaults to true
      */
-    json(json: boolean): ReturnType<TChain>;
+    json(json?: boolean): ReturnType<TChain>;
     /**
      * Assert / Bind exchanges/queues. Will be skipped if skipSetup is set in the chain
      */

@@ -22,7 +22,7 @@ export interface ConnectionManager {
     getConnection(): Promise<Connection>;
     getChannel(): Promise<Channel>;
     getConfirmChannel(): Promise<ConfirmChannel>;
-    rpc<TReply>(correlationId: string, timeout?: number): Promise<{ promise: Promise<TReply>, queue: string }>;
+    rpc<TReply>(correlationId: string): Promise<{ promise: Promise<TReply>, queue: string }>;
 }
 
 export const makeConnectionManager = (connectionOpts: string | Options.Connect, socketOpts: any): ConnectionManager => {
@@ -85,12 +85,12 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
         }
     };
 
-    const rpc = async <TReply>(correlationId: string, timeout?: number) => {
+    const rpc = async <TReply>(correlationId: string) => {
         if (!rpcPromise) {
             rpcPromise = startRpc(initialChain({ connectionManager: cm as ConnectionManager }));
         }
         const rpc = await rpcPromise;
-        return rpc.add<TReply>(correlationId, timeout);
+        return rpc.add<TReply>(correlationId);
     };
 
     const loopGetConnection = async () => {
