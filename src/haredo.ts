@@ -267,7 +267,7 @@ export const addExchangeBinding = <TMessage, TChain extends ChainFunction<TMessa
             if (typeof exchange === 'string') {
                 exchange = new Exchange(exchange, type, opts);
             }
-            return chain(merge(state, { bindings: [{ exchange, patterns: [].concat(pattern) }] })) as ReturnType<TChain> | ReturnType<TCustomChain>;
+            return chain(merge(state, { bindings: (state.bindings || []).concat({ exchange, patterns: [].concat(pattern) }) })) as ReturnType<TChain> | ReturnType<TCustomChain>;
         };
 
 const addConfirm = <T extends ChainFunction>(chain: T) =>
