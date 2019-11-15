@@ -10,7 +10,7 @@ import { use, expect } from 'chai';
 import { Queue } from '../../src/queue';
 import { Channel } from 'amqplib';
 import { delay } from '../../src/utils';
-import { eventToPromise } from '../integration/consumer.test';
+import { eventToPromise } from '../integration/helpers/utils';
 
 use(sinonChai);
 

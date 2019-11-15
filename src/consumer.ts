@@ -56,6 +56,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
         if (consumerTag && channel) {
             await channel.cancel(consumerTag);
         }
+        emitter.emit('close');
         consumer.isClosed = true;
     };
     const setPrefetch = (prefetch: number) => {

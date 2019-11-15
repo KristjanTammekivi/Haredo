@@ -1,12 +1,12 @@
 import { Haredo, haredo } from '../../src/haredo';
-import { setup, teardown, checkQueue, getChannel } from './helpers/amqp';
+import { setup, teardown, checkQueue } from './helpers/amqp';
 import { delay } from '../../src/utils';
 import { spy } from 'sinon';
 
 import * as sinonChai from 'sinon-chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import { use, expect } from 'chai';
-import { EventEmitter } from 'events';
+import { isConsumerClosed } from './helpers/utils';
 
 use(sinonChai);
 use(chaiAsPromised);
@@ -44,7 +44,7 @@ describe('integration/consuming', () => {
     it('should close consumer if haredo gets closed', async () => {
         const consumer = await rabbit.queue('test').subscribe(() => { });
         await rabbit.close();
-        expect(await consumer.isClosed).to.be.true;
+        expect(consumer.isClosed).to.be.true;
     });
 });
 
@@ -60,25 +60,3 @@ export const expectFail = async (promise: Promise<any>, pattern?: string) => {
         }
     }
 }
-
-const isConsumerClosed = async(queue: string) => {
-    const channel = await getChannel();
-    try {
-        await channel.consume('test', () => { }, { exclusive: true });
-        await channel.close();
-    } catch (e) {
-        if (e.message.includes('exclusive')) {
-            return false;
-        }
-        throw e;
-    }
-    return true;
-}
-
-export const eventToPromise = (emitter: EventEmitter, event: string) => {
-    return new Promise((resolve) => {
-        emitter.once(event, () => {
-            resolve();
-        });
-    });
-};
