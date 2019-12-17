@@ -1,3 +1,9 @@
+#### 1.3.1 (2019-12-17)
+
+##### Chores
+
+* **deps:**  bump lodash.template from 4.4.0 to 4.5.0 ([4ddae461](https://github.com/KristjanTammekivi/haredo/commit/4ddae46123cb842071733fdeccfa471c224ef11c))
+
 ### 1.3.0 (2019-07-20)
 
 ##### Chores
