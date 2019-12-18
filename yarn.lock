@@ -267,10 +267,10 @@ ajv@^6.5.5:
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
 
-amqplib@0.5.3:
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/amqplib/-/amqplib-0.5.3.tgz#7ccfc85d12ee7cd3c6dc861bb07f0648ec3d7193"
-  integrity sha512-ZOdUhMxcF+u62rPI+hMtU1NBXSDFQ3eCJJrenamtdQ7YYwh7RZJHOIM1gonVbZ5PyVdYH4xqBPje9OYqk7fnqw==
+amqplib@^0.5.5:
+  version "0.5.5"
+  resolved "https://registry.yarnpkg.com/amqplib/-/amqplib-0.5.5.tgz#698f0cb577e0591954a90572fcb3b8998a76fd40"
+  integrity sha512-sWx1hbfHbyKMw6bXOK2k6+lHL8TESWxjAx5hG8fBtT7wcxoXNIsFxZMnFyBjxt3yL14vn7WqBDe5U6BGOadtLg==
   dependencies:
     bitsyntax "~0.1.0"
     bluebird "^3.5.2"
@@ -1568,6 +1568,11 @@ lodash@^4.13.1, lodash@^4.17.10, lodash@^4.17.11:
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.11.tgz#b39ea6229ef607ecd89e2c8df12536891cac9b8d"
   integrity sha512-cQKh8igo5QUhZ7lg38DYWAxMvjSAKG0A8wGSVimP07SIUEK2UO+arSRKbRZWtelMtN5V0Hkwh5ryOto/SshYIg==
 
+lodash@^4.17.15:
+  version "4.17.15"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
+  integrity sha512-8xOcRHvCjnocdS5cpwXQXVzmmh5e5+saE2QGoeQmbKmRS6J3VQppPOIt0MnmE+4xlZoumy0GPG0D0MVIQbNA1A==
+
 log-driver@^1.2.7:
   version "1.2.7"
   resolved "https://registry.yarnpkg.com/log-driver/-/log-driver-1.2.7.tgz#63b95021f0702fedfa2c9bb0a24e7797d71871d8"
@@ -2136,10 +2141,10 @@ querystringify@^2.1.1:
   resolved "https://registry.yarnpkg.com/querystringify/-/querystringify-2.1.1.tgz#60e5a5fd64a7f8bfa4d2ab2ed6fdf4c85bad154e"
   integrity sha512-w7fLxIRCRT7U8Qu53jQnJyPkYZIaR4n5151KMfcJlO/A9397Wxb1amJvROTK6TOnp7PfoAmg/qXiNHI+08jRfA==
 
-rabbitmq-stats@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/rabbitmq-stats/-/rabbitmq-stats-1.2.0.tgz#4b036bf1bf0f6964af46177768b6c9efb232dacd"
-  integrity sha512-ZbrNWMUwl8/zsXGB08QKNDW4AJcc2cUNyQY1XWBDrnK6k22fvXktnu93P7J5h3tLamtZhQuxsDzQDJsmSBCt+g==
+rabbitmq-stats@^1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/rabbitmq-stats/-/rabbitmq-stats-1.2.2.tgz#a633a2c79271c8db028b9132c8f9b74c0e48f5b3"
+  integrity sha512-nsrV21QdcVmorbuZrUVlau4+ceM40HI6u1hs1tpFHTEZFrDw2ZYYazkJSS1914Ja7gMasxMGCgwk/3SGGbyiVw==
   dependencies:
     lodash "4.17.10"
     request "2.85.0"

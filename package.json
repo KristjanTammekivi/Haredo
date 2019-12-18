@@ -57,7 +57,7 @@
     "url": "https://github.com/KristjanTammekivi/haredo.git"
   },
   "dependencies": {
-    "amqplib": "0.5.3",
+    "amqplib": "^0.5.5",
     "debug": "^4.0.0"
   },
   "devDependencies": {
@@ -72,9 +72,10 @@
     "chai-as-promised": "^7.1.1",
     "coveralls": "^3.0.3",
     "generate-changelog": "^1.7.1",
+    "lodash": "^4.17.15",
     "mocha": "^5.2.0",
     "nyc": "^13.1.0",
-    "rabbitmq-stats": "^1.2.0",
+    "rabbitmq-stats": "^1.2.2",
     "rewiremock": "^3.13.7",
     "rimraf": "^2.6.2",
     "sinon": "^7.3.2",
