@@ -1,5 +1,5 @@
 import { Haredo, haredo } from '../../src/haredo';
-import { setup, teardown, checkQueue } from './helpers/amqp';
+import { setup, teardown, checkQueue, getSingleMessage } from './helpers/amqp';
 import { delay } from '../../src/utils';
 import { spy } from 'sinon';
 
@@ -45,6 +45,14 @@ describe('integration/consuming', () => {
         const consumer = await rabbit.queue('test').subscribe(() => { });
         await rabbit.close();
         expect(consumer.isClosed).to.be.true;
+    });
+    it('should wait for message to be acked before closing consumer', async () => {
+        const consumer = await rabbit.queue('test').subscribe(async () => {
+            await delay(2000);
+        });
+        await rabbit.queue('test').confirm().publish('test');
+        await consumer.close();
+        await expectFail(getSingleMessage('test'));
     });
 });
 

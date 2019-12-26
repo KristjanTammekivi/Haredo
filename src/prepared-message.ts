@@ -59,7 +59,7 @@ export interface MessageChain<TMessage = unknown> {
      * Mandatory messages will be returned to sender if they're not routed
      * Haredo doesn't implement basic.return yet so this will not do anything
      */
-    mandatory(mandatory: boolean): MessageChain<TMessage>;
+    mandatory(mandatory?: boolean): MessageChain<TMessage>;
     /**
      * Arbitrary application-specific identifier for the message
      */
@@ -68,7 +68,7 @@ export interface MessageChain<TMessage = unknown> {
      * persistent messages survive broker restarts provided it's
      * in a queue that also survives restarts
      */
-    persistent(persistent: boolean): MessageChain<TMessage>;
+    persistent(persistent?: boolean): MessageChain<TMessage>;
     /**
      * A priority for the message. Only works with priority queues
      */
@@ -113,37 +113,37 @@ export const isMessageChain = (msg: any): msg is MessageChain => {
     return msg && !!msg.getState;
 };
 
-export const messageChain = <TMessage>(state: Partial<MessageChainState<TMessage>> = {}): MessageChain<TMessage> => {
+export const preparedMessage = <TMessage>(state: Partial<MessageChainState<TMessage>> = {}): MessageChain<TMessage> => {
     return {
         getState: () => state,
 
-        appId: (appId: string) => messageChain(mergeMessageState(state, { options: { appId } })),
-        blindCarbonCopy: (...BCC: string[]) => messageChain(mergeMessageState(state, { options: { BCC } })),
-        carbonCopy: (...CC: string[]) => messageChain(mergeMessageState(state, { options: { CC } })),
-        contentEncoding: (contentEncoding: string) => messageChain(mergeMessageState(state, { options: { contentEncoding } })),
-        contentType: (contentType: string) => messageChain(mergeMessageState(state, { options: { contentType } })),
-        correlationId: (correlationId: string) => messageChain(mergeMessageState(state, { options: { correlationId } })),
-        delay: (delay: number) => messageChain(state).setHeader('x-delay', delay),
-        expiration: (expiration: number) => messageChain(mergeMessageState(state, { options: { expiration } })),
+        appId: (appId: string) => preparedMessage(mergeMessageState(state, { options: { appId } })),
+        blindCarbonCopy: (...BCC: string[]) => preparedMessage(mergeMessageState(state, { options: { BCC } })),
+        carbonCopy: (...CC: string[]) => preparedMessage(mergeMessageState(state, { options: { CC } })),
+        contentEncoding: (contentEncoding: string) => preparedMessage(mergeMessageState(state, { options: { contentEncoding } })),
+        contentType: (contentType: string) => preparedMessage(mergeMessageState(state, { options: { contentType } })),
+        correlationId: (correlationId: string) => preparedMessage(mergeMessageState(state, { options: { correlationId } })),
+        delay: (delay: number) => preparedMessage(state).setHeader('x-delay', delay),
+        expiration: (expiration: number) => preparedMessage(mergeMessageState(state, { options: { expiration } })),
         json: (content?: TMessage) => {
-            const chain = messageChain(state).contentType('application/json');
+            const chain = preparedMessage(state).contentType('application/json');
             if (content !== undefined) {
                 return chain.rawContent(JSON.stringify(content));
             }
             return chain;
         },
-        mandatory: (mandatory: boolean) => messageChain(mergeMessageState(state, { options: { mandatory } })),
-        messageId: (messageId: string) => messageChain(mergeMessageState(state, { options: { messageId } })),
-        persistent: (persistent: boolean) => messageChain(mergeMessageState(state, { options: { persistent } })),
-        priority: (priority: number) => messageChain(mergeMessageState(state, { options: { priority } })),
-        rawContent: (content: string) => messageChain(mergeMessageState(state, { content })),
-        replyTo: (replyTo: string) => messageChain(mergeMessageState(state, { options: { replyTo } })),
-        routingKey: (routingKey: string) => messageChain(mergeMessageState(state, { routingKey })),
-        timestamp: (timestamp: number) => messageChain(mergeMessageState(state, { options: { timestamp } })),
-        type: (type: string) => messageChain(mergeMessageState(state, { options: { type } })),
-        userId: (userId: string) => messageChain(mergeMessageState(state, { options: { userId } })),
-        setHeader: (header: string, value: any) => messageChain(mergeMessageState(state, { options: { headers: { [header]: value } } })),
-        setHeaders: (headers: Record<string, any>) => messageChain(mergeMessageState(state, { options: { headers } }))
+        mandatory: (mandatory = true) => preparedMessage(mergeMessageState(state, { options: { mandatory } })),
+        messageId: (messageId: string) => preparedMessage(mergeMessageState(state, { options: { messageId } })),
+        persistent: (persistent = true) => preparedMessage(mergeMessageState(state, { options: { persistent } })),
+        priority: (priority: number) => preparedMessage(mergeMessageState(state, { options: { priority } })),
+        rawContent: (content: string) => preparedMessage(mergeMessageState(state, { content })),
+        replyTo: (replyTo: string) => preparedMessage(mergeMessageState(state, { options: { replyTo } })),
+        routingKey: (routingKey: string) => preparedMessage(mergeMessageState(state, { routingKey })),
+        timestamp: (timestamp: number) => preparedMessage(mergeMessageState(state, { options: { timestamp } })),
+        type: (type: string) => preparedMessage(mergeMessageState(state, { options: { type } })),
+        userId: (userId: string) => preparedMessage(mergeMessageState(state, { options: { userId } })),
+        setHeader: (header: string, value: any) => preparedMessage(mergeMessageState(state, { options: { headers: { [header]: value } } })),
+        setHeaders: (headers: Record<string, any>) => preparedMessage(mergeMessageState(state, { options: { headers } }))
     };
 };
 

@@ -6,7 +6,7 @@ import { HaredoChainState, Middleware, defaultState } from './state';
 import { MergeTypes, promiseMap, merge } from './utils';
 import { makeConnectionManager } from './connection-manager';
 import { MessageCallback, Consumer, makeConsumer } from './consumer';
-import { MessageChain, isMessageChain, messageChain, mergeMessageState } from './prepared-message';
+import { MessageChain, isMessageChain, preparedMessage, mergeMessageState } from './prepared-message';
 import { generateCorrelationId } from './rpc';
 
 export interface HaredoOptions {
@@ -200,15 +200,15 @@ const prepMessage = <TMessage, TReply>(
 ): MessageChain<TMessage> => {
     if (!isMessageChain(message)) {
         if (state.json) {
-            message = messageChain({}).json(message);
+            message = preparedMessage({}).json(message);
         } else {
-            message = messageChain({}).rawContent(message as string);
+            message = preparedMessage({}).rawContent(message as string);
         }
     }
     if (routingKey) {
         message = message.routingKey(routingKey);
     }
-    message = messageChain(mergeMessageState(message.getState(), { options }));
+    message = preparedMessage(mergeMessageState(message.getState(), { options }));
     return message;
 };
 
@@ -267,7 +267,8 @@ export const addExchangeBinding = <TMessage, TChain extends ChainFunction<TMessa
             if (typeof exchange === 'string') {
                 exchange = new Exchange(exchange, type, opts);
             }
-            return chain(merge(state, { bindings: (state.bindings || []).concat({ exchange, patterns: [].concat(pattern) }) })) as ReturnType<TChain> | ReturnType<TCustomChain>;
+            return chain(merge(state, { bindings: (state.bindings || [])
+                .concat({ exchange, patterns: [].concat(pattern) }) })) as ReturnType<TChain> | ReturnType<TCustomChain>;
         };
 
 const addConfirm = <T extends ChainFunction>(chain: T) =>
@@ -494,7 +495,7 @@ export interface QueueChain<TMessage, TReply> extends
      * (Only if message has replyTo and a correlationId)
      *
      * [RPC tutorial](https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html)
-     * 
+     *
      * @param autoReply defaults to true
      */
     autoReply(autoReply?: boolean): QueueChain<TMessage, TReply>;

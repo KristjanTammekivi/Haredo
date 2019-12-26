@@ -7,6 +7,10 @@ const main = async () => {
         connection: 'amqp://guest:guest@localhost:5672/'
     });
     const queue = new Queue<{ test: number, time: number }>('test').expires(2000);
+    await chain.queue(queue)
+        .subscribe(({ data }) => {
+            console.log(data);
+        });
     let i = 1;
     while (true) {
         await chain.queue(queue).publish({ test: i, time: Date.now() });
