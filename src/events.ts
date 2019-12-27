@@ -32,4 +32,4 @@ export const typedEventToPromise = <T>(
 
 export const makeEmitter = <T>() => {
     return new EventEmitter() as TypedEventEmitter<T>;
-}
+};
