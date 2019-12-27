@@ -34,7 +34,7 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     const addConsumer = (consumer: Consumer) => {
         consumers = consumers.concat(consumer);
         consumer.emitter.on('close', () => {
-            consumers = consumers.filter(x => x === consumer);
+            consumers = consumers.filter(x => x !== consumer);
         });
     };
 
