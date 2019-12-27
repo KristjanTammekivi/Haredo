@@ -1,7 +1,7 @@
 import { Haredo, haredo } from '../../src/haredo';
 import { setup, teardown, checkQueue, getSingleMessage } from './helpers/amqp';
 import { delay } from '../../src/utils';
-import { spy } from 'sinon';
+import { spy, SinonSpy } from 'sinon';
 
 import * as sinonChai from 'sinon-chai';
 import * as chaiAsPromised from 'chai-as-promised';
@@ -53,6 +53,62 @@ describe('integration/consuming', () => {
         await rabbit.queue('test').confirm().publish('test');
         await consumer.close();
         await expectFail(getSingleMessage('test'));
+    });
+    it('should mark isHandled in middleware', async () => {
+        let isHandledBefore: boolean;
+        let isHandledAfter: boolean;
+        const consumer = await rabbit.queue('test')
+            .use(async ({ isHandled }, next) => {
+                isHandledBefore = isHandled();
+                await next();
+                isHandledAfter = isHandled();
+            })
+            .subscribe(async () => {});
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(50);
+        await consumer.close();
+        expect(isHandledBefore).to.equal(false);
+        expect(isHandledAfter).to.equal(true);
+    });
+    it('should work with non-promise-returning middleware', async () => {
+        let isHandledBefore: boolean;
+        let isHandledAfter: boolean;
+        const consumer = await rabbit.queue('test')
+            .use(({ isHandled }, next) => {
+                isHandledBefore = isHandled();
+                next().then(() => isHandledAfter = isHandled());
+            })
+            .subscribe(async () => { });
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(50);
+        await consumer.close();
+        expect(isHandledBefore).to.equal(false);
+        expect(isHandledAfter).to.equal(true);
+    });
+    it('should nack if subscribe callback fails', async () => {
+        let nackSpy: SinonSpy;
+        await rabbit.queue('test')
+            .failThreshold(1)
+            .subscribe(async (message) => {
+                nackSpy = spy(message, 'nack')
+                throw new Error('whoopsiedaisy');
+            });
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(100);
+        expect(nackSpy.calledOnce).to.be.true;
+    });
+    it('should nack if subscribe middleware fails', async () => {
+        let nackSpy: SinonSpy;
+        await rabbit.queue('test')
+            .failThreshold(1)
+            .use((message) => {
+                nackSpy = spy(message, 'nack');
+                throw new Error();
+            })
+            .subscribe(() => {});
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(100);
+        expect(nackSpy.calledOnce).to.be.true;
     });
 });
 

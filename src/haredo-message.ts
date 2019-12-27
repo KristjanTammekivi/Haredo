@@ -16,6 +16,7 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown>
     isAcked: () => boolean;
     isReplied: () => boolean;
     headers: MessagePropertyHeaders;
+    getHeader: (header: string) => string | string[];
 
     contentType?: string;
     contentEncoding?: string;
@@ -94,6 +95,7 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
             return methods.reply(message);
         },
         headers: raw.properties.headers,
+        getHeader: (header: string) => raw.properties.headers[header],
         appId: raw.properties.appId,
         consumerTag: raw.fields.consumerTag,
         contentEncoding: raw.properties.contentEncoding,

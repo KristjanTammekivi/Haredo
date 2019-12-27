@@ -11,7 +11,7 @@ import { ChannelBrokenError } from './errors';
 import { initialChain } from './haredo';
 import { head, tail } from './utils';
 
-const { debug, error, info } = makeLogger('Consumer');
+const { error, info } = makeLogger('Consumer');
 
 export interface MessageCallback<TMessage = unknown, TReply = unknown> {
     (message: HaredoMessage<TMessage>): Promise<TReply | void> | TReply | void;
@@ -87,11 +87,12 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
             if (message === null) {
                 return;
             }
+            let messageInstance: HaredoMessage<TMessage, TReply>;
             try {
                 if (consumer.isClosing) {
                     return;
                 }
-                const messageInstance = makeHaredoMessage<TMessage, TReply>(message, opts.json, {
+                messageInstance = makeHaredoMessage<TMessage, TReply>(message, opts.json, {
                     ack: () => {
                         if (!channel) {
                             throw new ChannelBrokenError();
@@ -115,7 +116,8 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                 });
                 await applyMiddleware(opts.middleware || [], cb, messageInstance);
             } catch (e) {
-                console.error(e);
+                error(e);
+                messageInstance.nack(false);
             }
         }));
     };
@@ -136,17 +138,18 @@ export const applyMiddleware = async <TMessage, TReply>(middleware: Middleware<T
         if (typeof response !== 'undefined') {
             await msg.reply(response);
         }
+        msg.ack();
     } else {
         let nextWasCalled = false;
         await head(middleware)(msg, () => {
             nextWasCalled = true;
-            if (msg.isHandled) {
+            if (msg.isHandled()) {
                 error('Message was handled in the middleware but middleware called next() anyway');
                 return;
             }
             return applyMiddleware(tail(middleware), cb, msg);
         });
-        if (!nextWasCalled && !msg.isHandled) {
+        if (!nextWasCalled && !msg.isHandled()) {
             await applyMiddleware(tail(middleware), cb, msg);
         }
     }
