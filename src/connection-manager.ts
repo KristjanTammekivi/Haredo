@@ -1,13 +1,11 @@
 import { Connection, connect, Options, Channel, ConfirmChannel } from 'amqplib';
 import { HaredoClosingError } from './errors';
 import { makeEmitter, TypedEventEmitter } from './events';
-import { makeLogger } from './loggers';
 import { delay, promiseMap } from './utils';
 import { Consumer } from './consumer';
 import { StartRpc, startRpc } from './rpc';
 import { initialChain } from './haredo';
-
-const { info, error, debug } = makeLogger('ConnectionManager');
+import { Loggers } from './state';
 
 export interface Events {
     connected: Connection;
@@ -25,7 +23,7 @@ export interface ConnectionManager {
     rpc<TReply>(correlationId: string): Promise<{ promise: Promise<TReply>, queue: string }>;
 }
 
-export const makeConnectionManager = (connectionOpts: string | Options.Connect, socketOpts: any): ConnectionManager => {
+export const makeConnectionManager = (connectionOpts: string | Options.Connect, socketOpts: any, log: Loggers): ConnectionManager => {
     let connection: Connection;
     let connectionPromise: Promise<Connection>;
     let closing = false;
@@ -74,20 +72,20 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
         getChannel: async () => {
             const connection = await getConnection();
             const channel = await connection.createChannel();
-            channel.on('error', (err) => { });
+            channel.on('error', () => { });
             return channel;
         },
         getConfirmChannel: async () => {
             const connection = await getConnection();
             const channel = await connection.createConfirmChannel();
-            channel.on('error', (err) => { });
+            channel.on('error', () => { });
             return channel;
         }
     };
 
     const rpc = async <TReply>(correlationId: string) => {
         if (!rpcPromise) {
-            rpcPromise = startRpc(initialChain({ connectionManager: cm as ConnectionManager }));
+            rpcPromise = startRpc(initialChain({ log, connectionManager: cm as ConnectionManager }));
         }
         const rpc = await rpcPromise;
         return rpc.add<TReply>(correlationId);
@@ -101,11 +99,11 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
             try {
                 connection = await Promise.resolve(connect(connectionOpts, socketOpts));
                 connection.on('error', /* istanbul ignore next */(err) => {
-                    error('connection error', err);
+                    log.error('connection error', err);
                 });
                 connection.on('close', async () => {
                     emitter.emit('connectionclose');
-                    info('connection closed');
+                    log.info('connection closed');
                     connectionPromise = undefined;
                     connection = undefined;
                     if (!closing) {
@@ -115,7 +113,7 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
                 emitter.emit('connected', connection);
                 return connection;
             } catch (e) /* istanbul ignore next */ {
-                error('failed to connect', e);
+                log.error('failed to connect', e);
                 await delay(1000);
             }
         }

@@ -2,7 +2,7 @@ import { Options, Channel, ConfirmChannel } from 'amqplib';
 import { Queue } from './queue';
 import { Exchange, xDelayedTypeStrings, ExchangeType, ExchangeOptions, exchangeTypeStrings } from './exchange';
 
-import { HaredoChainState, Middleware, defaultState } from './state';
+import { HaredoChainState, Middleware, defaultState, Loggers } from './state';
 import { MergeTypes, promiseMap, merge } from './utils';
 import { makeConnectionManager } from './connection-manager';
 import { MessageCallback, Consumer, makeConsumer } from './consumer';
@@ -12,16 +12,30 @@ import { generateCorrelationId } from './rpc';
 export interface HaredoOptions {
     connection?: Options.Connect | string;
     socketOpts?: any;
+    logger?: (level: LogLevel, msg: any[]) => void;
+}
+
+export enum LogLevel {
+    'DEBUG',
+    'INFO',
+    'WARNING',
+    'ERROR'
 }
 
 export interface Haredo extends InitialChain<unknown, unknown> {
     close: () => Promise<void>;
 }
 
-export const haredo = (opts: HaredoOptions) => {
-    const connectionManager = makeConnectionManager(opts.connection, opts.socketOpts);
+export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOptions) => {
+    const log: Loggers = {
+        debug: (args: any[]) => logger(LogLevel.DEBUG, args),
+        info: (args: any[]) => logger(LogLevel.INFO, args),
+        warning: (args: any[]) => logger(LogLevel.WARNING, args),
+        error: (args: any[]) => logger(LogLevel.ERROR, args)
+    };
+    const connectionManager = makeConnectionManager(connection, socketOpts, log);
     return {
-        ...initialChain(merge(defaultState<unknown, unknown>({}), { connectionManager })),
+        ...initialChain(merge(defaultState<unknown, unknown>({}), { connectionManager, log })),
         close: async () => {
             await connectionManager.close();
         }
@@ -111,7 +125,7 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
                 queue: state.queue,
                 reestablish: state.reestablish ?? true,
                 setup: addSetup(state)
-            });
+            }, state.log);
             state.connectionManager.addConsumer(consumer);
             return consumer;
         },
@@ -169,7 +183,7 @@ export const rpcToQueue = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
             .correlationId(correlationId)
             .replyTo(queue)
             .getState();
-        await channel.sendToQueue(state.queue.name, Buffer.from(preppedMessage.content), preppedMessage.options);
+        channel.sendToQueue(state.queue.name, Buffer.from(preppedMessage.content), preppedMessage.options);
         return  promise;
     };
 

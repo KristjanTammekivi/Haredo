@@ -1,7 +1,6 @@
-import { makeLogger } from './loggers';
 import { HaredoMessage, makeHaredoMessage } from './haredo-message';
 import { Queue } from './queue';
-import { Middleware } from './state';
+import { Middleware, Loggers } from './state';
 import { Channel, Replies } from 'amqplib';
 import { ConnectionManager } from './connection-manager';
 import { delay } from 'bluebird';
@@ -10,8 +9,6 @@ import { makeEmitter, TypedEventEmitter } from './events';
 import { ChannelBrokenError } from './errors';
 import { initialChain } from './haredo';
 import { head, tail } from './utils';
-
-const { error, info } = makeLogger('Consumer');
 
 export interface MessageCallback<TMessage = unknown, TReply = unknown> {
     (message: HaredoMessage<TMessage>): Promise<TReply | void> | TReply | void;
@@ -45,7 +42,8 @@ export interface Consumer {
 export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
     cb: MessageCallback<TMessage, TReply>,
     connectionManager: ConnectionManager,
-    opts: ConsumerOpts
+    opts: ConsumerOpts,
+    log: Loggers
 ): Promise<Consumer> => {
     let channel: Channel;
     let messageManager = new MessageManager();
@@ -66,7 +64,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
         await opts.setup();
         channel = await connectionManager.getChannel();
         channel.once('close', async () => {
-            info('channel closed');
+            log.info('channel closed');
             channel = null;
             if (opts.reestablish) {
                 await delay(5);
@@ -76,7 +74,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                         await start();
                     }
                 } catch (e) {
-                    error('Failed to restart consumer', e);
+                    log.error('Failed to restart consumer', e);
                     emitter.emit('error', e);
                 }
             }
@@ -114,12 +112,12 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                             });
                     }
                 });
-                await applyMiddleware(opts.middleware || [], cb, messageInstance, opts.autoAck, opts.autoReply);
+                await applyMiddleware(opts.middleware || [], cb, messageInstance, opts.autoAck, opts.autoReply, log);
                 if (opts.autoAck && !messageInstance.isHandled()) {
                     messageInstance.ack();
                 }
             } catch (e) {
-                error(e);
+                log.error(e);
                 messageInstance.nack(false);
             }
         }));
@@ -135,7 +133,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
     return consumer;
 };
 
-export const applyMiddleware = async <TMessage, TReply>(middleware: Middleware<TMessage, TReply>[], cb: MessageCallback<TMessage, TReply>, msg: HaredoMessage<TMessage, TReply>, autoAck: boolean, autoReply: boolean) => {
+export const applyMiddleware = async <TMessage, TReply>(middleware: Middleware<TMessage, TReply>[], cb: MessageCallback<TMessage, TReply>, msg: HaredoMessage<TMessage, TReply>, autoAck: boolean, autoReply: boolean, log: Loggers) => {
     if (!middleware.length) {
         const response = await cb(msg);
         if (typeof response !== 'undefined' && autoReply) {
@@ -149,13 +147,13 @@ export const applyMiddleware = async <TMessage, TReply>(middleware: Middleware<T
         await head(middleware)(msg, () => {
             nextWasCalled = true;
             if (msg.isHandled()) {
-                error('Message was handled in the middleware but middleware called next() anyway');
+                log.warning('Message was handled in the middleware but middleware called next() anyway');
                 return;
             }
-            return applyMiddleware(tail(middleware), cb, msg, autoAck, autoReply);
+            return applyMiddleware(tail(middleware), cb, msg, autoAck, autoReply, log);
         });
         if (!nextWasCalled && !msg.isHandled()) {
-            await applyMiddleware(tail(middleware), cb, msg, autoAck, autoReply);
+            await applyMiddleware(tail(middleware), cb, msg, autoAck, autoReply, log);
         }
     }
 };

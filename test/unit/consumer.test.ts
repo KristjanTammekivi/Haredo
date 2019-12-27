@@ -38,7 +38,7 @@ describe('unit/consumer', () => {
             queue: new Queue('test'),
             reestablish: true,
             setup: async () => {}
-        });
+        }, { debug: () => {}, info: () => {}, warning: () => {}, error: () => {}});
     })
     it('Should reestablish when channel closes', async () => {
         channelMock.emit('close');

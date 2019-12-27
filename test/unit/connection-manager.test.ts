@@ -14,6 +14,13 @@ describe('unit/connection-manager', () => {
     let connectionManager: typeof import("../../src/connection-manager");
     let connectionMock: EventEmitter;
     let connectStub: SinonStub;
+    const noop = () => {};
+    const loggers = {
+        debug: noop,
+        info: noop,
+        warning: noop,
+        error: noop
+    };
 
     beforeEach(async () => {
         connectionMock = new EventEmitter();
@@ -26,13 +33,13 @@ describe('unit/connection-manager', () => {
     });
 
     it('should return connection', async () => {
-        const cm = connectionManager.makeConnectionManager({}, {});
+        const cm = connectionManager.makeConnectionManager({}, {}, loggers);
         const connection = await cm.getConnection();
         expect(connection).to.equal(connectionMock);
     });
 
     it('should reopen connection if it closes', async () => {
-        const cm = connectionManager.makeConnectionManager({}, {});
+        const cm = connectionManager.makeConnectionManager({}, {}, loggers);
         const connection = await cm.getConnection();
         connection.emit('close');
         await delay(10);
@@ -40,7 +47,7 @@ describe('unit/connection-manager', () => {
     })
 
     it('should throw an error if cm is closed but getConnection is called', async () => {
-        const cm = connectionManager.makeConnectionManager({}, {});
+        const cm = connectionManager.makeConnectionManager({}, {}, loggers);
         cm.close();
         await expect(cm.getConnection()).to.be.rejected;
     });

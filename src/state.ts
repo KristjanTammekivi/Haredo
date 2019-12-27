@@ -18,6 +18,13 @@ export interface StateExchangeCollection {
     patterns: string[];
 }
 
+export interface Loggers {
+    debug: (...msg: any[]) => void;
+    info: (...msg: any[]) => void;
+    warning: (...msg: any[]) => void;
+    error: (...msg: any[]) => void;
+}
+
 export interface HaredoChainState<TMessage = unknown, TReply = unknown> {
     autoAck: boolean;
     prefetch: number;
@@ -37,6 +44,7 @@ export interface HaredoChainState<TMessage = unknown, TReply = unknown> {
     priority: number;
     noAck: boolean;
     exclusive: boolean;
+    log: Loggers;
 }
 
 export const defaultState = <TMessage, TReply>(
@@ -55,6 +63,7 @@ export const defaultState = <TMessage, TReply>(
         json: newState.json ?? true,
         confirm: newState.confirm,
         skipSetup: newState.skipSetup,
-        middleware: newState.middleware || []
+        middleware: newState.middleware || [],
+        log: newState.log
     };
 };
