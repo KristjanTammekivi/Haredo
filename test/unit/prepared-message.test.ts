@@ -36,10 +36,13 @@ describe('prepared-message', () => {
     });
     it('should set json', async () => {
         const message = preparedMessage().json('test');
+        const message2 = preparedMessage().rawContent('"test"').json();
         expect(message.getState().content).to.equal('"test"');
+        expect(message.getState().options.contentType).to.equal('application/json');
+        expect(message2.getState().options.contentType).to.equal('application/json');
     });
     it('should set mandatory', () => {
-        const message = preparedMessage().mandatory(true);
+        const message = preparedMessage().mandatory();
         expect(message.getState().options.mandatory).to.equal(true);
     });
     it('should set messageId', () => {

@@ -147,7 +147,7 @@ export const preparedMessage = <TMessage>(state: Partial<MessageChainState<TMess
     };
 };
 
-export const mergeMessageState = <TMessage>(base: Partial<MessageChainState<TMessage>> = {}, top: Partial<MessageChainState<TMessage>> = {}): MessageChainState<TMessage> => ({
+export const mergeMessageState = <TMessage>(base: Partial<MessageChainState<TMessage>>, top: Partial<MessageChainState<TMessage>>): MessageChainState<TMessage> => ({
     content: top.content || base.content,
     routingKey: top.routingKey || base.routingKey,
     options: mergeOptions(base.options, top.options)
