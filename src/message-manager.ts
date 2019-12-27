@@ -33,12 +33,12 @@ export class MessageManager<T = unknown> {
         if (this.isDrained()) {
             return;
         }
-        await promiseMap(this.messages, async (message) => {
+        await promiseMap(this.messages, async ({ isHandled, emitter }) => {
             /* istanbul ignore if */
-            if (message.isHandled) {
+            if (isHandled()) {
                 return;
             }
-            return typedEventToPromise(message.emitter, 'handled');
+            await typedEventToPromise(emitter, 'handled');
         });
     }
 }

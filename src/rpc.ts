@@ -1,5 +1,4 @@
 import { InitialChain } from './haredo';
-import { TimeoutError } from './errors';
 import { Consumer } from './consumer';
 import { Queue } from './queue';
 

@@ -40,12 +40,12 @@ describe('unit/consumer', () => {
             setup: async () => {}
         }, { debug: () => {}, info: () => {}, warning: () => {}, error: () => {}});
     })
-    it('Should reestablish when channel closes', async () => {
+    it('should reestablish when channel closes', async () => {
         channelMock.emit('close');
         await delay(10);
         expect(channelMock.consume).to.be.calledTwice;
     });
-    it('should', async () => {
+    it('should emit error event on consumer on channel errors', async () => {
         const promise = eventToPromise(consumer.emitter, 'error');
         channelMock.emit('close');
         let consumerErrored = false;

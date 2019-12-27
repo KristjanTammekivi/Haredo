@@ -54,6 +54,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
         if (consumerTag && channel) {
             await channel.cancel(consumerTag);
         }
+        await messageManager.drain();
         emitter.emit('close');
         consumer.isClosed = true;
     };
@@ -78,7 +79,9 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                     emitter.emit('error', e);
                 }
             }
-            await close();
+            if (!consumer.isClosing) {
+                await close();
+            }
         });
         await setPrefetch(opts.prefetch || 0);
         ({ consumerTag } = await channel.consume(opts.queue.name, async (message) => {
@@ -112,6 +115,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                             });
                     }
                 });
+                messageManager.add(messageInstance);
                 await applyMiddleware(opts.middleware || [], cb, messageInstance, opts.autoAck, opts.autoReply, log);
                 if (opts.autoAck && !messageInstance.isHandled()) {
                     messageInstance.ack();

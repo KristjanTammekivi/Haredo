@@ -23,7 +23,8 @@ describe('integration/consuming', () => {
     });
     it('should close consumer when rabbit is closed', async () => {
         const consumer = await rabbit.queue('test').subscribe(() => { });
+        const closePromise = eventToPromise(consumer.emitter, 'close')
         await rabbit.close();
-        await eventToPromise(consumer.emitter, 'close')
+        await closePromise;
     });
 });

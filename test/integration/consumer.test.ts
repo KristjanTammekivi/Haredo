@@ -126,6 +126,19 @@ describe('integration/consuming', () => {
         await delay(120);
         expect(isMessageHandled()).to.be.true;
     });
+    it('should wait for all messages to be handled before closing consumer', async () => {
+        let hasDelayPassed = false;
+        const consumer = await rabbit.queue('test')
+            .subscribe(async () => {
+                await delay(200);
+                hasDelayPassed = true;
+            });
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(50);
+        await consumer.close();
+        expect(hasDelayPassed).to.be.true;
+        await expectFail(getSingleMessage('test'));
+    });
 });
 
 export const expectFail = async (promise: Promise<any>, pattern?: string) => {
