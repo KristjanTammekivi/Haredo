@@ -22,8 +22,8 @@ describe('integration/rpc', () => {
     });
     it('should respond reply in a subscriber if message has correlationId and replyTo set', async () => {
         await rabbit.queue('responsequeue').setup();
-        await rabbit.queue('test').json(false).subscribe(() => {
-            return 'world';
+        await rabbit.queue('test').json(false).subscribe(({ reply }) => {
+            reply('world');
         });
         await publishMessage('test', 'hello', { correlationId: 'test', replyTo: 'responsequeue' });
         await delay(100);
@@ -32,7 +32,7 @@ describe('integration/rpc', () => {
         expect(reply.properties.correlationId).to.equal('test');
     });
     it('should resolve with message from reply', async () => {
-        await rabbit.queue('test').subscribe(() => {
+        await rabbit.queue('test').autoReply().subscribe(() => {
             return 'world';
         });
         const reply = await rabbit.queue('test').confirm().rpc('hello');
@@ -40,6 +40,7 @@ describe('integration/rpc', () => {
     });
     it('should rpc to exchange', async () => {
         await rabbit.queue('test')
+            .autoReply()
             .bindExchange('testexchange', '*', 'topic')
             .subscribe(() => 'world');
         const result = await rabbit

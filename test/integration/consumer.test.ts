@@ -110,6 +110,22 @@ describe('integration/consuming', () => {
         await delay(100);
         expect(nackSpy.calledOnce).to.be.true;
     });
+    it('should not autoack when it is disabled', async () => {
+        let isMessageHandled: () => boolean;
+        await rabbit.queue('test')
+            .autoAck(false)
+            .subscribe(({ isHandled, ack }) => {
+                isMessageHandled = isHandled;
+                setTimeout(async () => {
+                    ack();
+                }, 200);
+            });
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(100);
+        expect(isMessageHandled()).to.be.false;
+        await delay(120);
+        expect(isMessageHandled()).to.be.true;
+    });
 });
 
 export const expectFail = async (promise: Promise<any>, pattern?: string) => {

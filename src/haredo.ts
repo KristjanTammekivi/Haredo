@@ -103,13 +103,13 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
         getState: () => state,
         subscribe: async <TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>, unknown>) => {
             const consumer = await makeConsumer(cb, state.connectionManager, {
-                autoAck: state.autoReply,
-                json: state.json,
+                autoAck: state.autoAck ?? true,
+                json: state.json ?? true,
                 middleware: state.middleware,
-                autoReply: state.autoReply,
+                autoReply: state.autoReply ?? false,
                 prefetch: state.prefetch,
                 queue: state.queue,
-                reestablish: state.reestablish,
+                reestablish: state.reestablish ?? true,
                 setup: addSetup(state)
             });
             state.connectionManager.addConsumer(consumer);

@@ -109,12 +109,15 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                         await initialChain({ connectionManager })
                             .queue(message.properties.replyTo)
                             .skipSetup()
-                            .publish(reply, {
+                            .publish(opts.json ? JSON.stringify(reply) : reply, {
                                 correlationId: message.properties.correlationId
                             });
                     }
                 });
-                await applyMiddleware(opts.middleware || [], cb, messageInstance);
+                await applyMiddleware(opts.middleware || [], cb, messageInstance, opts.autoAck, opts.autoReply);
+                if (opts.autoAck && !messageInstance.isHandled()) {
+                    messageInstance.ack();
+                }
             } catch (e) {
                 error(e);
                 messageInstance.nack(false);
@@ -132,13 +135,15 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
     return consumer;
 };
 
-export const applyMiddleware = async <TMessage, TReply>(middleware: Middleware<TMessage, TReply>[], cb: MessageCallback<TMessage, TReply>, msg: HaredoMessage<TMessage, TReply>) => {
+export const applyMiddleware = async <TMessage, TReply>(middleware: Middleware<TMessage, TReply>[], cb: MessageCallback<TMessage, TReply>, msg: HaredoMessage<TMessage, TReply>, autoAck: boolean, autoReply: boolean) => {
     if (!middleware.length) {
         const response = await cb(msg);
-        if (typeof response !== 'undefined') {
+        if (typeof response !== 'undefined' && autoReply) {
             await msg.reply(response);
         }
-        msg.ack();
+        if (autoAck) {
+            msg.ack();
+        }
     } else {
         let nextWasCalled = false;
         await head(middleware)(msg, () => {
@@ -147,10 +152,10 @@ export const applyMiddleware = async <TMessage, TReply>(middleware: Middleware<T
                 error('Message was handled in the middleware but middleware called next() anyway');
                 return;
             }
-            return applyMiddleware(tail(middleware), cb, msg);
+            return applyMiddleware(tail(middleware), cb, msg, autoAck, autoReply);
         });
         if (!nextWasCalled && !msg.isHandled()) {
-            await applyMiddleware(tail(middleware), cb, msg);
+            await applyMiddleware(tail(middleware), cb, msg, autoAck, autoReply);
         }
     }
 };

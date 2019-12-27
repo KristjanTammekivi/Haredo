@@ -59,7 +59,6 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
     };
 
     const dataString = raw.content.toString();
-
     const data = parseJson ? JSON.parse(dataString) : dataString;
 
     const emitter = makeEmitter<HaredoMessageEvents>();

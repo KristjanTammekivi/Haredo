@@ -43,16 +43,16 @@ export const defaultState = <TMessage, TReply>(
     newState: Partial<HaredoChainState<TMessage, TReply>>
 ): Partial<HaredoChainState<TMessage, TReply>> => {
     return {
-        autoAck: defaultToTrue(newState.autoAck),
-        autoReply: defaultTo(newState.autoReply, false),
+        autoAck: newState.autoAck ?? true,
+        autoReply: newState.autoReply ?? false,
         queue: newState.queue,
         bindings: [].concat(newState.bindings || []),
         prefetch: newState.prefetch || 0,
-        reestablish: defaultToTrue(newState.reestablish),
+        reestablish: newState.reestablish ?? true,
         failSpan: newState.failSpan,
         failThreshold: newState.failThreshold,
         failTimeout: newState.failTimeout,
-        json: defaultToTrue(newState.json),
+        json: newState.json ?? true,
         confirm: newState.confirm,
         skipSetup: newState.skipSetup,
         middleware: newState.middleware || []
