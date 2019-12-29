@@ -4,11 +4,11 @@ import { Middleware, Loggers } from './state';
 import { Channel, Replies } from 'amqplib';
 import { ConnectionManager } from './connection-manager';
 import { delay } from 'bluebird';
-import { MessageManager } from './message-manager';
 import { makeEmitter, TypedEventEmitter } from './events';
 import { ChannelBrokenError, FailedParsingJsonError } from './errors';
 import { initialChain } from './haredo';
 import { head, tail } from './utils';
+import { makeMessageManager } from './message-manager';
 
 export interface MessageCallback<TMessage = unknown, TReply = unknown> {
     (message: HaredoMessage<TMessage>): Promise<TReply | void> | TReply | void;
@@ -46,7 +46,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
     log: Loggers
 ): Promise<Consumer> => {
     let channel: Channel;
-    let messageManager = new MessageManager();
+    let messageManager = makeMessageManager();
     let consumerTag: string;
     const emitter = makeEmitter<ConsumerEvents>();
     const close = async () => {
@@ -71,7 +71,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                 await delay(5);
                 try {
                     if (!consumer.isClosing) {
-                        messageManager = new MessageManager();
+                        messageManager = makeMessageManager();
                         await start();
                     }
                 } catch (e) {
