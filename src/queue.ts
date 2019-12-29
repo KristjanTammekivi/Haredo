@@ -8,8 +8,6 @@ export const DEFAULT_QUEUE_OPTIONS: QueueOptions = Object.freeze({
     exclusive: false
 });
 
-// TODO: add getName
-
 export interface Queue<TPublish = unknown, TReply = unknown> {
     type: 'queue';
     getName: () => string;

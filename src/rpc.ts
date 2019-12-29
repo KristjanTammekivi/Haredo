@@ -18,7 +18,6 @@ export interface StartRpc {
     close: () => Promise<void>;
 }
 
-// TODO: gracefully close RPC on haredo close
 // TODO: add ability to timeout
 // TODO: add ability to force close
 
