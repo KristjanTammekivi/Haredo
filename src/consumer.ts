@@ -1,4 +1,4 @@
-import { HaredoMessage, makeHaredoMessage } from './haredo-message';
+import { HaredoMessage, makeHaredoMessage, Methods } from './haredo-message';
 import { Queue } from './queue';
 import { Middleware, Loggers } from './state';
 import { Channel, Replies } from 'amqplib';
@@ -89,40 +89,46 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                 return;
             }
             let messageInstance: HaredoMessage<TMessage, TReply>;
+            const methods: Methods<TReply> = {
+                ack: () => {
+                    if (!channel) {
+                        throw new ChannelBrokenError();
+                    }
+                    channel.ack(message);
+                },
+                nack: (requeue = true) => {
+                    if (!channel) {
+                        throw new ChannelBrokenError();
+                    }
+                    channel.nack(message, false, requeue);
+                },
+                reply: async (reply) => {
+                    await initialChain({ connectionManager })
+                        .queue(message.properties.replyTo)
+                        .skipSetup()
+                        .publish(opts.json ? JSON.stringify(reply) : reply, {
+                            correlationId: message.properties.correlationId
+                        });
+                }
+            };
             try {
                 if (consumer.isClosing) {
                     return;
                 }
-                messageInstance = makeHaredoMessage<TMessage, TReply>(message, opts.json, {
-                    ack: () => {
-                        if (!channel) {
-                            throw new ChannelBrokenError();
-                        }
-                        channel.ack(message);
-                    },
-                    nack: (requeue = true) => {
-                        if (!channel) {
-                            throw new ChannelBrokenError();
-                        }
-                        channel.nack(message, false, requeue);
-                    },
-                    reply: async (reply) => {
-                        await initialChain({ connectionManager })
-                            .queue(message.properties.replyTo)
-                            .skipSetup()
-                            .publish(opts.json ? JSON.stringify(reply) : reply, {
-                                correlationId: message.properties.correlationId
-                            });
-                    }
-                });
+                messageInstance = makeHaredoMessage<TMessage, TReply>(message, opts.json, methods);
                 messageManager.add(messageInstance);
                 await applyMiddleware(opts.middleware || [], cb, messageInstance, opts.autoAck, opts.autoReply, log);
                 if (opts.autoAck && !messageInstance.isHandled()) {
                     messageInstance.ack();
                 }
             } catch (e) {
-                log.error(e);
-                messageInstance.nack(!(opts.json && e instanceof FailedParsingJsonError));
+                if (!messageInstance) {
+                    log.error('consumer: failed initializing a message instance', e);
+                    methods.nack(false);
+                } else {
+                    log.error('consumer: error while handling message', e, messageInstance);
+                    messageInstance.nack(true);
+                }
             }
         }));
     };

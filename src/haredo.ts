@@ -397,6 +397,12 @@ export interface ExchangeChain<TMessage, TReply> extends
         exchange: Exchange<TCustomMessage>,
         pattern: string | string[]
     ): ExchangeChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
+    bindExchange(
+        exchangeName: string,
+        pattern: string | string[],
+        exchangeType: ExchangeType,
+        exchangeOpts?: ExchangeOptions
+    ): ExchangeChain<TMessage, TReply>;
     /**
      * Bind an exchange to the main exchange.
      *
@@ -442,6 +448,12 @@ export interface QueueChain<TMessage, TReply> extends
         exchange: Exchange<TCustomMessage>,
         pattern: string | string[]
     ): QueueChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
+    bindExchange(
+        exchangeName: string,
+        pattern: string | string[],
+        exchangeType: ExchangeType,
+        exchangeOpts?: ExchangeOptions
+    ): QueueChain<TMessage, TReply>;
     /**
      * Bind an exchange to the queue.
      *

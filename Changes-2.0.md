@@ -2,7 +2,7 @@
 
 ## Split queues
 
-In haredo@1 You could start a queue based chain with both haredo.queue(...).exchange(...) and haredo.exchange(...).queue(...). This causes some ambiguity in the API though (eg. if You only use .exchange then the subscribe method is there, but using it throws a runtime error). To reduce the chances of misusing the library I've limited the user. Now, if You plan on subscribing, You have to start off with .queue.
+In haredo@1 You could start a queue based chain with both haredo.queue(...).exchange(...) and haredo.exchange(...).queue(...). This causes some ambiguity in the API though (eg. if You only use .exchange then the subscribe method is there, but using it throws a runtime error). To reduce the chances of misusing the library I've limited the user. Now, if You plan on binding a queue to an exhange You have to do haredo.queue(...).bindExchange(...)
 
 ## Classes
 

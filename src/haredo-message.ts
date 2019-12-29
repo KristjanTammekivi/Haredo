@@ -40,7 +40,7 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown>
     routingKey: string;
 }
 
-interface Methods<TReply = unknown> {
+export interface Methods<TReply = unknown> {
     ack: () => void;
     nack: (requeue: boolean) => void;
     reply: (message: TReply) => Promise<void>;
@@ -49,8 +49,7 @@ interface Methods<TReply = unknown> {
 export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
     raw: Message,
     parseJson: boolean,
-    methods:
-    Methods<TReply>
+    methods: Methods<TReply>
 ): HaredoMessage<TMessage, TReply> => {
     const state = {
         isHandled: false,

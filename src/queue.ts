@@ -1,4 +1,5 @@
 import { Options } from 'amqplib';
+import { Exchange } from './exchange';
 
 export type QueueOptions = Options.AssertQueue;
 
@@ -43,6 +44,15 @@ export interface Queue<TPublish = unknown, TReply = unknown> {
      */
     expires: (expires: number) => Queue<TPublish, TReply>;
     /**
+    * Add a dead letter exchange to route discarded messages to.
+    * A message is discarded for any of 4 reasons
+    * - Message expires
+    * - Queue limit is reached
+    * - Message is rejected (not implemented in Haredo)
+    * - Message is nacked with requeue set to false
+    */
+    dead: (dlx: string | Exchange, deadLetterRoutingKey?: string) => Queue<TPublish, TReply>;
+    /**
      * set the name of the queue. Empty string will cause the server to assign
      * a name for it.
      */
@@ -76,6 +86,12 @@ export const makeQueue = <TPublish = unknown, TReply = unknown>(name?: string, o
         messageTtl: (messageTtl: number) => makeQueue(name, cloneOpts({ messageTtl })),
         maxLength: (maxLength: number) => makeQueue(name, cloneOpts({ maxLength })),
         expires: (expires: number) => makeQueue(name, cloneOpts({ expires })),
+        dead: (deadLetterExchange: string | Exchange, deadLetterRoutingKey?: string) => {
+            if (typeof deadLetterExchange !== 'string') {
+                deadLetterExchange = deadLetterExchange.getName();
+            }
+            return makeQueue(name, cloneOpts({ deadLetterExchange, deadLetterRoutingKey }));
+        },
         name: (name: string) => makeQueue(name, cloneOpts({})),
         mutateName: (newName: string) => { name = newName; }
     };
