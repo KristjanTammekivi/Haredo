@@ -1,12 +1,12 @@
 import { haredo } from '../haredo';
-import { Queue } from '../queue';
+import { makeQueue } from '../queue';
 import { delay } from 'bluebird';
 
 const main = async () => {
     const chain = haredo({
         connection: 'amqp://guest:guest@localhost:5672/'
     });
-    const queue = new Queue<{ test: number, time: number }>('test').expires(2000);
+    const queue = makeQueue<{ test: number, time: number }>('test').expires(2000);
     await chain.queue(queue)
         .subscribe(({ data }) => {
             console.log(data);

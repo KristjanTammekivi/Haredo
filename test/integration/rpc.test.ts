@@ -16,7 +16,7 @@ describe('integration/rpc', () => {
         await teardown();
     });
     it('should publish message', async () => {
-        await Promise.race([rabbit.queue('test').rpc('test'), delay(100)]);
+        await Promise.race([rabbit.queue('test').rpc('test'), delay(150)]);
         const msg = await getSingleMessage('test');
         expect(msg.content).to.equal('"test"');
     });

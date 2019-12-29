@@ -1,9 +1,9 @@
 import { Options, Channel, ConfirmChannel } from 'amqplib';
-import { Queue } from './queue';
+import { Queue, makeQueue } from './queue';
 import { Exchange, xDelayedTypeStrings, ExchangeType, ExchangeOptions, exchangeTypeStrings } from './exchange';
 
 import { HaredoChainState, Middleware, defaultState, Loggers } from './state';
-import { MergeTypes, promiseMap, merge } from './utils';
+import { MergeTypes, promiseMap, merge, omit } from './utils';
 import { makeConnectionManager } from './connection-manager';
 import { MessageCallback, Consumer, makeConsumer } from './consumer';
 import { MessageChain, isMessageChain, preparedMessage, mergeMessageState } from './prepared-message';
@@ -64,8 +64,8 @@ const addSetup = (state: Partial<HaredoChainState>) => async () => {
     });
     try {
         if (typeof state.queue !== 'undefined') {
-            const queueData = await channel.assertQueue(state.queue.name, state.queue.opts);
-            state.queue.name = queueData.queue;
+            const queueData = await channel.assertQueue(state.queue.getState().name, omit(state.queue.getState));
+            state.queue.mutateName(queueData.queue);
         }
         if (state.exchange) {
             await channel.assertExchange(state.exchange.name, state.exchange.type, state.exchange.opts);
@@ -74,7 +74,7 @@ const addSetup = (state: Partial<HaredoChainState>) => async () => {
             await promiseMap(state.bindings, async (binding) => {
                 await channel.assertExchange(binding.exchange.name, binding.exchange.type, binding.exchange.opts);
                 await promiseMap(binding.patterns, async (pattern) => {
-                    await channel.bindQueue(state.queue.name, binding.exchange.name, pattern);
+                    await channel.bindQueue(state.queue.getState().name, binding.exchange.name, pattern);
                 });
             });
         }
@@ -183,7 +183,7 @@ export const rpcToQueue = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
             .correlationId(correlationId)
             .replyTo(queue)
             .getState();
-        channel.sendToQueue(state.queue.name, Buffer.from(preppedMessage.content), preppedMessage.options);
+        channel.sendToQueue(state.queue.getState().name, Buffer.from(preppedMessage.content), preppedMessage.options);
         return  promise;
     };
 
@@ -236,7 +236,7 @@ export const publishToQueue = <TMessage>(state: Partial<HaredoChainState<TMessag
             channel = await state.connectionManager.getChannel();
         }
         await addSetup(state)();
-        return channel.sendToQueue(state.queue.name, Buffer.from(preppedMessage.content), preppedMessage.options);
+        return channel.sendToQueue(state.queue.getState().name, Buffer.from(preppedMessage.content), preppedMessage.options);
     };
 
 export const publishToExchange = <TMessage>(state: Partial<HaredoChainState<TMessage>>) =>
@@ -256,7 +256,7 @@ export const addQueue = <T extends ChainFunction>(chain: T) =>
     (state: Partial<HaredoChainState>) =>
         (queue: string | Queue, opts: Options.AssertQueue = {}) => {
             if (typeof queue === 'string') {
-                queue = new Queue(queue, opts);
+                queue = makeQueue(queue, opts);
             }
             return chain(merge(state, { queue }));
         };

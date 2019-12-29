@@ -1,6 +1,5 @@
 import { Exchange } from './exchange';
 import { Queue } from './queue';
-import { defaultToTrue, defaultTo } from './utils';
 import { ConnectionManager } from './connection-manager';
 import { HaredoMessage } from './haredo-message';
 

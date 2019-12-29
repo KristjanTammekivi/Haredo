@@ -1,6 +1,5 @@
 import { Options } from 'amqplib';
-import { Exchange } from './exchange';
-import { keyValuePairs, flatObjectIsEqual } from './utils';
+import { merge } from './utils';
 
 export type QueueOptions = Options.AssertQueue;
 
@@ -9,101 +8,72 @@ export const DEFAULT_QUEUE_OPTIONS: QueueOptions = Object.freeze({
     exclusive: false
 });
 
-export class Queue<TPublish = unknown, TReply = unknown> {
-    opts: QueueOptions;
-    anonymous: boolean;
-    /**
-     * Create a Queue configuration object. Note: this does not assert the queue
-     *
-     * @param name name of the queue, falsey value (including empty string) will make the server generate a name for you
-     * @param opts queue options, passed to assertQueue
-     * [amqplib#assertQueue](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue)
-     */
-    constructor(public name?: string, opts: Partial<QueueOptions> = { arguments: {} }) {
-        this.opts = Object.assign({}, DEFAULT_QUEUE_OPTIONS, opts);
-        this.anonymous = !this.name;
-    }
-    clone(opts: Partial<QueueOptions> = {}) {
-        return new Queue<TPublish>(this.name, Object.assign({}, this.opts, opts));
-    }
+// TODO: add getName
+
+export interface Queue<TPublish = unknown, TReply = unknown> {
+    type: 'queue';
+    getState: () => QueueOptions & { name: string };
     /**
      * if true, the queue will survive broker restarts,
      * modulo the effects of exclusive and autoDelete;
      * this defaults to true if not supplied, unlike the others.
      */
-    durable(durable = true) {
-        return this.clone({ durable });
-    }
+    durable: (durable?: boolean) => Queue<TPublish, TReply>;
     /**
      * if true, the queue will be deleted when the number
      * of consumers drops to zero (defaults to false)
      */
-    autoDelete(autoDelete = true) {
-        return this.clone({ autoDelete });
-    }
+    autoDelete: (autoDelete?: boolean) => Queue<TPublish, TReply>;
     /**
      * if true, scopes the queue to the connection (defaults to false)
      */
-    exclusive(exclusive = true) {
-        return this.clone({ exclusive });
-    }
+    exclusive: (exclusive?: boolean) => Queue<TPublish, TReply>;
     /**
      * expires messages arriving in the queue after n milliseconds
      */
-    messageTtl(messageTtl: number) {
-        return this.clone({ messageTtl });
-    }
+    messageTtl: (messageTtl: number) => Queue<TPublish, TReply>;
     /**
      * set a maximum number of messages the queue will hold. Old messages
      * will be discarded/dead lettered to make room for new ones
      */
-    maxLength(maxLength: number) {
-        return this.clone({ maxLength });
-    }
+    maxLength: (maxLength: number) => Queue<TPublish, TReply>;
     /**
-    * the queue will be destroyed after n milliseconds of disuse,
-    * where use means having consumers or being declared
-    */
-    expires(expires: number) {
-        return this.clone({ expires });
-    }
-    /**
-     * Add a dead letter exchange to route discarded messages to.
-     * A message is discarded for any of 4 reasons
-     * - Message expires
-     * - Message is rejected (not implemented in Haredo)
-     * - Message is nacked with requeue set to false
-     * - Queue limit is reached
+     * the queue will be destroyed after n milliseconds of disuse,
+     * where use means having consumers or being declared
      */
-    dead(deadLetterExchange: Exchange | string, deadLetterRoutingKey?: string) {
-        if (deadLetterExchange instanceof Exchange) {
-            deadLetterExchange = deadLetterExchange.name;
-        }
-        return this.clone({
-            deadLetterRoutingKey,
-            deadLetterExchange
-        });
-    }
-    toString() {
-        return `Queue${this.name ? padString(this.name) : ' '}opts:${keyValuePairs(this.opts).join(',')}`;
-    }
-    isEqual(queue: Queue) {
-        return this.name && queue.name &&
-            this.name === queue.name &&
-            this.opts.autoDelete === queue.opts.autoDelete &&
-            this.opts.deadLetterExchange === queue.opts.deadLetterExchange &&
-            this.opts.deadLetterRoutingKey === queue.opts.deadLetterRoutingKey &&
-            this.opts.durable === queue.opts.durable &&
-            this.opts.exclusive === queue.opts.exclusive &&
-            this.opts.expires === queue.opts.expires &&
-            this.opts.maxLength === queue.opts.maxLength &&
-            this.opts.maxPriority === queue.opts.maxPriority &&
-            this.opts.messageTtl === queue.opts.messageTtl &&
-            flatObjectIsEqual(this.opts.arguments, queue.opts.arguments);
-    }
-    isPerishable() {
-        return this.opts.autoDelete || this.opts.exclusive || !this.opts.durable || !!this.opts.expires;
-    }
+    expires: (expires: number) => Queue<TPublish, TReply>;
+    /**
+     * set the name of the queue. Empty string will cause the server to assign
+     * a name for it.
+     */
+    name: (name: string) => Queue<TPublish, TReply>;
+    /**
+     * Made for internal use. Mutates the state instead of doing the usual thing of returning
+     * a brand new object
+     */
+    mutateName: (name: string) => void;
 }
 
-const padString = (str: string) => ` ${str} `;
+    /**
+     * Create a queue configuration object. Note: this does not assert the queue
+     *
+     * @param name name of the queue, falsey value (including empty string) will make the server generate a name for you
+     * @param opts queue options, passed to assertQueue
+     * [amqplib#assertQueue](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue)
+     */
+export const makeQueue = <TPublish = unknown, TReply = unknown>(name?: string, opts: Partial<QueueOptions> = {}): Queue<TPublish, TReply> => {
+    return {
+        type: 'queue',
+        getState: () => Object.assign({}, opts, { name }),
+        durable: (durable = true) => makeQueue(name, merge(opts, { durable })),
+        autoDelete: (autoDelete = true) => makeQueue(name, merge(opts, { autoDelete })),
+        exclusive: (exclusive = true) => makeQueue(name, merge(opts, { exclusive })),
+        messageTtl: (messageTtl: number) => makeQueue(name, merge(opts, { messageTtl })),
+        maxLength: (maxLength: number) => makeQueue(name, merge(opts, { maxLength })),
+        expires: (expires: number) => makeQueue(name, merge(opts, { expires })),
+        name: (name: string) => makeQueue(name, merge({}, opts)),
+        mutateName: (newName: string) => { name = newName; }
+    };
+};
+
+export const padString = (str: string) => ` ${str} `;

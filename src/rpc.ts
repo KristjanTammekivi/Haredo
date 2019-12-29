@@ -1,15 +1,17 @@
 import { InitialChain } from './haredo';
 import { Consumer } from './consumer';
-import { Queue } from './queue';
+import { makeQueue } from './queue';
 
 export interface StartRpc {
     consumer: Consumer;
     add: <TReply>(correlationId: string) => { promise: Promise<TReply>, queue: string } ;
 }
 
+// TODO: gracefully close RPC on haredo close
+
 export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, TReply>): Promise<StartRpc> => {
     const openListeners = {} as Record<string, { resolve: (value: any) => void, reject: (error: Error) => void }>;
-    const queue = new Queue('').durable();
+    const queue = makeQueue('').durable();
     return {
         consumer: await haredo
             .queue(queue)
@@ -23,7 +25,7 @@ export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, 
             }),
         add: (correlationId: string) => {
             return {
-                queue: queue.name,
+                queue: queue.getState().name,
                 promise: new Promise((resolve, reject) => {
                     openListeners[correlationId] = { resolve, reject };
                 })

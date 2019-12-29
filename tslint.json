@@ -37,7 +37,8 @@
         "no-parameter-reassignment": false,
         "no-identical-functions": false,
         "object-shorthand-properties-first": false,
-        "interface-over-type-literal": true
+        "interface-over-type-literal": true,
+        "bool-param-default": false
     },
     "linterOptions": {
         "exclude": [

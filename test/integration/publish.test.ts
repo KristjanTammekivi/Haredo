@@ -2,8 +2,8 @@ import { Haredo, haredo } from '../../src/haredo';
 import { setup, teardown, getSingleMessage, checkQueue, checkExchange } from './helpers/amqp';
 import { expect } from 'chai';
 import { ExchangeType, Exchange } from '../../src/exchange';
-import { Queue } from '../../src/queue';
 import { delay } from '../../src/utils';
+import { makeQueue } from '../../src/queue';
 
 describe('integration/publish', () => {
     let rabbit: Haredo;
@@ -37,9 +37,9 @@ describe('integration/publish', () => {
     });
     it('should bind an exchange to a queue', async () => {
         const exchange = new Exchange<string>('testexchange', 'topic');
-        const queue = new Queue<number>('testqueue');
+        const queue = makeQueue<number>('testqueue');
         await rabbit.queue(queue).bindExchange(exchange, '*').publish('message');
-        const msg = await getSingleMessage(queue.name);
+        const msg = await getSingleMessage(queue.getState().name);
         expect(msg.content).to.equal(JSON.stringify('message'));
     });
     it('should not publish in json if json is switched off', async () => {

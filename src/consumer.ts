@@ -84,7 +84,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
             }
         });
         await setPrefetch(opts.prefetch || 0);
-        ({ consumerTag } = await channel.consume(opts.queue.name, async (message) => {
+        ({ consumerTag } = await channel.consume(opts.queue.getState().name, async (message) => {
             if (message === null) {
                 return;
             }

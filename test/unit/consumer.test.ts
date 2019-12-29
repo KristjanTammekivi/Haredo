@@ -7,7 +7,7 @@ import { ConnectionManager } from '../../src/connection-manager';
 
 import * as sinonChai from 'sinon-chai';
 import { use, expect } from 'chai';
-import { Queue } from '../../src/queue';
+import { makeQueue } from '../../src/queue';
 import { Channel } from 'amqplib';
 import { delay } from '../../src/utils';
 import { eventToPromise } from '../integration/helpers/utils';
@@ -35,7 +35,7 @@ describe('unit/consumer', () => {
             autoReply: true,
             json: true,
             middleware: [],
-            queue: new Queue('test'),
+            queue: makeQueue('test'),
             reestablish: true,
             setup: async () => {}
         }, { debug: () => {}, info: () => {}, warning: () => {}, error: () => {}});
