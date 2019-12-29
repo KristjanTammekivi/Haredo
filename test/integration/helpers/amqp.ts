@@ -1,11 +1,11 @@
 import { connect, Connection, Options } from 'amqplib';
 import { stringify } from '../../../src/utils';
-import { ExchangeType, exchangeTypeStrings } from '../../../src/exchange';
+import { ExchangeType } from '../../../src/exchange';
 
 let connection: Connection;
 
-const RabbitStats = require('rabbitmq-stats');
-const statsInstance = RabbitStats('http://localhost:15672', 'guest', 'guest');
+const rabbitStats = require('rabbitmq-stats');
+const statsInstance = rabbitStats('http://localhost:15672', 'guest', 'guest');
 
 export const setup = async () => {
     await createVhost();
@@ -38,7 +38,7 @@ interface GetConsumers {
 
 export const getConsumers = async () => statsInstance.getVhostConsumers('test') as GetConsumers[];
 
-export const checkExchange = async (name: string, type: ExchangeType | exchangeTypeStrings, opts?: Options.AssertExchange) => {
+export const checkExchange = async (name: string, type: ExchangeType, opts?: Options.AssertExchange) => {
     const channel = await getChannel();
     await channel.checkExchange(name);
     if (opts) {
@@ -112,11 +112,11 @@ export const purgeQueue = async (name: string) => {
     const data = await channel.purgeQueue(name);
     await channel.close();
     return data.messageCount;
-}
+};
 
 export const getSingleMessage = async (name: string) => {
     const channel = await getChannel();
-    const message = await channel.get(name, { noAck: true })
+    const message = await channel.get(name, { noAck: true });
     await channel.close();
     if (message === false) {
         throw new Error(`No message in queue ${name}`);

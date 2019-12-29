@@ -6,7 +6,7 @@ In haredo@1 You could start a queue based chain with both haredo.queue(...).exch
 
 ## Classes
 
-I've moved from classes to using closures to contain the state. Initially this was to allow for a better code reuse in the split chains but it also helps by enabling users to destructure methods.
+I've moved (mostly) away from classes to using closures to contain the state. Initially this was to allow for a better code reuse in the split chains but it also helps by enabling users to destructure methods.
 
 ## Subscribing changes
 

@@ -1,6 +1,6 @@
 import 'mocha';
 
-import { initialChain, queueChain, InitialChain, QueueChain } from '../../src/haredo';
+import { initialChain, queueChain, InitialChain } from '../../src/haredo';
 import { expect } from 'chai';
 import { Middleware, HaredoChainState } from '../../src/state';
 import { stub } from 'sinon';
@@ -47,8 +47,8 @@ describe('unit/chain', () => {
         expect(chain.queue('test').confirm(false).getState()).to.have.property('confirm' as keyof HaredoChainState, false);
     });
     it('should set confirm', () => {
-        expect(chain.exchange('test', 'direct').getState().exchange.name).to.equal('test');
-        expect(chain.exchange('test', 'direct').getState().exchange.type).to.equal('direct');
+        expect(chain.exchange('test', 'direct').getState().exchange.getName()).to.equal('test');
+        expect(chain.exchange('test', 'direct').getState().exchange.getType()).to.equal('direct');
     });
     it('should set prefetch', () => {
         expect(chain.queue('test').prefetch(5).getState()).to.have.property('prefetch' as keyof HaredoChainState, 5);

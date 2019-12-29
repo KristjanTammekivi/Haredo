@@ -1,3 +1,5 @@
+import { FailedParsingJsonError } from './errors';
+
 export const keyValuePairs = (obj: Object): string[] => {
     return Object.keys(obj).map((key) => {
         return `${key}=${stringify((obj as any)[key])}`;
@@ -14,24 +16,6 @@ export const stringify = (item: any): string => {
     }
 
     return JSON.stringify(item);
-};
-
-export const get = <T extends object, U>(obj: T, cb: (obj: T) => U): U | undefined => {
-    try {
-        return cb(obj);
-    } catch (e) {
-        return;
-    }
-};
-
-export const flatObjectIsEqual = (base: any, top: any) => {
-    if (Object.keys(base).some(x => base[x] !== top[x])) {
-        return false;
-    }
-    if (Object.keys(top).some(x => base[x] !== top[x])) {
-        return false;
-    }
-    return true;
 };
 
 export const promiseMap = async <T, U>(arr: T[], cb: (obj: T, i: number, arr: T[]) => U) => {
@@ -51,47 +35,8 @@ export const delay = (ms: number) => {
     });
 };
 
-export class TimeoutError extends Error { }
-
-export const timeout = (milliseconds: number) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(reject, milliseconds, new TimeoutError());
-    });
-};
-
-export const swallowRejection = async <T>(error: { new(): Error }, promise: Promise<T>): Promise<T | undefined> => {
-    try {
-        return await promise;
-    } catch (e) {
-        if (!(e instanceof error)) {
-            throw e;
-        }
-    }
-};
-
-export const swallowError = <T>(error: { new(): Error }, fn: () => T): T | undefined => {
-    try {
-        return fn();
-    } catch (e) {
-        if (!(e instanceof error)) {
-            throw e;
-        }
-    }
-};
-
 type notany = object | string | number | undefined | null;
 export type MergeTypes<T, U> = T extends notany ? U extends notany ? T | U : T : U;
-
-export const defaultToTrue = (value: boolean) => defaultTo(value, true);
-export const defaultTo = <T>(value: T, backup: T) => value === undefined ? backup : value;
-
-export const pick = <T, K extends keyof T>(item: T, ...keys: K[]) => {
-    const pickedItem = {} as Pick<T, K>;
-    for (const key of keys) {
-        pickedItem[key] = item[key];
-    }
-    return pickedItem;
-};
 
 export const omit = <T, K extends keyof T>(item: T, ...keys: K[]) => {
     const omittedItem = {} as Omit<T, K>;
@@ -103,12 +48,14 @@ export const omit = <T, K extends keyof T>(item: T, ...keys: K[]) => {
     return omittedItem;
 };
 
-export const attempt = <T>(cb: () => T): T | undefined => {
-    try {
-        return cb();
-    } catch {}
-};
-
 export const merge = <T>(base: T, top: T): T => {
     return Object.assign({}, base, top);
+};
+
+export const parseJSON = (data: string) => {
+    try {
+        return JSON.parse(data);
+    } catch {
+        throw new FailedParsingJsonError(data);
+    }
 };

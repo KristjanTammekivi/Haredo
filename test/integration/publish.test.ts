@@ -1,7 +1,7 @@
 import { Haredo, haredo } from '../../src/haredo';
 import { setup, teardown, getSingleMessage, checkQueue, checkExchange } from './helpers/amqp';
 import { expect } from 'chai';
-import { ExchangeType, Exchange } from '../../src/exchange';
+import { ExchangeType, Exchange, makeExchange } from '../../src/exchange';
 import { delay } from '../../src/utils';
 import { makeQueue } from '../../src/queue';
 
@@ -22,13 +22,13 @@ describe('integration/publish', () => {
         await checkQueue('test');
     });
     it('should setup exchange when publish is called', async () => {
-        await rabbit.exchange('test', ExchangeType.Direct, { durable: true }).publish('message', 'routingkey');
-        await checkExchange('test', ExchangeType.Direct, { durable: true });
+        await rabbit.exchange('test', 'direct', { durable: true }).publish('message', 'routingkey');
+        await checkExchange('test', 'direct', { durable: true });
     });
     it ('should setup an exchange with Exchange object', async () => {
-        const exchange = new Exchange<string>('test', 'direct').durable();
+        const exchange = makeExchange<string>('test', 'direct').durable();
         await rabbit.exchange(exchange).publish('message', 'routingkey');
-        await checkExchange(exchange.name, exchange.type, exchange.opts);
+        await checkExchange(exchange.getName(), exchange.getType(), exchange.getOpts());
     });
     it('should publish a message to queue', async () => {
         await rabbit.queue('test').publish('message');
@@ -36,10 +36,10 @@ describe('integration/publish', () => {
         expect(msg.content).to.equal(JSON.stringify('message'));
     });
     it('should bind an exchange to a queue', async () => {
-        const exchange = new Exchange<string>('testexchange', 'topic');
+        const exchange = makeExchange<string>('testexchange', 'topic');
         const queue = makeQueue<number>('testqueue');
         await rabbit.queue(queue).bindExchange(exchange, '*').publish('message');
-        const msg = await getSingleMessage(queue.getState().name);
+        const msg = await getSingleMessage(queue.getName());
         expect(msg.content).to.equal(JSON.stringify('message'));
     });
     it('should not publish in json if json is switched off', async () => {

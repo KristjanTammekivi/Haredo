@@ -1,5 +1,4 @@
 import { Options } from 'amqplib';
-import { merge } from './utils';
 
 export type QueueOptions = Options.AssertQueue;
 
@@ -12,7 +11,8 @@ export const DEFAULT_QUEUE_OPTIONS: QueueOptions = Object.freeze({
 
 export interface Queue<TPublish = unknown, TReply = unknown> {
     type: 'queue';
-    getState: () => QueueOptions & { name: string };
+    getName: () => string;
+    getOpts: () => QueueOptions;
     /**
      * if true, the queue will survive broker restarts,
      * modulo the effects of exclusive and autoDelete;
@@ -62,16 +62,21 @@ export interface Queue<TPublish = unknown, TReply = unknown> {
      * [amqplib#assertQueue](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue)
      */
 export const makeQueue = <TPublish = unknown, TReply = unknown>(name?: string, opts: Partial<QueueOptions> = {}): Queue<TPublish, TReply> => {
+    const cloneOpts = (top: Partial<QueueOptions>): QueueOptions => ({
+        ...opts,
+        ...top,
+    });
     return {
         type: 'queue',
-        getState: () => Object.assign({}, opts, { name }),
-        durable: (durable = true) => makeQueue(name, merge(opts, { durable })),
-        autoDelete: (autoDelete = true) => makeQueue(name, merge(opts, { autoDelete })),
-        exclusive: (exclusive = true) => makeQueue(name, merge(opts, { exclusive })),
-        messageTtl: (messageTtl: number) => makeQueue(name, merge(opts, { messageTtl })),
-        maxLength: (maxLength: number) => makeQueue(name, merge(opts, { maxLength })),
-        expires: (expires: number) => makeQueue(name, merge(opts, { expires })),
-        name: (name: string) => makeQueue(name, merge({}, opts)),
+        getName: () => name,
+        getOpts: () => cloneOpts(opts),
+        durable: (durable = true) => makeQueue(name, cloneOpts({ durable })),
+        autoDelete: (autoDelete = true) => makeQueue(name, cloneOpts({ autoDelete })),
+        exclusive: (exclusive = true) => makeQueue(name, cloneOpts({ exclusive })),
+        messageTtl: (messageTtl: number) => makeQueue(name, cloneOpts({ messageTtl })),
+        maxLength: (maxLength: number) => makeQueue(name, cloneOpts({ maxLength })),
+        expires: (expires: number) => makeQueue(name, cloneOpts({ expires })),
+        name: (name: string) => makeQueue(name, cloneOpts({})),
         mutateName: (newName: string) => { name = newName; }
     };
 };

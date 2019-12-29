@@ -1,6 +1,6 @@
 import { haredo } from '../haredo';
 import { makeQueue } from '../queue';
-import { Exchange } from '../exchange';
+import { makeExchange } from '../exchange';
 import { delay } from '../utils';
 
 export const main = async () => {
@@ -8,8 +8,8 @@ export const main = async () => {
         connection: 'amqp://guest:guest@localhost:5672/'
     });
     const queue = makeQueue('test').autoDelete();
-    const messagesExchange = new Exchange<{ id: number; body: string }>('messages', 'topic').autoDelete();
-    const usersExchange = new Exchange<{ id: number; name: string }>('users', 'topic').autoDelete();
+    const messagesExchange = makeExchange<{ id: number; body: string }>('messages', 'topic').autoDelete();
+    const usersExchange = makeExchange<{ id: number; name: string }>('users', 'topic').autoDelete();
     await chain.queue(queue)
         .bindExchange(messagesExchange, 'message.#')
         .bindExchange(usersExchange, ['user.create', 'user.update'])

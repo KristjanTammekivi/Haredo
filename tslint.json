@@ -38,7 +38,8 @@
         "no-identical-functions": false,
         "object-shorthand-properties-first": false,
         "interface-over-type-literal": true,
-        "bool-param-default": false
+        "bool-param-default": false,
+        "no-duplicate-string": false
     },
     "linterOptions": {
         "exclude": [

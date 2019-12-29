@@ -1,5 +1,6 @@
-import { Message, MessagePropertyHeaders, MessageProperties, MessageFields } from 'amqplib';
+import { Message, MessagePropertyHeaders } from 'amqplib';
 import { makeEmitter, TypedEventEmitter } from './events';
+import { parseJSON } from './utils';
 
 export interface HaredoMessageEvents {
     handled: void;
@@ -59,7 +60,7 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
     };
 
     const dataString = raw.content.toString();
-    const data = parseJson ? JSON.parse(dataString) : dataString;
+    const data = parseJson ? parseJSON(dataString) : dataString;
 
     const emitter = makeEmitter<HaredoMessageEvents>();
     return {

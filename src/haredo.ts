@@ -1,6 +1,6 @@
 import { Options, Channel, ConfirmChannel } from 'amqplib';
 import { Queue, makeQueue } from './queue';
-import { Exchange, xDelayedTypeStrings, ExchangeType, ExchangeOptions, exchangeTypeStrings } from './exchange';
+import { Exchange, StandardExchangeType, ExchangeType, ExchangeOptions, makeExchange } from './exchange';
 
 import { HaredoChainState, Middleware, defaultState, Loggers } from './state';
 import { MergeTypes, promiseMap, merge, omit } from './utils';
@@ -66,17 +66,17 @@ const addSetup = (state: Partial<HaredoChainState>) => async () => {
     });
     try {
         if (typeof state.queue !== 'undefined') {
-            const queueData = await channel.assertQueue(state.queue.getState().name, omit(state.queue.getState));
+            const queueData = await channel.assertQueue(state.queue.getName(), omit(state.queue.getOpts()));
             state.queue.mutateName(queueData.queue);
         }
         if (state.exchange) {
-            await channel.assertExchange(state.exchange.name, state.exchange.type, state.exchange.opts);
+            await channel.assertExchange(state.exchange.getName(), state.exchange.getType(), state.exchange.getOpts());
         }
         if (state.bindings) {
             await promiseMap(state.bindings, async (binding) => {
-                await channel.assertExchange(binding.exchange.name, binding.exchange.type, binding.exchange.opts);
+                await channel.assertExchange(binding.exchange.getName(), binding.exchange.getType(), binding.exchange.getOpts());
                 await promiseMap(binding.patterns, async (pattern) => {
-                    await channel.bindQueue(state.queue.getState().name, binding.exchange.name, pattern);
+                    await channel.bindQueue(state.queue.getName(), binding.exchange.getName(), pattern);
                 });
             });
         }
@@ -185,7 +185,7 @@ export const rpcToQueue = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
             .correlationId(correlationId)
             .replyTo(queue)
             .getState();
-        channel.sendToQueue(state.queue.getState().name, Buffer.from(preppedMessage.content), preppedMessage.options);
+        await channel.sendToQueue(state.queue.getName(), Buffer.from(preppedMessage.content), preppedMessage.options);
         return  promise;
     };
 
@@ -204,7 +204,7 @@ export const rpcToExchange = <TMessage, TReply>(state: Partial<HaredoChainState<
             .correlationId(correlationId)
             .replyTo(queue)
             .getState();
-        await channel.publish(state.exchange.name, preppedMessage.routingKey, Buffer.from(preppedMessage.content), preppedMessage.options);
+        await channel.publish(state.exchange.getName(), preppedMessage.routingKey, Buffer.from(preppedMessage.content), preppedMessage.options);
         return promise;
     };
 
@@ -238,7 +238,7 @@ export const publishToQueue = <TMessage>(state: Partial<HaredoChainState<TMessag
             channel = await state.connectionManager.getChannel();
         }
         await addSetup(state)();
-        return channel.sendToQueue(state.queue.getState().name, Buffer.from(preppedMessage.content), preppedMessage.options);
+        return channel.sendToQueue(state.queue.getName(), Buffer.from(preppedMessage.content), preppedMessage.options);
     };
 
 export const publishToExchange = <TMessage>(state: Partial<HaredoChainState<TMessage>>) =>
@@ -251,7 +251,7 @@ export const publishToExchange = <TMessage>(state: Partial<HaredoChainState<TMes
             channel = await state.connectionManager.getChannel();
         }
         await addSetup(state)();
-        return channel.publish(state.exchange.name, preppedMessage.routingKey, Buffer.from(preppedMessage.content), preppedMessage.options);
+        return channel.publish(state.exchange.getName(), preppedMessage.routingKey, Buffer.from(preppedMessage.content), preppedMessage.options);
     };
 
 export const addQueue = <T extends ChainFunction>(chain: T) =>
@@ -265,9 +265,9 @@ export const addQueue = <T extends ChainFunction>(chain: T) =>
 
 export const addExchange = <T extends ChainFunction>(chain: T) =>
     (state: Partial<HaredoChainState>) =>
-        (exchange: Exchange | string, type: ExchangeType | exchangeTypeStrings, opts: Partial<ExchangeOptions> = {}) => {
+        (exchange: Exchange | string, type: ExchangeType, opts: Partial<ExchangeOptions> = {}) => {
             if (typeof exchange === 'string') {
-                exchange = new Exchange(exchange, type, opts);
+                exchange = makeExchange(exchange, type, opts);
             }
             return chain(merge(state, { exchange }));
         };
@@ -277,11 +277,11 @@ export const addExchangeBinding = <TMessage, TChain extends ChainFunction<TMessa
         <TCustom>(
             exchange: Exchange<TCustom> | string,
             pattern: string | string[],
-            type?: ExchangeType | exchangeTypeStrings,
+            type?: ExchangeType,
             opts: Partial<ExchangeOptions> = {}
         ) => {
             if (typeof exchange === 'string') {
-                exchange = new Exchange(exchange, type, opts);
+                exchange = makeExchange(exchange, type, opts);
             }
             return chain(merge(state, { bindings: (state.bindings || [])
                 .concat({ exchange, patterns: [].concat(pattern) }) })) as ReturnType<TChain> | ReturnType<TCustomChain>;
@@ -367,7 +367,7 @@ export interface InitialChain<TMessage, TReply> {
      */
     exchange<TCustomMessage = unknown, TCustomReply = unknown>(
         exchange: string,
-        type: ExchangeType | xDelayedTypeStrings,
+        type: ExchangeType | StandardExchangeType,
         opts?: Partial<ExchangeOptions>
     ): ExchangeChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
 
@@ -413,7 +413,7 @@ export interface ExchangeChain<TMessage, TReply> extends
     bindExchange<TCustomMessage = unknown, TCustomReply = unknown>(
         exchange: string,
         pattern: string | string[],
-        type: ExchangeType | exchangeTypeStrings,
+        type: ExchangeType,
         opts?: Partial<ExchangeOptions>): ExchangeChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
 
 }
@@ -458,7 +458,7 @@ export interface QueueChain<TMessage, TReply> extends
     bindExchange<TCustomMessage = unknown, TCustomReply = unknown>(
         exchange: string,
         pattern: string | string[],
-        type: ExchangeType | exchangeTypeStrings,
+        type: ExchangeType,
         opts?: Partial<ExchangeOptions>): QueueChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
 
     /**

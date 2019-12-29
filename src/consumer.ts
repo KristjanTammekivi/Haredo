@@ -6,7 +6,7 @@ import { ConnectionManager } from './connection-manager';
 import { delay } from 'bluebird';
 import { MessageManager } from './message-manager';
 import { makeEmitter, TypedEventEmitter } from './events';
-import { ChannelBrokenError } from './errors';
+import { ChannelBrokenError, FailedParsingJsonError } from './errors';
 import { initialChain } from './haredo';
 import { head, tail } from './utils';
 
@@ -84,7 +84,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
             }
         });
         await setPrefetch(opts.prefetch || 0);
-        ({ consumerTag } = await channel.consume(opts.queue.getState().name, async (message) => {
+        ({ consumerTag } = await channel.consume(opts.queue.getName(), async (message) => {
             if (message === null) {
                 return;
             }
@@ -122,7 +122,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                 }
             } catch (e) {
                 log.error(e);
-                messageInstance.nack(false);
+                messageInstance.nack(!(opts.json && e instanceof FailedParsingJsonError));
             }
         }));
     };

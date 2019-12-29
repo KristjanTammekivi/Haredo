@@ -51,7 +51,7 @@ export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, 
             throw new HaredoClosingError();
         }
         return {
-            queue: queue.getState().name,
+            queue: queue.getName(),
             // tslint:disable-next-line: no-useless-cast
             promise: new Promise((resolve, reject) => {
                 debug(`rpc: attached listening for correlationId ${correlationId}`);
