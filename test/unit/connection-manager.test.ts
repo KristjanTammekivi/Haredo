@@ -12,7 +12,7 @@ use(chaiAsPromised);
 
 describe('unit/connection-manager', () => {
     let connectionManager: typeof import("../../src/connection-manager");
-    let connectionMock: EventEmitter;
+    let connectionMock: EventEmitter &  { close(): void };
     let connectStub: SinonStub;
     const noop = () => {};
     const loggers = {
@@ -23,7 +23,7 @@ describe('unit/connection-manager', () => {
     };
 
     beforeEach(async () => {
-        connectionMock = new EventEmitter();
+        connectionMock = Object.assign(new EventEmitter(), { async close() {} });
         connectStub = stub().resolves(connectionMock);
         connectionManager = await rewiremock.module(() => import('../../src/connection-manager'), () => ({
             amqplib: {
@@ -45,11 +45,5 @@ describe('unit/connection-manager', () => {
         await delay(10);
         expect(connectStub).to.be.calledTwice;
     })
-
-    it('should throw an error if cm is closed but getConnection is called', async () => {
-        const cm = connectionManager.makeConnectionManager({}, {}, loggers);
-        cm.close();
-        await expect(cm.getConnection()).to.be.rejected;
-    });
 
 });

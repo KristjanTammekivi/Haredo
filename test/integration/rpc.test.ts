@@ -2,6 +2,7 @@ import { Haredo, haredo } from '../../src/haredo';
 import { setup, teardown, getSingleMessage, publishMessage } from './helpers/amqp';
 import { expect } from 'chai';
 import { delay } from '../../src/utils';
+import { preparedMessage } from '../../src/prepared-message';
 
 describe('integration/rpc', () => {
     let rabbit: Haredo;
@@ -19,6 +20,10 @@ describe('integration/rpc', () => {
         await Promise.race([rabbit.queue('test').rpc('test'), delay(150)]);
         const msg = await getSingleMessage('test');
         expect(msg.content).to.equal('"test"');
+        await rabbit
+            .queue(msg.properties.replyTo)
+            .skipSetup()
+            .publish(preparedMessage().correlationId(msg.properties.correlationId).json('world'));
     });
     it('should respond reply in a subscriber if message has correlationId and replyTo set', async () => {
         await rabbit.queue('responsequeue').setup();
@@ -47,5 +52,17 @@ describe('integration/rpc', () => {
             .exchange('testexchange', 'topic')
             .rpc('hello', 'rk');
         expect(result).to.equal('world');
+    });
+    it('should wait for reply before closing', async () => {
+        await rabbit.queue('test')
+            .autoReply()
+            .subscribe(async () => {
+                await delay(300);
+                return 'world';
+            });
+        const promise = rabbit.queue('test').skipSetup().rpc('hello');
+        await delay(20);
+        await rabbit.close();
+        expect(await promise).to.equal('world');
     });
 });

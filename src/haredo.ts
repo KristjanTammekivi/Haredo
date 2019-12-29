@@ -26,6 +26,8 @@ export interface Haredo extends InitialChain<unknown, unknown> {
     close: () => Promise<void>;
 }
 
+// TODO: add a .logger method to chains so you can swap out logging
+
 export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOptions) => {
     const log: Loggers = {
         debug: (args: any[]) => logger(LogLevel.DEBUG, args),

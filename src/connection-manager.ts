@@ -6,6 +6,7 @@ import { Consumer } from './consumer';
 import { StartRpc, startRpc } from './rpc';
 import { initialChain } from './haredo';
 import { Loggers } from './state';
+import { inspect } from 'util';
 
 export interface Events {
     connected: Connection;
@@ -26,7 +27,7 @@ export interface ConnectionManager {
 export const makeConnectionManager = (connectionOpts: string | Options.Connect, socketOpts: any, log: Loggers): ConnectionManager => {
     let connection: Connection;
     let connectionPromise: Promise<Connection>;
-    let closing = false;
+    let closed = false;
     const emitter = makeEmitter<Events>();
     let consumers = [] as Consumer[];
     let rpcPromise: Promise<StartRpc>;
@@ -39,13 +40,16 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     };
 
     const closeConsumers = async () => {
+        log.info('connectionmanager: closing consumers');
         await promiseMap(consumers, async (consumer) => {
             await consumer.close();
         });
+        log.info('connectionmanager: done closing consumers');
     };
 
     const getConnection = async () => {
-        if (closing) {
+        if (closed) {
+            log.error('connectionmanager: closed, cannot create a new connection');
             const error = new HaredoClosingError();
             emitter.emit('error', error);
             /* istanbul ignore next for some reason throw error seems as uncovered */
@@ -62,12 +66,19 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
         emitter,
         getConnection,
         close: async () => {
-            closing = true;
+            log.info('connectionmanager: closing...');
             try {
                 await connectionPromise;
-            } catch { }
+            } catch (e) {
+                log.error('connectionmanager: getting initial connection failed', e);
+            }
+            const rpc = await rpcPromise;
+            await rpc?.close();
             await closeConsumers();
-            await (connection && connection.close());
+            closed = true;
+            log.info('connectionmanager: closing rabbitmq connection');
+            await connection?.close();
+            log.info('connectionmanager: closed');
         },
         getChannel: async () => {
             const connection = await getConnection();
@@ -85,35 +96,37 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
 
     const rpc = async <TReply>(correlationId: string) => {
         if (!rpcPromise) {
-            rpcPromise = startRpc(initialChain({ log, connectionManager: cm as ConnectionManager }));
+            rpcPromise = startRpc(initialChain({ log, connectionManager: cm as ConnectionManager }), log);
         }
         const rpc = await rpcPromise;
         return rpc.add<TReply>(correlationId);
     };
 
     const loopGetConnection = async () => {
+        log.info('connectionmanager: connecting');
         while (true) {
-            if (closing) {
+            if (closed) {
                 throw new HaredoClosingError();
             }
             try {
-                connection = await Promise.resolve(connect(connectionOpts, socketOpts));
+                connection = await connect(connectionOpts, socketOpts);
                 connection.on('error', /* istanbul ignore next */(err) => {
                     log.error('connection error', err);
                 });
                 connection.on('close', async () => {
                     emitter.emit('connectionclose');
-                    log.info('connection closed');
+                    log.info('connectionmanager: connection closed');
                     connectionPromise = undefined;
                     connection = undefined;
-                    if (!closing) {
+                    if (!closed) {
+                        log.info('connectionmanager: reopening connection');
                         await getConnection();
                     }
                 });
                 emitter.emit('connected', connection);
                 return connection;
             } catch (e) /* istanbul ignore next */ {
-                log.error('failed to connect', e);
+                log.error('connecitonmanager: failed to connect', e);
                 await delay(1000);
             }
         }
