@@ -22,6 +22,9 @@ export enum LogLevel {
     'ERROR'
 }
 
+// TODO: convert loglevel away from enum
+// TODO: make logging always start with component name as a separate parameter
+
 export interface Haredo extends InitialChain<unknown, unknown> {
     close: () => Promise<void>;
 }
