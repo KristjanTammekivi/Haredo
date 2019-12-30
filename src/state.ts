@@ -17,11 +17,15 @@ export interface StateExchangeCollection {
     patterns: string[];
 }
 
+export type Component = 'ConnectionManager' | 'RPC' | 'Consumer';
+
+export type logger = (component: Component, ...msg: any[]) => void;
+
 export interface Loggers {
-    debug: (...msg: any[]) => void;
-    info: (...msg: any[]) => void;
-    warning: (...msg: any[]) => void;
-    error: (...msg: any[]) => void;
+    debug: logger;
+    info: logger;
+    warning: logger;
+    error: logger;
 }
 
 export interface HaredoChainState<TMessage = unknown, TReply = unknown> {

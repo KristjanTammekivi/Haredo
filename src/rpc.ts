@@ -26,14 +26,14 @@ export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, 
     const queue = makeQueue('').durable();
     let isClosing = false;
     const emitter = makeEmitter<Events>();
-    info('rpc: starting consumer');
+    info('RPC', 'starting consumer');
     const consumer = await haredo
         .queue(queue)
         .noAck()
         .subscribe(({ correlationId, data }) => {
             const listener = openListeners[correlationId];
             if (listener) {
-                debug(`rpc: resolving correlationId ${correlationId}`);
+                debug('RPC', `resolving correlationId ${correlationId}`);
                 listener.resolve(data);
                 delete openListeners[correlationId];
                 emitter.emit('resolve');
@@ -41,19 +41,19 @@ export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, 
                     emitter.emit('drain');
                 }
             } else {
-                warning(`rpc: received unknown correlationId ${correlationId}`);
+                warning('RPC', `received unknown correlationId ${correlationId}`);
             }
         });
     const add = <TReply>(correlationId: string) => {
         if (isClosing) {
-            error('rpc: not attaching rpc listener since RPC service is closing');
+            error('RPC', 'not attaching rpc listener since RPC service is closing');
             throw new HaredoClosingError();
         }
         return {
             queue: queue.getName(),
             // tslint:disable-next-line: no-useless-cast
             promise: new Promise((resolve, reject) => {
-                debug(`rpc: attached listening for correlationId ${correlationId}`);
+                debug('RPC', `attached listening for correlationId ${correlationId}`);
                 openListeners[correlationId] = { resolve, reject };
             }) as Promise<TReply>
         };
@@ -62,19 +62,19 @@ export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, 
         return Object.keys(openListeners).length === 0;
     };
     const close = async () => {
-        info('rpc: closing...');
+        info('RPC', 'closing...');
         isClosing = true;
         if (isDrained()) {
-            info('rpc: no more listeners, closing consumer');
+            info('RPC', 'no more listeners, closing consumer');
             await consumer.close();
-            info('rpc: closed');
+            info('RPC', 'closed');
             return;
         }
-        info(`rpc: waiting for ${ Object.keys(openListeners).length } replies before closing`);
+        info('RPC', `waiting for ${ Object.keys(openListeners).length } replies before closing`);
         await typedEventToPromise(emitter, 'drain');
-        info('rpc: no more listeners, closing consumer');
+        info('RPC', 'no more listeners, closing consumer');
         await consumer.close();
-        info('rpc: closed');
+        info('RPC', 'closed');
     };
     return {
         consumer,

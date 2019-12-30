@@ -6,7 +6,6 @@ import { Consumer } from './consumer';
 import { StartRpc, startRpc } from './rpc';
 import { initialChain } from './haredo';
 import { Loggers } from './state';
-import { inspect } from 'util';
 
 export interface Events {
     connected: Connection;
@@ -40,16 +39,16 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     };
 
     const closeConsumers = async () => {
-        log.info('connectionmanager: closing consumers');
+        log.info('ConnectionManager', 'closing consumers');
         await promiseMap(consumers, async (consumer) => {
             await consumer.close();
         });
-        log.info('connectionmanager: done closing consumers');
+        log.info('ConnectionManager', 'done closing consumers');
     };
 
     const getConnection = async () => {
         if (closed) {
-            log.error('connectionmanager: closed, cannot create a new connection');
+            log.error('ConnectionManager', 'closed, cannot create a new connection');
             const error = new HaredoClosingError();
             emitter.emit('error', error);
             /* istanbul ignore next for some reason throw error seems as uncovered */
@@ -66,19 +65,19 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
         emitter,
         getConnection,
         close: async () => {
-            log.info('connectionmanager: closing...');
+            log.info('ConnectionManager', 'closing...');
             try {
                 await connectionPromise;
             } catch (e) {
-                log.error('connectionmanager: getting initial connection failed', e);
+                log.error('ConnectionManager', 'getting initial connection failed', e);
             }
             const rpc = await rpcPromise;
             await rpc?.close();
             await closeConsumers();
             closed = true;
-            log.info('connectionmanager: closing rabbitmq connection');
+            log.info('ConnectionManager', 'closing rabbitmq connection');
             await connection?.close();
-            log.info('connectionmanager: closed');
+            log.info('ConnectionManager', 'closed');
         },
         getChannel: async () => {
             const connection = await getConnection();
@@ -103,7 +102,7 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     };
 
     const loopGetConnection = async () => {
-        log.info('connectionmanager: connecting');
+        log.info('ConnectionManager', 'connecting');
         while (true) {
             if (closed) {
                 throw new HaredoClosingError();
@@ -111,22 +110,22 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
             try {
                 connection = await connect(connectionOpts, socketOpts);
                 connection.on('error', /* istanbul ignore next */(err) => {
-                    log.error('connection error', err);
+                    log.error('ConnectionManager', err);
                 });
                 connection.on('close', async () => {
                     emitter.emit('connectionclose');
-                    log.info('connectionmanager: connection closed');
+                    log.info('ConnectionManager', 'connection closed');
                     connectionPromise = undefined;
                     connection = undefined;
                     if (!closed) {
-                        log.info('connectionmanager: reopening connection');
+                        log.info('ConnectionManager', 'reopening connection');
                         await getConnection();
                     }
                 });
                 emitter.emit('connected', connection);
                 return connection;
             } catch (e) /* istanbul ignore next */ {
-                log.error('connecitonmanager: failed to connect', e);
+                log.error('ConnectionManager', e);
                 await delay(1000);
             }
         }

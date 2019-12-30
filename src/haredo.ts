@@ -12,31 +12,29 @@ import { generateCorrelationId } from './rpc';
 export interface HaredoOptions {
     connection?: Options.Connect | string;
     socketOpts?: any;
-    logger?: (level: LogLevel, msg: any[]) => void;
+    logger?: (log: { level: LogLevel; component: string;  msg: any[]; timestamp: Date; }) => void;
 }
 
 export enum LogLevel {
-    'DEBUG',
-    'INFO',
-    'WARNING',
-    'ERROR'
+    'DEBUG' = 'DEBUG',
+    'INFO' = 'INFO',
+    'WARNING' = 'WARNING',
+    'ERROR' = 'ERROR'
 }
-
-// TODO: convert loglevel away from enum
-// TODO: make logging always start with component name as a separate parameter
 
 export interface Haredo extends InitialChain<unknown, unknown> {
     close: () => Promise<void>;
 }
 
+// TODO: fix publishing
 // TODO: add a .logger method to chains so you can swap out logging
 
 export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOptions) => {
     const log: Loggers = {
-        debug: (args: any[]) => logger(LogLevel.DEBUG, args),
-        info: (args: any[]) => logger(LogLevel.INFO, args),
-        warning: (args: any[]) => logger(LogLevel.WARNING, args),
-        error: (args: any[]) => logger(LogLevel.ERROR, args)
+        debug: (component: string, ...args: any[]) => logger({ component, level: LogLevel.DEBUG, msg: args, timestamp: new Date() }),
+        info: (component: string, ...args: any[]) => logger({ component, level: LogLevel.INFO, msg: args, timestamp: new Date() }),
+        warning: (component: string, ...args: any[]) => logger({ component, level: LogLevel.WARNING, msg: args, timestamp: new Date() }),
+        error: (component: string, ...args: any[]) => logger({ component, level: LogLevel.ERROR, msg: args, timestamp: new Date() })
     };
     const connectionManager = makeConnectionManager(connection, socketOpts, log);
     return {

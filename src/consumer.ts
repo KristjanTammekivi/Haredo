@@ -65,7 +65,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
         await opts.setup();
         channel = await connectionManager.getChannel();
         channel.once('close', async () => {
-            log.info('channel closed');
+            log.info('Consumer', 'channel closed');
             channel = null;
             if (opts.reestablish) {
                 await delay(5);
@@ -75,7 +75,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                         await start();
                     }
                 } catch (e) {
-                    log.error('Failed to restart consumer', e);
+                    log.error('Consumer', 'Failed to restart consumer', e);
                     emitter.emit('error', e);
                 }
             }
@@ -123,10 +123,10 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                 }
             } catch (e) {
                 if (!messageInstance) {
-                    log.error('consumer: failed initializing a message instance', e);
+                    log.error('Consumer', 'failed initializing a message instance', e);
                     methods.nack(false);
                 } else {
-                    log.error('consumer: error while handling message', e, messageInstance);
+                    log.error('Consumer', 'error while handling message', e, messageInstance);
                     messageInstance.nack(true);
                 }
             }
@@ -157,7 +157,7 @@ export const applyMiddleware = async <TMessage, TReply>(middleware: Middleware<T
         await head(middleware)(msg, () => {
             nextWasCalled = true;
             if (msg.isHandled()) {
-                log.warning('Message was handled in the middleware but middleware called next() anyway');
+                log.warning('Consumer', 'message was handled in the middleware but middleware called next() anyway');
                 return;
             }
             return applyMiddleware(tail(middleware), cb, msg, autoAck, autoReply, log);
