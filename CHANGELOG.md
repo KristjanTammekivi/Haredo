@@ -1,3 +1,10 @@
+#### 1.3.2 (2019-12-30)
+
+##### Chores
+
+* **deps:**  bump handlebars from 4.1.2 to 4.5.3 ([bbeed51c](https://github.com/KristjanTammekivi/haredo/commit/bbeed51c1b66db727f249ffc50e72d2b2ed00af0))
+*  bump dependencies ([7e814f8c](https://github.com/KristjanTammekivi/haredo/commit/7e814f8cb8718e20e1217f00092ea34ad2336cd5))
+
 #### 1.3.1 (2019-12-17)
 
 ##### Chores
