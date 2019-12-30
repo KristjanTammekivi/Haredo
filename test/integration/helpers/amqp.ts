@@ -1,5 +1,4 @@
 import { connect, Connection, Options } from 'amqplib';
-import { stringify } from '../../../src/utils';
 import { ExchangeType } from '../../../src/exchange';
 
 let connection: Connection;
@@ -103,7 +102,7 @@ export const deleteVhost = async () => {
 
 export const publishMessage = async (name: string, content: any, opts: Options.Publish) => {
     const channel = await getChannel();
-    await channel.sendToQueue(name, Buffer.from(stringify(content)), opts);
+    await channel.sendToQueue(name, Buffer.from(JSON.stringify(content)), opts);
     await channel.close();
 };
 

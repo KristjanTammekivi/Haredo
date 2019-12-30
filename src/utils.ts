@@ -1,23 +1,4 @@
 import { FailedParsingJsonError } from './errors';
-import { EventEmitter } from 'events';
-
-export const keyValuePairs = (obj: Object): string[] => {
-    return Object.keys(obj).map((key) => {
-        return `${key}=${stringify((obj as any)[key])}`;
-    });
-};
-
-export const stringify = (item: any): string => {
-    if (typeof item === 'string' || typeof item === 'number') {
-        return item.toString();
-    }
-
-    if (item === undefined || item === null) {
-        return '';
-    }
-
-    return JSON.stringify(item);
-};
 
 export const promiseMap = async <T, U>(arr: T[], cb: (obj: T, i: number, arr: T[]) => U) => {
     return Promise.all<U>(arr.map(cb));
@@ -25,10 +6,6 @@ export const promiseMap = async <T, U>(arr: T[], cb: (obj: T, i: number, arr: T[
 
 export const head = <T>(arr: T[]): T => arr[0];
 export const tail = <T>(arr: T[]): T[] => arr.slice(1);
-
-export const reject = <T>(arr: T[], cb: (item: T, index: number, arr: T[]) => boolean): T[] => {
-    return arr.filter((...args) => !cb(...args));
-};
 
 export const delay = (ms: number) => {
     return new Promise((resolve) => {
