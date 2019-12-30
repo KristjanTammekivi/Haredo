@@ -48,8 +48,14 @@ describe('integration/publish', () => {
         const msg = await getSingleMessage('test');
         expect(msg.content).to.equal('test');
     });
-    it('should publish via confirmChannel', async () => {
+    it('should publish via confirmChannel to queue', async () => {
         await rabbit.queue('test').confirm(true).publish('test');
+        const msg = await getSingleMessage('test');
+        expect(msg.content).to.equal('"test"');
+    });
+    it('should publish via confirmChannel to exchange', async () => {
+        await rabbit.queue('test').bindExchange('testexchange', '#', 'fanout').setup();
+        await rabbit.exchange('testexchange', 'fanout').confirm().publish('test', 'lolno');
         const msg = await getSingleMessage('test');
         expect(msg.content).to.equal('"test"');
     });

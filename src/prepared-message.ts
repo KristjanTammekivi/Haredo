@@ -1,6 +1,6 @@
 import { Options } from 'amqplib';
 
-export interface ExtendedPublishType extends Omit<Options.Publish, 'headers'> {
+export interface ExtendedPublishOptions extends Omit<Options.Publish, 'headers'> {
     headers: {
         [header: string]: any;
         'x-delay'?: number;
@@ -10,7 +10,7 @@ export interface ExtendedPublishType extends Omit<Options.Publish, 'headers'> {
 export interface MessageChainState<TMessage = unknown> {
     content: string;
     routingKey: string;
-    options: Partial<ExtendedPublishType>;
+    options: Partial<ExtendedPublishOptions>;
 }
 
 export interface MessageChain<TMessage = unknown> {
@@ -153,7 +153,7 @@ export const mergeMessageState = <TMessage>(base: Partial<MessageChainState<TMes
     options: mergeOptions(base.options, top.options)
 });
 
-export const mergeOptions = (base: Partial<ExtendedPublishType> = {}, top: Partial<ExtendedPublishType> = {}) => ({
+export const mergeOptions = (base: Partial<ExtendedPublishOptions> = {}, top: Partial<ExtendedPublishOptions> = {}) => ({
     ...base,
     ...top,
     headers: mergeHeaders(base.headers, top.headers)

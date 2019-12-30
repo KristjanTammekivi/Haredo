@@ -6,6 +6,7 @@ import { Consumer } from './consumer';
 import { StartRpc, startRpc } from './rpc';
 import { initialChain } from './haredo';
 import { Loggers } from './state';
+import { makePublisher, Publisher } from './publisher';
 
 export interface Events {
     connected: Connection;
@@ -20,6 +21,7 @@ export interface ConnectionManager {
     getConnection(): Promise<Connection>;
     getChannel(): Promise<Channel>;
     getConfirmChannel(): Promise<ConfirmChannel>;
+    publisher: Publisher;
     rpc<TReply>(correlationId: string): Promise<{ promise: Promise<TReply>, queue: string }>;
 }
 
@@ -92,6 +94,8 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
             return channel;
         }
     };
+
+    cm.publisher = makePublisher(cm as ConnectionManager, log);
 
     const rpc = async <TReply>(correlationId: string) => {
         if (!rpcPromise) {

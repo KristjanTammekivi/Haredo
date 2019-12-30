@@ -26,7 +26,7 @@ describe('unit/chain', () => {
         const chain = queueChain({}).use(middleware[0]).use(middleware[1]);
         expect(chain.getState().middleware).to.eql(middleware);
     });
-    it('should publish via confirm channel', async () => {
+    xit('should publish via confirm channel', async () => {
         const noop = async () => {};
         const getMock = () => Object.assign(new EventEmitter, { close: noop, assertQueue: noop, sendToQueue: noop });
         const getConfirmChannelStub = stub().resolves(getMock());

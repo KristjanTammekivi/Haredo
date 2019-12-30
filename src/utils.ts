@@ -1,4 +1,5 @@
 import { FailedParsingJsonError } from './errors';
+import { EventEmitter } from 'events';
 
 export const keyValuePairs = (obj: Object): string[] => {
     return Object.keys(obj).map((key) => {
@@ -58,4 +59,66 @@ export const parseJSON = (data: string) => {
     } catch {
         throw new FailedParsingJsonError(data);
     }
+};
+
+export interface TicketMachine {
+    take: () => Promise<Function>;
+    play: () => void;
+    pause: () => void;
+    stop: () => void;
+    check: () => void;
+}
+
+export const makeTicketMachine = (): TicketMachine => {
+    let paused = false;
+    let waiting = false;
+    let stopped = false;
+    const tickets: { resolve: Function; reject: Function; }[] = [];
+    const check = () => {
+        if (stopped) {
+            throw new Error('Ticketmachine has been stopped, no new tickets will be forthcoming');
+        }
+        if (paused || waiting) {
+            return;
+        }
+        const ticket = tickets.shift();
+        if (!ticket) {
+            return;
+        }
+        waiting = true;
+        ticket.resolve(() => {
+            waiting = false;
+            check();
+        });
+    };
+    const play = () => {
+        paused = false;
+        check();
+    };
+    const pause = () => {
+        paused = true;
+    };
+    const stop = (e = new Error()) => {
+        stopped = true;
+        tickets.forEach(x => x.reject(e));
+        tickets.length = 0;
+    };
+    const take = () => {
+        let resolve: Function;
+        let reject: Function;
+        const promise = new Promise<Function>((res, rej) => {
+            resolve = res;
+            reject = rej;
+        });
+        tickets.push({ resolve, reject });
+        check();
+        return promise;
+    };
+    return {
+        take,
+        check,
+        pause,
+        play,
+        stop
+    };
 };

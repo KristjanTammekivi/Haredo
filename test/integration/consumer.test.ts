@@ -11,7 +11,7 @@ import { isConsumerClosed } from './helpers/utils';
 use(sinonChai);
 use(chaiAsPromised);
 
-describe('integration/consuming', () => {
+describe('integration/consumer', () => {
     let rabbit: Haredo;
     beforeEach(async () => {
         await setup();
@@ -48,9 +48,10 @@ describe('integration/consuming', () => {
     });
     it('should wait for message to be acked before closing consumer', async () => {
         const consumer = await rabbit.queue('test').subscribe(async () => {
-            await delay(2000);
+            await delay(200);
         });
         await rabbit.queue('test').confirm().publish('test');
+        await delay(20);
         await consumer.close();
         await expectFail(getSingleMessage('test'));
     });

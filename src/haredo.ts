@@ -6,13 +6,20 @@ import { HaredoChainState, Middleware, defaultState, Loggers } from './state';
 import { MergeTypes, promiseMap, merge, omit } from './utils';
 import { makeConnectionManager } from './connection-manager';
 import { MessageCallback, Consumer, makeConsumer } from './consumer';
-import { MessageChain, isMessageChain, preparedMessage, mergeMessageState } from './prepared-message';
+import { MessageChain, isMessageChain, preparedMessage, mergeMessageState, ExtendedPublishOptions } from './prepared-message';
 import { generateCorrelationId } from './rpc';
+
+export interface LogItem {
+    level: LogLevel;
+    component: string;
+    msg: any[];
+    timestamp: Date;
+}
 
 export interface HaredoOptions {
     connection?: Options.Connect | string;
     socketOpts?: any;
-    logger?: (log: { level: LogLevel; component: string;  msg: any[]; timestamp: Date; }) => void;
+    logger?: (log: LogItem) => void;
 }
 
 export enum LogLevel {
@@ -173,12 +180,6 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
 
 export const rpcToQueue = <TMessage, TReply>(state: Partial<HaredoChainState<TMessage, TReply>>) =>
     async (message: TMessage, opts: Options.Publish) => {
-        let channel: ConfirmChannel | Channel;
-        if (state.confirm) {
-            channel = await state.connectionManager.getConfirmChannel();
-        } else {
-            channel = await state.connectionManager.getChannel();
-        }
         await addSetup(state)();
         const correlationId = generateCorrelationId();
         const { promise, queue } = await state.connectionManager.rpc(correlationId);
@@ -186,18 +187,17 @@ export const rpcToQueue = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
             .correlationId(correlationId)
             .replyTo(queue)
             .getState();
-        await channel.sendToQueue(state.queue.getName(), Buffer.from(preppedMessage.content), preppedMessage.options);
+        await state.connectionManager.publisher.sendToQueue(
+            state.queue.getName(),
+            Buffer.from(preppedMessage.content),
+            preppedMessage.options as ExtendedPublishOptions,
+            state.confirm
+        );
         return  promise;
     };
 
 export const rpcToExchange = <TMessage, TReply>(state: Partial<HaredoChainState<TMessage, TReply>>) =>
     async (message: string | TMessage | MessageChain<TMessage>, routingKey?: string, options: Options.Publish = {}) => {
-        let channel: ConfirmChannel | Channel;
-        if (state.confirm) {
-            channel = await state.connectionManager.getConfirmChannel();
-        } else {
-            channel = await state.connectionManager.getChannel();
-        }
         await addSetup(state)();
         const correlationId = generateCorrelationId();
         const { promise, queue } = await state.connectionManager.rpc<TReply>(correlationId);
@@ -205,7 +205,13 @@ export const rpcToExchange = <TMessage, TReply>(state: Partial<HaredoChainState<
             .correlationId(correlationId)
             .replyTo(queue)
             .getState();
-        await channel.publish(state.exchange.getName(), preppedMessage.routingKey, Buffer.from(preppedMessage.content), preppedMessage.options);
+        await state.connectionManager.publisher.publishToExchange(
+            state.exchange.getName(),
+            preppedMessage.routingKey,
+            Buffer.from(preppedMessage.content),
+            preppedMessage.options as ExtendedPublishOptions,
+            state.confirm
+        );
         return promise;
     };
 
@@ -232,27 +238,26 @@ const prepMessage = <TMessage, TReply>(
 export const publishToQueue = <TMessage>(state: Partial<HaredoChainState<TMessage>>) =>
     async (message: TMessage | MessageChain<TMessage>, options: Options.Publish = {}) => {
         const preppedMessage = prepMessage(state, message, undefined, options).getState();
-        let channel: ConfirmChannel | Channel;
-        if (state.confirm) {
-            channel = await state.connectionManager.getConfirmChannel();
-        } else {
-            channel = await state.connectionManager.getChannel();
-        }
         await addSetup(state)();
-        return channel.sendToQueue(state.queue.getName(), Buffer.from(preppedMessage.content), preppedMessage.options);
+        return state.connectionManager.publisher.sendToQueue(
+            state.queue.getName(),
+            Buffer.from(preppedMessage.content),
+            preppedMessage.options as ExtendedPublishOptions,
+            state.confirm
+        );
     };
 
 export const publishToExchange = <TMessage>(state: Partial<HaredoChainState<TMessage>>) =>
     async (message: TMessage | MessageChain<TMessage> | string, routingKey: string, options?: Options.Publish) => {
         const preppedMessage = prepMessage(state, message, routingKey, options).getState();
-        let channel: ConfirmChannel | Channel;
-        if (state.confirm) {
-            channel = await state.connectionManager.getConfirmChannel();
-        } else {
-            channel = await state.connectionManager.getChannel();
-        }
         await addSetup(state)();
-        return channel.publish(state.exchange.getName(), preppedMessage.routingKey, Buffer.from(preppedMessage.content), preppedMessage.options);
+        return state.connectionManager.publisher.publishToExchange(
+            state.exchange.getName(),
+            preppedMessage.routingKey,
+            Buffer.from(preppedMessage.content),
+            preppedMessage.options as ExtendedPublishOptions,
+            state.confirm
+        );
     };
 
 export const addQueue = <T extends ChainFunction>(chain: T) =>
@@ -323,12 +328,12 @@ interface GeneralChainMembers<TChain extends ChainFunction> {
 }
 
 export interface QueuePublishMethod<TMessage = unknown, TReply = unknown> {
-    publish(message: TMessage | MessageChain<TMessage> | string, publishOpts?: Options.Publish): Promise<boolean>;
+    publish(message: TMessage | MessageChain<TMessage> | string, publishOpts?: Options.Publish): Promise<void>;
     rpc(message: TMessage | MessageChain<TMessage> | string, publishOpts?: Options.Publish): Promise<TReply>;
 }
 
 export interface ExchangePublishMethod<TMessage = unknown, TReply = unknown> {
-    publish(message: TMessage | MessageChain<TMessage> | string, routingKey: string, publishOpts?: Options.Publish): Promise<boolean>;
+    publish(message: TMessage | MessageChain<TMessage> | string, routingKey: string, publishOpts?: Options.Publish): Promise<void>;
     rpc(message: TMessage | MessageChain<TMessage> | string, routingKey: string, publishOpts?: Options.Publish): Promise<TReply>;
 }
 

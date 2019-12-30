@@ -5,7 +5,8 @@ export {
     LogLevel,
     HaredoOptions,
     Haredo,
-    haredo
+    haredo,
+    LogItem
 } from './haredo';
 
 export { Queue, QueueOptions, makeQueue } from './queue';
