@@ -14,6 +14,7 @@ export interface MessageChainState<TMessage = unknown> {
 }
 
 export interface MessageChain<TMessage = unknown> {
+    metaType: 'preparedMessage';
     getState(): Partial<MessageChainState<TMessage>>;
 
     /**
@@ -110,11 +111,12 @@ export interface MessageChain<TMessage = unknown> {
 }
 
 export const isMessageChain = (msg: any): msg is MessageChain => {
-    return msg && !!msg.getState;
+    return msg?.metaType === 'preparedMessage';
 };
 
 export const preparedMessage = <TMessage>(state: Partial<MessageChainState<TMessage>> = {}): MessageChain<TMessage> => {
     return {
+        metaType: 'preparedMessage',
         getState: () => state,
 
         appId: (appId: string) => preparedMessage(mergeMessageState(state, { options: { appId } })),

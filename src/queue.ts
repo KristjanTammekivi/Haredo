@@ -9,7 +9,7 @@ export const DEFAULT_QUEUE_OPTIONS: QueueOptions = Object.freeze({
 });
 
 export interface Queue<TPublish = unknown, TReply = unknown> {
-    type: 'queue';
+    metaType: 'queue';
     getName: () => string;
     getOpts: () => QueueOptions;
     /**
@@ -75,7 +75,7 @@ export const makeQueue = <TPublish = unknown, TReply = unknown>(name?: string, o
         ...top,
     });
     return {
-        type: 'queue',
+        metaType: 'queue',
         getName: () => name,
         getOpts: () => cloneOpts(opts),
         durable: (durable = true) => makeQueue(name, cloneOpts({ durable })),

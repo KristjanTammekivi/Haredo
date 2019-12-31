@@ -20,7 +20,7 @@ export interface ExchangeOptions extends Options.AssertExchange {
 }
 
 export interface Exchange<TMessage = unknown> {
-    type: 'exchange';
+    metaType: 'exchange';
     getName: () => string;
     getType: () => ExchangeType;
     getOpts: () => ExchangeOptions;
@@ -78,7 +78,7 @@ export const makeExchange = <TMessage>(name: string, type: ExchangeType, opts: P
         }
     });
     return {
-        type: 'exchange',
+        metaType: 'exchange',
         getName: () => name,
         getType: () => type,
         getOpts: () => cloneOpts({}),
