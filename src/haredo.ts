@@ -199,7 +199,7 @@ interface RpcToExchange<TMessage, TReply> {
      * Unless .json(false) is present in the chain,
      * the message will be passed through JSON.stringify
      */
-    (message: TMessage | string, routingKey: string, options?: Options.Publish): Promise<TReply>;
+    (message: TMessage | string, routingKey?: string, options?: Options.Publish): Promise<TReply>;
     /**
      * Send an RPC message to the provided exchange.
      * If you provide a truthy routingKey,
@@ -265,7 +265,7 @@ interface PublishToExchange<TMessage> {
      * Unless the chain contains .json(false),
      * the message will be passed through JSON.stringify
      */
-    (message: TMessage | string, routingKey: string, options?: Options.Publish): Promise<void>;
+    (message: TMessage | string, routingKey?: string, options?: Options.Publish): Promise<void>;
     /**
      * Publish a message to the exchange.
      * If you provide a truthy routingKey,
