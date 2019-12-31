@@ -370,8 +370,8 @@ export interface QueuePublishMethod<TMessage = unknown, TReply = unknown> {
 }
 
 export interface ExchangePublishMethod<TMessage = unknown, TReply = unknown> {
-    publish(message: TMessage | MessageChain<TMessage> | string, routingKey: string, publishOpts?: Options.Publish): Promise<void>;
-    rpc(message: TMessage | MessageChain<TMessage> | string, routingKey: string, publishOpts?: Options.Publish): Promise<TReply>;
+    publish: PublishToExchange<TMessage>;
+    rpc: RpcToExchange<TMessage, TReply>;
 }
 
 export interface InitialChain<TMessage, TReply> {
