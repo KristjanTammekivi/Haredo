@@ -33,9 +33,6 @@ export interface Haredo extends InitialChain<unknown, unknown> {
     close: () => Promise<void>;
 }
 
-// TODO: fix publishing
-// TODO: add a .logger method to chains so you can swap out logging
-
 export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOptions) => {
     const log: Loggers = {
         debug: (component: string, ...args: any[]) => logger({ component, level: LogLevel.DEBUG, msg: args, timestamp: new Date() }),
@@ -196,7 +193,22 @@ export const rpcToQueue = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
         return  promise;
     };
 
-export const rpcToExchange = <TMessage, TReply>(state: Partial<HaredoChainState<TMessage, TReply>>) =>
+interface RpcToExchange<TMessage, TReply> {
+    /**
+     * Send an RPC message to the provided exchange.
+     * Unless .json(false) is present in the chain,
+     * the message will be passed through JSON.stringify
+     */
+    (message: TMessage | string, routingKey: string, options?: Options.Publish): Promise<TReply>;
+    /**
+     * Send an RPC message to the provided exchange.
+     * If you provide a truthy routingKey,
+     * it will override the one specified in MessageChain
+     */
+    (message: MessageChain<TMessage>, routingKey?: string, options?: Options.Publish): Promise<TReply>;
+}
+
+export const rpcToExchange = <TMessage, TReply>(state: Partial<HaredoChainState<TMessage, TReply>>): RpcToExchange<TMessage, TReply> =>
     async (message: string | TMessage | MessageChain<TMessage>, routingKey?: string, options: Options.Publish = {}) => {
         await addSetup(state)();
         const correlationId = generateCorrelationId();
@@ -247,8 +259,23 @@ export const publishToQueue = <TMessage>(state: Partial<HaredoChainState<TMessag
         );
     };
 
-export const publishToExchange = <TMessage>(state: Partial<HaredoChainState<TMessage>>) =>
-    async (message: TMessage | MessageChain<TMessage> | string, routingKey: string, options?: Options.Publish) => {
+interface PublishToExchange<TMessage> {
+    /**
+     * Publish a message to the exchange.
+     * Unless the chain contains .json(false),
+     * the message will be passed through JSON.stringify
+     */
+    (message: TMessage | string, routingKey: string, options?: Options.Publish): Promise<void>;
+    /**
+     * Publish a message to the exchange.
+     * If you provide a truthy routingKey,
+     * it will override the one specified in MessageChain
+     */
+    (message: MessageChain<TMessage>, routingKey?: string, options?: Options.Publish): Promise<void>;
+}
+
+export const publishToExchange = <TMessage>(state: Partial<HaredoChainState<TMessage>>): PublishToExchange<TMessage> =>
+    async (message: TMessage | MessageChain<TMessage> | string, routingKey?: string, options?: Options.Publish) => {
         const preppedMessage = prepMessage(state, message, routingKey, options).getState();
         await addSetup(state)();
         return state.connectionManager.publisher.publishToExchange(
