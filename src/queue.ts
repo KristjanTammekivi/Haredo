@@ -69,7 +69,7 @@ export interface Queue<TPublish = unknown, TReply = unknown> {
      * @param opts queue options, passed to assertQueue
      * [amqplib#assertQueue](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue)
      */
-export const makeQueue = <TPublish = unknown, TReply = unknown>(name?: string, opts: Partial<QueueOptions> = {}): Queue<TPublish, TReply> => {
+export const makeQueueConfig = <TPublish = unknown, TReply = unknown>(name?: string, opts: Partial<QueueOptions> = {}): Queue<TPublish, TReply> => {
     const cloneOpts = (top: Partial<QueueOptions>): QueueOptions => ({
         ...opts,
         ...top,
@@ -78,19 +78,19 @@ export const makeQueue = <TPublish = unknown, TReply = unknown>(name?: string, o
         metaType: 'queue',
         getName: () => name,
         getOpts: () => cloneOpts(opts),
-        durable: (durable = true) => makeQueue(name, cloneOpts({ durable })),
-        autoDelete: (autoDelete = true) => makeQueue(name, cloneOpts({ autoDelete })),
-        exclusive: (exclusive = true) => makeQueue(name, cloneOpts({ exclusive })),
-        messageTtl: (messageTtl: number) => makeQueue(name, cloneOpts({ messageTtl })),
-        maxLength: (maxLength: number) => makeQueue(name, cloneOpts({ maxLength })),
-        expires: (expires: number) => makeQueue(name, cloneOpts({ expires })),
+        durable: (durable = true) => makeQueueConfig(name, cloneOpts({ durable })),
+        autoDelete: (autoDelete = true) => makeQueueConfig(name, cloneOpts({ autoDelete })),
+        exclusive: (exclusive = true) => makeQueueConfig(name, cloneOpts({ exclusive })),
+        messageTtl: (messageTtl: number) => makeQueueConfig(name, cloneOpts({ messageTtl })),
+        maxLength: (maxLength: number) => makeQueueConfig(name, cloneOpts({ maxLength })),
+        expires: (expires: number) => makeQueueConfig(name, cloneOpts({ expires })),
         dead: (deadLetterExchange: string | Exchange, deadLetterRoutingKey?: string) => {
             if (typeof deadLetterExchange !== 'string') {
                 deadLetterExchange = deadLetterExchange.getName();
             }
-            return makeQueue(name, cloneOpts({ deadLetterExchange, deadLetterRoutingKey }));
+            return makeQueueConfig(name, cloneOpts({ deadLetterExchange, deadLetterRoutingKey }));
         },
-        name: (name: string) => makeQueue(name, cloneOpts({})),
+        name: (name: string) => makeQueueConfig(name, cloneOpts({})),
         mutateName: (newName: string) => { name = newName; }
     };
 };

@@ -1,9 +1,9 @@
 import { Haredo, haredo } from '../../src/haredo';
 import { setup, teardown, getSingleMessage, checkQueue, checkExchange } from './helpers/amqp';
 import { expect } from 'chai';
-import { ExchangeType, Exchange, makeExchange } from '../../src/exchange';
+import { makeExchangeConfig } from '../../src/exchange';
 import { delay } from '../../src/utils';
-import { makeQueue } from '../../src/queue';
+import { makeQueueConfig } from '../../src/queue';
 
 describe('integration/publish', () => {
     let rabbit: Haredo;
@@ -26,7 +26,7 @@ describe('integration/publish', () => {
         await checkExchange('test', 'direct', { durable: true });
     });
     it ('should setup an exchange with Exchange object', async () => {
-        const exchange = makeExchange<string>('test', 'direct').durable();
+        const exchange = makeExchangeConfig<string>('test', 'direct').durable();
         await rabbit.exchange(exchange).publish('message', 'routingkey');
         await checkExchange(exchange.getName(), exchange.getType(), exchange.getOpts());
     });
@@ -36,8 +36,8 @@ describe('integration/publish', () => {
         expect(msg.content).to.equal(JSON.stringify('message'));
     });
     it('should bind an exchange to a queue', async () => {
-        const exchange = makeExchange<string>('testexchange', 'topic');
-        const queue = makeQueue<number>('testqueue');
+        const exchange = makeExchangeConfig<string>('testexchange', 'topic');
+        const queue = makeQueueConfig<number>('testqueue');
         await rabbit.queue(queue).bindExchange(exchange, '*').publish('message');
         const msg = await getSingleMessage(queue.getName());
         expect(msg.content).to.equal(JSON.stringify('message'));

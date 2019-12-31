@@ -1,6 +1,6 @@
-import { Options, Channel, ConfirmChannel } from 'amqplib';
-import { Queue, makeQueue } from './queue';
-import { Exchange, StandardExchangeType, ExchangeType, ExchangeOptions, makeExchange } from './exchange';
+import { Options } from 'amqplib';
+import { Queue, makeQueueConfig } from './queue';
+import { Exchange, StandardExchangeType, ExchangeType, ExchangeOptions, makeExchangeConfig } from './exchange';
 
 import { HaredoChainState, Middleware, defaultState, Loggers } from './state';
 import { MergeTypes, promiseMap, merge, omit } from './utils';
@@ -291,7 +291,7 @@ export const addQueue = <T extends ChainFunction>(chain: T) =>
     (state: Partial<HaredoChainState>) =>
         (queue: string | Queue, opts: Options.AssertQueue = {}) => {
             if (typeof queue === 'string') {
-                queue = makeQueue(queue, opts);
+                queue = makeQueueConfig(queue, opts);
             }
             return chain(merge(state, { queue }));
         };
@@ -300,7 +300,7 @@ export const addExchange = <T extends ChainFunction>(chain: T) =>
     (state: Partial<HaredoChainState>) =>
         (exchange: Exchange | string, type: ExchangeType, opts: Partial<ExchangeOptions> = {}) => {
             if (typeof exchange === 'string') {
-                exchange = makeExchange(exchange, type, opts);
+                exchange = makeExchangeConfig(exchange, type, opts);
             }
             return chain(merge(state, { exchange }));
         };
@@ -314,7 +314,7 @@ export const addExchangeBinding = <TMessage, TChain extends ChainFunction<TMessa
             opts: Partial<ExchangeOptions> = {}
         ) => {
             if (typeof exchange === 'string') {
-                exchange = makeExchange(exchange, type, opts);
+                exchange = makeExchangeConfig(exchange, type, opts);
             }
             return chain(merge(state, { bindings: (state.bindings || [])
                 .concat({ exchange, patterns: [].concat(pattern) }) })) as ReturnType<TChain> | ReturnType<TCustomChain>;

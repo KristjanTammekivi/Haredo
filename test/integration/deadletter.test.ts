@@ -1,6 +1,6 @@
 import { Haredo, haredo } from '../../src/haredo';
 import { setup, teardown, getSingleMessage } from './helpers/amqp';
-import { makeQueue } from '../../src/queue';
+import { makeQueueConfig } from '../../src/queue';
 import { delay } from '../../src/utils';
 
 describe('integration/rpc', () => {
@@ -16,7 +16,7 @@ describe('integration/rpc', () => {
         await teardown();
     });
     it('should dead forward a message to dead letter exchange when it is declared on queue', async () => {
-        const queue = makeQueue('test').dead('test.dlx');
+        const queue = makeQueueConfig('test').dead('test.dlx');
         await rabbit.queue('test.dlq').bindExchange('test.dlx', '', 'fanout').setup();
         await rabbit.queue(queue)
             .subscribe(({ nack }) => nack(false));
@@ -25,7 +25,7 @@ describe('integration/rpc', () => {
         await getSingleMessage('test.dlq');
     });
     it('should dead letter a message when json parsing fails', async () => {
-        const queue = makeQueue('poison').dead('test.dlx');
+        const queue = makeQueueConfig('poison').dead('test.dlx');
         await rabbit.queue('test.dlq').bindExchange('test.dlx', '', 'fanout').setup();
         await rabbit.queue(queue)
             .subscribe(() => {});

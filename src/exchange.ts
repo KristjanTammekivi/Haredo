@@ -68,7 +68,7 @@ export interface Exchange<TMessage = unknown> {
  * @param opts Options that will be passed directly to amqplib
  * [amqplib#assertExchange](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertExchange)
  */
-export const makeExchange = <TMessage>(name: string, type: ExchangeType, opts: Partial<ExchangeOptions> = {}): Exchange<TMessage> => {
+export const makeExchangeConfig = <TMessage>(name: string, type: ExchangeType, opts: Partial<ExchangeOptions> = {}): Exchange<TMessage> => {
     const cloneOpts = (top: Partial<ExchangeOptions>): ExchangeOptions => ({
         ...opts,
         ...top,
@@ -82,18 +82,18 @@ export const makeExchange = <TMessage>(name: string, type: ExchangeType, opts: P
         getName: () => name,
         getType: () => type,
         getOpts: () => cloneOpts({}),
-        durable: (durable = true) => makeExchange(name, type, cloneOpts({ durable })),
-        autoDelete: (autoDelete = true) => makeExchange(name, type, cloneOpts({ autoDelete })),
+        durable: (durable = true) => makeExchangeConfig(name, type, cloneOpts({ durable })),
+        autoDelete: (autoDelete = true) => makeExchangeConfig(name, type, cloneOpts({ autoDelete })),
         alternateExchange: (alternateExchange: string | Exchange) => {
             if (typeof alternateExchange !== 'string') {
                 alternateExchange = alternateExchange.getName();
             }
-            return makeExchange(name, type, Object.assign({}, opts, { alternateExchange }));
+            return makeExchangeConfig(name, type, Object.assign({}, opts, { alternateExchange }));
         },
-        direct: () => makeExchange(name, 'direct', opts),
-        fanout: () => makeExchange(name, 'fanout', opts),
-        headers: () => makeExchange(name, 'headers', opts),
-        topic: () => makeExchange(name, 'topic', opts),
-        delayed: (xDelayedType: StandardExchangeType) => makeExchange(name, 'x-delayed-message', cloneOpts({ arguments: { 'x-delayed-type': xDelayedType } }))
+        direct: () => makeExchangeConfig(name, 'direct', opts),
+        fanout: () => makeExchangeConfig(name, 'fanout', opts),
+        headers: () => makeExchangeConfig(name, 'headers', opts),
+        topic: () => makeExchangeConfig(name, 'topic', opts),
+        delayed: (xDelayedType: StandardExchangeType) => makeExchangeConfig(name, 'x-delayed-message', cloneOpts({ arguments: { 'x-delayed-type': xDelayedType } }))
     };
 };
