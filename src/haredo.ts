@@ -115,7 +115,10 @@ export const exchangeChain = <TMessage, TReply>(state: Partial<HaredoChainState<
         getState: () => state,
         ...chainMethods(exchangeChain as ExchangeChainFunction<TMessage, TReply>)(state),
         publish: publishToExchange<TMessage>(state),
-        rpc: rpcToExchange<TMessage, TReply>(state)
+        rpc: rpcToExchange<TMessage, TReply>(state),
+        skipSetup: (skipSetup = true) => {
+            return exchangeChain(merge(state, { skipSetup }));
+        },
     };
 };
 
@@ -462,6 +465,12 @@ export interface ExchangeChain<TMessage, TReply> extends
         type: ExchangeType,
         opts?: Partial<ExchangeOptions>): ExchangeChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
 
+    /**
+     * Don't run automatic setup. Useful for faster publishing.
+     *
+     * @param skipSetup defaults to true
+     */
+    skipSetup(skipSetup?: boolean): ExchangeChain<TMessage, TReply>;
 }
 
 export interface QueueChain<TMessage, TReply> extends
