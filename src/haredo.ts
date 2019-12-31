@@ -9,6 +9,9 @@ import { MessageCallback, Consumer, makeConsumer } from './consumer';
 import { MessageChain, isMessageChain, preparedMessage, mergeMessageState, ExtendedPublishOptions } from './prepared-message';
 import { generateCorrelationId } from './rpc';
 
+// TODO: make this file smaller
+// TODO: add a configuration option for max connection attempts
+
 export interface LogItem {
     level: LogLevel;
     component: string;
@@ -31,9 +34,10 @@ export enum LogLevel {
 
 export interface Haredo extends InitialChain<unknown, unknown> {
     close: () => Promise<void>;
+    connect: () => Promise<void>;
 }
 
-export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOptions) => {
+export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOptions): Haredo => {
     const log: Loggers = {
         debug: (component: string, ...args: any[]) => logger({ component, level: LogLevel.DEBUG, msg: args, timestamp: new Date() }),
         info: (component: string, ...args: any[]) => logger({ component, level: LogLevel.INFO, msg: args, timestamp: new Date() }),
@@ -45,6 +49,9 @@ export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOpti
         ...initialChain(merge(defaultState<unknown, unknown>({}), { connectionManager, log })),
         close: async () => {
             await connectionManager.close();
+        },
+        connect: async () => {
+            await connectionManager.getConnection();
         }
     };
 };
