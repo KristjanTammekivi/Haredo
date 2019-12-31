@@ -42,7 +42,7 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown>
 
 export interface Methods<TReply = unknown> {
     ack: () => void;
-    nack: (requeue: boolean) => void;
+    nack: (requeue?: boolean) => void;
     reply: (message: TReply) => Promise<void>;
 }
 
@@ -80,7 +80,7 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
             methods.ack();
             emitter.emit('handled');
         },
-        nack: (requeue: boolean) => {
+        nack: (requeue = true) => {
             if (state.isHandled) {
                 return;
             }
