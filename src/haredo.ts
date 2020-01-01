@@ -189,7 +189,7 @@ export const rpcToQueue = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
     async (message: TMessage, opts: Options.Publish) => {
         await addSetup(state)();
         const correlationId = generateCorrelationId();
-        const { promise, queue } = await state.connectionManager.rpc(correlationId);
+        const { promise, queue } = await state.connectionManager.rpc<TReply>(correlationId);
         const preppedMessage = prepMessage(state, message, undefined, opts)
             .correlationId(correlationId)
             .replyTo(queue)
@@ -200,7 +200,7 @@ export const rpcToQueue = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
             preppedMessage.options as ExtendedPublishOptions,
             state.confirm
         );
-        return  promise;
+        return promise;
     };
 
 interface RpcToExchange<TMessage, TReply> {
@@ -418,7 +418,7 @@ export interface InitialChain<TMessage, TReply> {
 
 export interface ExchangeChain<TMessage, TReply> extends
     GeneralChainMembers<(state: HaredoChainState<TMessage>) => ExchangeChain<TMessage, TReply>>,
-    ExchangePublishMethod<TMessage> {
+    ExchangePublishMethod<TMessage, TReply> {
 
     /**
      * Return the state of the chain for inspection
@@ -475,7 +475,7 @@ export interface ExchangeChain<TMessage, TReply> extends
 
 export interface QueueChain<TMessage, TReply> extends
     GeneralChainMembers<(state: HaredoChainState<TMessage, TReply>) => QueueChain<TMessage, TReply>>,
-    QueuePublishMethod<TMessage> {
+    QueuePublishMethod<TMessage, TReply> {
 
     /**
      * Return the state of the chain for inspection
@@ -565,7 +565,7 @@ export interface QueueChain<TMessage, TReply> extends
     /**
      * Subscribe to messages in the queue specified in the chain
      */
-    subscribe<TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>>): Promise<Consumer>;
+    subscribe<TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>, TReply>): Promise<Consumer>;
     /**
      * Autoreply (enabled by default) automatically replies to messages
      * where message callback in subscriber returns a non-undefined value

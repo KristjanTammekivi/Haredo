@@ -1,5 +1,4 @@
-import { e, q } from '..';
-import { haredo } from '../haredo';
+import { q, haredo } from '..';
 import { delay } from '../utils';
 
 export const main = async () => {
