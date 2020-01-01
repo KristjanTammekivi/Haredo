@@ -31,8 +31,13 @@ For a long time I've been using [tortoise](https://www.npmjs.com/package/tortois
  - TypeScript
  - Chaining based API
  - Graceful closing
+ - RPC
 
 ## Usage
+
+Working examples are available on [github](https://github.com/KristjanTammekivi/Haredo/tree/master/src/examples)
+
+### Initializing
 
 ```typescript
 import { Haredo } from 'haredo';
@@ -51,4 +56,16 @@ haredo.excange('my-exchange').publish({ id: 5, status: 'active' }, 'item.created
 
 ```typescript
 haredo.queue('my-queue').publish({ id: 5, status: 'inactive' }, 'item.modified');
+```
+
+### RPC
+
+```typescript
+haredo.queue('sum')
+    // With autoReply on, returned value from callback is automatically replied
+    // Alternative is to use the reply/1 method on the message
+    .autoReply()
+    .subscribe(({ data }) => data[0] + data[1]);
+
+const response = await haredo.queue('sum').rpc([30, 12])
 ```

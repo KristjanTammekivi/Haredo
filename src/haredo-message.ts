@@ -9,9 +9,21 @@ export interface HaredoMessageEvents {
 export interface HaredoMessage<TMessage = unknown, TReply = unknown>
     extends Methods<TReply> {
     emitter: TypedEventEmitter<HaredoMessageEvents>;
+    /**
+     * Raw message from amqplib
+     */
     raw: Message;
+    /**
+     * Message contents
+     */
     data: TMessage;
+    /**
+     * Unparsed message data
+     */
     dataString: string;
+    /**
+     * Returns true if message has been acked/nacked
+     */
     isHandled: () => boolean;
     isNacked: () => boolean;
     isAcked: () => boolean;
@@ -21,6 +33,9 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown>
 
     contentType?: string;
     contentEncoding?: string;
+    /**
+     * Either 1 for non-persistent or 2 for persistent
+     */
     deliveryMode?: 1 | 2;
     priority?: number;
     correlationId?: string;
@@ -35,14 +50,31 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown>
     messageCount?: number;
     consumerTag?: string;
     deliveryTag: number;
+    /**
+     * True if the message has been sent to a consumer at least once
+     */
     redelivered: boolean;
     exchange: string;
     routingKey: string;
 }
 
 export interface Methods<TReply = unknown> {
+    /**
+     * Mark the message as done, removes it from the queue
+     */
     ack: () => void;
+    /**
+     * Nack the message. If requeue is false (defaults to true)
+     * then the message will be discarded. Otherwise it will be returned to
+     * the front of the queue
+     */
     nack: (requeue?: boolean) => void;
+    /**
+     * Reply to the message. Only works if the message has a
+     * replyTo and correlationId have been set on the message.
+     * If autoReply has been set on the chain, then You can just return a
+     * non-undefined value from the subscribe callback
+     */
     reply: (message: TReply) => Promise<void>;
 }
 

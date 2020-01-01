@@ -11,6 +11,7 @@ I've moved (mostly) away from classes to using closures to contain the state. In
 ## Subscribing changes
 
 The signatures for subscribe callback and middleware were different and it always irked me. Now they're somewhat unified.
+The wrapped message object is the first argument and it can be destructured to get data, routingKey, ack/nack/reply methods, etc.
 
 ```typescript
 // haredo@1:
@@ -38,10 +39,6 @@ haredo.queue('test')
     })
     .subscribe(({ data, nack }) => {
         console.log(data.id);
-        await nack();
+        await nack(false);
     });
 ```
-
-## Anonymous queues
-
-Anonymous queues are now always marked with autoDelete: true.

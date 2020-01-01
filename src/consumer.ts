@@ -11,7 +11,7 @@ import { head, tail } from './utils';
 import { makeMessageManager } from './message-manager';
 
 export interface MessageCallback<TMessage = unknown, TReply = unknown> {
-    (message: HaredoMessage<TMessage>): Promise<TReply | void> | TReply | void;
+    (message: HaredoMessage<TMessage, TReply>): Promise<TReply | void> | TReply | void;
 }
 
 export interface ConsumerOpts {
@@ -103,6 +103,9 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                     channel.nack(message, false, requeue);
                 },
                 reply: async (reply) => {
+                    if (!(message.properties.replyTo && message.properties.correlationId)) {
+                        return;
+                    }
                     await initialChain({ connectionManager })
                         .queue(message.properties.replyTo)
                         .skipSetup()

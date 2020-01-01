@@ -11,6 +11,7 @@ import { generateCorrelationId } from './rpc';
 
 // TODO: make this file smaller
 // TODO: add a configuration option for max connection attempts
+// TODO: different failurebackoffs
 
 export interface LogItem {
     level: LogLevel;
@@ -132,7 +133,7 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
         publish: publishToQueue<TMessage>(state),
         rpc: rpcToQueue<TMessage, TReply>(state),
         getState: () => state,
-        subscribe: async <TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>, unknown>) => {
+        subscribe: async <TCustomMessage, TCustomReply>(cb: MessageCallback<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>) => {
             const consumer = await makeConsumer(cb, state.connectionManager, {
                 autoAck: state.autoAck ?? true,
                 json: state.json ?? true,
@@ -565,7 +566,7 @@ export interface QueueChain<TMessage, TReply> extends
     /**
      * Subscribe to messages in the queue specified in the chain
      */
-    subscribe<TCustom>(cb: MessageCallback<MergeTypes<TMessage, TCustom>, TReply>): Promise<Consumer>;
+    subscribe<TCustomMessage, TCustomReply>(cb: MessageCallback<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>): Promise<Consumer>;
     /**
      * Autoreply (enabled by default) automatically replies to messages
      * where message callback in subscriber returns a non-undefined value
