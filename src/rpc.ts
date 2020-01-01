@@ -23,7 +23,7 @@ export interface StartRpc {
 
 export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, TReply>, { info, debug, warning, error }: Loggers): Promise<StartRpc> => {
     const openListeners = {} as Record<string, { resolve: (value: any) => void, reject: (error: Error) => void }>;
-    const queue = makeQueueConfig('').durable();
+    const queue = makeQueueConfig('').durable(false).autoDelete();
     let isClosing = false;
     const emitter = makeEmitter<Events>();
     info('RPC', 'starting consumer');
