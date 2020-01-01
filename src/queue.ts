@@ -9,7 +9,7 @@ export const DEFAULT_QUEUE_OPTIONS: QueueOptions = Object.freeze({
     exclusive: false
 });
 
-export class Queue<T = unknown> {
+export class Queue<TPublish = unknown, TReply = unknown> {
     opts: QueueOptions;
     anonymous: boolean;
     /**
@@ -24,7 +24,7 @@ export class Queue<T = unknown> {
         this.anonymous = !this.name;
     }
     clone(opts: Partial<QueueOptions> = {}) {
-        return new Queue<T>(this.name, Object.assign({}, this.opts, opts));
+        return new Queue<TPublish>(this.name, Object.assign({}, this.opts, opts));
     }
     /**
      * if true, the queue will survive broker restarts,

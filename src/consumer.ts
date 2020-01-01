@@ -9,12 +9,14 @@ import { delay, swallowError, head, tail } from './utils';
 import { FailHandlerOpts, FailHandler } from './fail-handler';
 import { makeLogger } from './logger';
 import { Queue } from './queue';
-import { Middleware, HaredoChain } from './haredo-chain';
+import {  HaredoChain } from './haredo-chain';
+import { Middleware, HaredoChainState } from './state';
+import { PreparedMessage } from './prepared-message';
 
 const { debug, error, info } = makeLogger('Consumer');
 
-export interface MessageCallback<T = unknown, U = unknown> {
-    (data: T, messageWrapper?: HaredoMessage<T>): U | Promise<U>;
+export interface MessageCallback<TMessage = unknown, TReply = unknown> {
+    (data: TMessage, messageWrapper?: HaredoMessage<TMessage>): TReply | Promise<TReply> | void;
 }
 
 export interface ConsumerOpts<T> {
@@ -25,7 +27,7 @@ export interface ConsumerOpts<T> {
     queue: Queue;
     reestablish: boolean;
     fail: FailHandlerOpts;
-    setterUpper: () => Promise<any>;
+    setup: () => Promise<any>;
     middleware: Middleware<T>[];
 }
 
@@ -54,7 +56,7 @@ export class Consumer<T = unknown, U = unknown> {
         private cb: MessageCallback<T>
     ) {
         this.prefetch = this.opts.prefetch;
-        this.setterUpper = this.opts.setterUpper;
+        this.setterUpper = this.opts.setup;
         this.failHandler = new FailHandler(this.opts.fail);
     }
     /**
@@ -95,7 +97,7 @@ export class Consumer<T = unknown, U = unknown> {
                         return;
                     }
                     try {
-                        const messageInstance = new HaredoMessage<T>(message, this.opts.json, this);
+                        const messageInstance = new HaredoMessage<T, U>(message, this.opts.json, this);
                         /* istanbul ignore if */
                         if (this.cancelling) {
                             return this.nack(messageInstance, true);
@@ -178,11 +180,12 @@ export class Consumer<T = unknown, U = unknown> {
      * reply to a message
      */
     async reply(replyTo: string, correlationId: string, message: U) {
-        await new HaredoChain(this.connectionManager, {})
+        const msg = new PreparedMessage().correlationId(correlationId).json(message);
+        await new HaredoChain(this.connectionManager, {} as HaredoChainState<U>)
             .queue(replyTo)
             .skipSetup()
             .json(this.opts.json)
-            .publish(message, { correlationId });
+            .publish(msg);
     }
     /**
      * Cancel a consumer, wait for messages to finish processing

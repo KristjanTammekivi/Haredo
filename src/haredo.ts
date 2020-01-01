@@ -7,6 +7,7 @@ import { EventEmitter } from 'events';
 import { TypedEventEmitter } from './events';
 import { makeLogger } from './logger';
 import { HaredoError } from './errors';
+import { HaredoQueueChain } from './queue-chain';
 
 const { info } = makeLogger('Haredo');
 
@@ -63,7 +64,7 @@ export class Haredo {
      *
      * @param queue instance of Queue
      */
-    queue<T>(queue: Queue<T>): HaredoChain<T>;
+    queue<T>(queue: Queue<T>): HaredoQueueChain<T>;
     /**
      * Add a queue to the chain
      *
@@ -71,9 +72,9 @@ export class Haredo {
      * @param opts options that will be passed to amqplib
      * [amqplib#assertQueue](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue)
      */
-    queue<T>(queueName: string, opts?: Partial<Options.AssertQueue>): HaredoChain<T>;
-    queue<T>(queue: Queue<T> | string, opts?: Partial<Options.AssertQueue>) {
-        return new HaredoChain<T>(this.connectionManager, {})
+    queue<T>(queueName: string, opts?: Partial<Options.AssertQueue>): HaredoQueueChain<T>;
+    queue<T, U>(queue: Queue<T, U> | string, opts?: Partial<Options.AssertQueue>) {
+        return new HaredoChain<T, U>(this.connectionManager, {})
             .queue(queue as string, opts);
     }
     /**

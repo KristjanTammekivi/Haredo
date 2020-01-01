@@ -66,7 +66,7 @@ describe('HaredoChain', () => {
         await expect(checkQueue(queue.name)).to.be.rejected;
     });
     it('should not allow publishing to multiple exchanges', async () => {
-        await expect(haredo.exchange('test').exchange('test2').publish({ test: 'msg' })).to.be.rejected;
+        await expect(haredo.exchange('test').exchange('test2').publish({ test: 'msg' }, 'myroutingkey')).to.be.rejected;
     });
     it('should bind two exchanges', async () => {
         const exchange = new Exchange('test').direct();

@@ -2,10 +2,11 @@ import 'mocha';
 import { expect } from 'chai';
 import { Haredo, HaredoChain, BadArgumentsError } from '../../src';
 import { setup, teardown } from '../integration/helpers/amqp';
+import { HaredoQueueChain } from '../../src/queue-chain';
 
 describe('Unit: HaredoChain', () => {
     let haredo: Haredo;
-    let chain: HaredoChain;
+    let chain: HaredoQueueChain;
     beforeEach(async () => {
         await setup();
         haredo = new Haredo({
@@ -59,10 +60,6 @@ describe('Unit: HaredoChain', () => {
     it('should set failTimeout', () => {
         expect(chain.failTimeout(5000).state.failTimeout).to.eql(5000);
     });
-    it('should not allow more than one queue in a chain', () => {
-        const fn = () => chain.queue('test2');
-        expect(fn).to.throw(BadArgumentsError);
-    });
     it('should throw if exchange is provided as string but exchange type incorrect', () => {
         const fn = () => chain.exchange('test', 'f' as any);
         expect(fn).to.throw(BadArgumentsError);
@@ -79,9 +76,5 @@ describe('Unit: HaredoChain', () => {
     it('should should add a binding to an existing exchangery', () => {
         chain = chain.exchange('test', 'direct', 'pattern1').exchange('test', 'direct', 'pattern2')
         expect(chain.state.exchanges[0].patterns).to.eql(['pattern1', 'pattern2']);
-    });
-    it('should throw when trying to subscribe without exchange', async () => {
-        const chain = haredo.exchange('');
-        await expect(chain.subscribe(() => {})).to.be.rejectedWith(BadArgumentsError);
     });
 });

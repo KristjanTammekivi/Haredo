@@ -1,68 +1,32 @@
 import { Queue } from './queue';
 import { Exchange, ExchangeType, xDelayedTypeStrings, xDelayedTypesArray, ExchangeOptions } from './exchange';
-import { MergeTypes, stringify, promiseMap, defaultToTrue, reject, defaultTo } from './utils';
+import { MergeTypes, stringify, reject } from './utils';
 import { BadArgumentsError, HaredoError } from './errors';
 import { makeLogger } from './logger';
 import { ConnectionManager } from './connection-manager';
-import { Consumer, MessageCallback } from './consumer';
 import { PreparedMessage, ExtendedPublishType } from './prepared-message';
 import { Buffer } from 'buffer';
 import { Options } from 'amqplib';
-import { HaredoMessage } from './haredo-message';
+import { HaredoChainState, defaultState, StateExchangeCollection, Middleware } from './state';
+import { setup } from './setup';
+import { HaredoQueueChain } from './queue-chain';
 
 const { debug } = makeLogger('HaredoChain:');
 
-export interface AddExchange {
-    exchange: Exchange;
-    patterns: string[];
-}
-
-export interface HaredoChainState<T> {
-    autoAck: boolean;
-    prefetch: number;
-    queue: Queue<T>;
-    exchanges: AddExchange[];
-    failThreshold: number;
-    failSpan: number;
-    failTimeout: number;
-    reestablish: boolean;
-    json: boolean;
-    confirm: boolean;
-    skipSetup: boolean;
-    middleware: Middleware<T>[];
-    autoReply: boolean;
-}
-
-export interface Middleware<T> {
-    (message: HaredoMessage<T>, next: () => Promise<void>): void | Promise<void>;
-}
-
-export class HaredoChain<T = unknown> {
-    state: Partial<HaredoChainState<T>> = {};
-    constructor(public connectionManager: ConnectionManager, state: Partial<HaredoChainState<T>>) {
-        this.state.autoAck = defaultToTrue(state.autoAck);
-        this.state.autoReply = defaultTo(state.autoReply, false);
-        this.state.queue = state.queue;
-        this.state.exchanges = [].concat(state.exchanges || []);
-        this.state.prefetch = state.prefetch || 0;
-        this.state.reestablish = defaultToTrue(state.reestablish);
-        this.state.failSpan = state.failSpan;
-        this.state.failThreshold = state.failThreshold;
-        this.state.failTimeout = state.failTimeout;
-        this.state.json = defaultToTrue(state.json);
-        this.state.confirm = state.confirm;
-        this.state.skipSetup = state.skipSetup;
-        this.state.middleware = state.middleware || [];
+export class HaredoChain<TMessage = unknown, TReply = unknown> {
+    state: HaredoChainState<TMessage>;
+    constructor(public connectionManager: ConnectionManager, state: Partial<HaredoChainState<TMessage>>) {
+        this.state = defaultState(state);
     }
-    private clone<U = T>(state: Partial<HaredoChainState<U>>) {
-        return new HaredoChain<U>(this.connectionManager, Object.assign({}, this.state, state));
+    private clone<T = TMessage, U = TReply>(state: Partial<HaredoChainState<T>>) {
+        return new HaredoChain<T, U>(this.connectionManager, Object.assign({}, this.state, state));
     }
     /**
      * Add a queue to the chain (can only add 1, so choose wisely)
      *
      * @param queue instance of Queue
      */
-    queue<U = unknown>(queue: Queue<U>): HaredoChain<MergeTypes<T, U>>;
+    queue<T = unknown, U = unknown>(queue: Queue<T, U>): HaredoQueueChain<MergeTypes<TMessage, T>, MergeTypes<TReply, U>>;
     /**
      * Add a queue to the chain (can only add 1, so choose wisely)
      *
@@ -70,24 +34,30 @@ export class HaredoChain<T = unknown> {
      * @param opts options that will be passed to amqplib
      * [amqplib#assertQueue](https://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue)
      */
-    queue<U = unknown>(queueName: string, opts?: Partial<Options.AssertQueue>): HaredoChain<MergeTypes<T, U>>;
-    queue<U = unknown>(queue: Queue<U> | string, opts: Partial<Options.AssertQueue> = {}) {
+    queue<T = unknown, U = unknown>(
+        queueName: string,
+        opts?: Partial<Options.AssertQueue>
+    ): HaredoQueueChain<MergeTypes<TMessage, T>, MergeTypes<TReply, U>>;
+    queue<T = unknown, U = unknown>(queue: Queue<T, U> | string, opts: Partial<Options.AssertQueue> = {}) {
         if (!(queue instanceof Queue)) {
-            queue = new Queue<U>(queue, opts);
+            queue = new Queue<T>(queue, opts);
         }
         if (this.state.queue) {
             throw new BadArgumentsError(`Chain can only contain one queue`);
         }
-        return this.clone<MergeTypes<T, U>>({
-            queue,
-        });
+        return new HaredoQueueChain<MergeTypes<TMessage, T>, MergeTypes<TReply, U>>(
+            this.connectionManager,
+            Object.assign({}, this.state, {
+                queue,
+            } as HaredoChainState<MergeTypes<TMessage, T>>)
+        );
     }
     /**
     * Add an exchange to the chain. Pattern defaults to '#'
     *
     * @param exchange instance of Exchange
     */
-    exchange<U>(exchange: Exchange<U>): HaredoChain<MergeTypes<T, U>>;
+    exchange<U>(exchange: Exchange<U>): HaredoChain<MergeTypes<TMessage, U>>;
     /**
      * Add an exchange to the chain.
      *
@@ -98,7 +68,7 @@ export class HaredoChain<T = unknown> {
      * @param exchange instance of Exchange
      * @param pattern pattern or array of patterns to bind the queue to
      */
-    exchange<U>(exchange: Exchange<U>, pattern?: string | string[]): HaredoChain<MergeTypes<T, U>>;
+    exchange<U>(exchange: Exchange<U>, pattern?: string | string[]): HaredoChain<MergeTypes<TMessage, U>>;
     /**
      * Add an exchange to the chain.
      *
@@ -113,7 +83,7 @@ export class HaredoChain<T = unknown> {
         type?: ExchangeType | xDelayedTypeStrings,
         pattern?: string | string[],
         opts?: Partial<ExchangeOptions>
-    ): HaredoChain<MergeTypes<T, U>>;
+    ): HaredoChain<MergeTypes<TMessage, U>>;
     exchange<U>(
         exchange: Exchange<U> | string,
         // tslint:disable-next-line:max-union-size
@@ -131,7 +101,7 @@ export class HaredoChain<T = unknown> {
             pattern = typeOrPattern;
         }
         const patterns = [].concat(pattern);
-        const findFn = (x: AddExchange) => x.exchange.name === (exchange as Exchange).name;
+        const findFn = (x: StateExchangeCollection) => x.exchange.name === (exchange as Exchange).name;
         const existingExchangery = this.state.exchanges.find(findFn);
         if (existingExchangery) {
             const newPatterns = existingExchangery.patterns
@@ -143,7 +113,7 @@ export class HaredoChain<T = unknown> {
                 })
             });
         }
-        return this.clone<MergeTypes<T, U>>({
+        return this.clone<MergeTypes<TMessage, U>>({
             exchanges: this.state.exchanges.concat({
                 exchange,
                 patterns
@@ -159,7 +129,7 @@ export class HaredoChain<T = unknown> {
      *
      * @param middleware function(s) to run before the subscribe callback gets executed
      **/
-    use(middleware: Middleware<T> | Middleware<T>[]) {
+    use(middleware: Middleware<TMessage> | Middleware<TMessage>[]) {
         return this.clone({
             middleware: this.state.middleware.concat(middleware)
         });
@@ -181,7 +151,7 @@ export class HaredoChain<T = unknown> {
      * be run through JSON.parse
      */
     json(json = true) {
-        return this.clone<typeof json extends false ? string : T>({ json });
+        return this.clone<typeof json extends false ? string : TMessage>({ json });
     }
     /**
      * Reestablish a subscriber when channel / connection closes (on by default)
@@ -238,33 +208,6 @@ export class HaredoChain<T = unknown> {
         return this.clone({ autoReply });
     }
     /**
-     * Subscribe to messages in the queue specified in the chain
-     */
-    async subscribe(cb: MessageCallback<T>) {
-        if (!this.state.queue) {
-            throw new BadArgumentsError('Queue not set for subscribing');
-        }
-        const consumer = new Consumer<T>({
-            autoAck: this.state.autoAck,
-            autoReply: this.state.autoReply,
-            fail: {
-                failSpan: this.state.failSpan,
-                failThreshold: this.state.failThreshold,
-                failTimeout: this.state.failTimeout
-            },
-            json: this.state.json,
-            prefetch: this.state.prefetch,
-            queue: this.state.queue,
-            reestablish: this.state.reestablish,
-            setterUpper: () => this.setup(),
-            middleware: this.state.middleware
-        }, this.connectionManager, cb);
-        this.connectionManager.consumerManager.add(consumer);
-        await consumer.start();
-        return consumer;
-    }
-
-    /**
      * Enable publishing using ConfirmChannels
      *
      * See [RabbitMq Docs](https://www.rabbitmq.com/confirms.html)
@@ -294,26 +237,18 @@ export class HaredoChain<T = unknown> {
      */
 
     async rpc(
-        message: T | PreparedMessage<T>,
-        optRoutingKey?: string | Partial<ExtendedPublishType>,
-        optPublishSettings?: Partial<ExtendedPublishType>
+        message: TMessage | PreparedMessage<TMessage>,
+        routingKey: string,
+        options?: Partial<ExtendedPublishType>
     ) {
         /* istanbul ignore if */
         if (this.state.exchanges.length > 1) {
             throw new HaredoError(`Can't publish to more than one exchange`);
         }
         await this.setup();
-        let routingKey: string;
-        let options: Partial<ExtendedPublishType>;
-        if (typeof optRoutingKey === 'string') {
-            routingKey = optRoutingKey;
-            options = optPublishSettings;
-        } else {
-            options = optRoutingKey;
-        }
         if (!(message instanceof PreparedMessage)) {
             const content = this.state.json ? JSON.stringify(message) : message.toString();
-            message = new PreparedMessage<T>({ content, routingKey, options });
+            message = new PreparedMessage<TMessage>({ content, routingKey, options });
         } else {
             message = message.clone({ routingKey, options });
         }
@@ -322,11 +257,7 @@ export class HaredoChain<T = unknown> {
         const correlationId = this.connectionManager.rpcService.generateCorrelationId();
         message = message.replyTo(queueName).correlationId(correlationId);
 
-        if (this.state.exchanges.length) {
-            await this.publishToExchange(message, this.state.exchanges[0].exchange);
-        } else {
-            await this.publishToQueue(message, this.state.queue);
-        }
+        await this.publishToExchange(message, this.state.exchanges[0].exchange);
         return this.connectionManager.rpcService.listen(correlationId);
     }
 
@@ -334,55 +265,30 @@ export class HaredoChain<T = unknown> {
      * Publish a message to exchange/queue
      *
      * @param message message to publish
-     */
-    publish(message: T | PreparedMessage<T>): Promise<boolean>;
-    /**
-     * Publish a message to exchange/queue
-     *
-     * @param message message to publish
-     * @param opts options for publishing
-     */
-    publish(message: T | PreparedMessage<T>, opts?: Partial<ExtendedPublishType>): Promise<boolean>;
-    /**
-     * Publish a message to exchange/queue
-     *
-     * @param message message to publish
      * @param routingKey routing key
-     * @param opts options to pass to
-     * [amqplib.publish](https://www.squaremobius.net/amqp.node/channel_api.html#channel_publish) or
-     * [amqplib.sendToQueue](https://www.squaremobius.net/amqp.node/channel_api.html#channel_sendToQueue)
+     * @param options options to pass to
+     * [amqplib.publish](https://www.squaremobius.net/amqp.node/channel_api.html#channel_publish)
      */
-    publish(message: T | PreparedMessage<T>, routingKey: string, opts?: Partial<ExtendedPublishType>): Promise<boolean>;
+    publish(message: TMessage | PreparedMessage<TMessage>, routingKey: string, opts?: Partial<ExtendedPublishType>): Promise<boolean>;
     async publish(
-        message: T | PreparedMessage<T>,
-        optRoutingKey?: string | Partial<ExtendedPublishType>,
-        optPublishSettings?: Partial<ExtendedPublishType>
+        message: TMessage | PreparedMessage<TMessage>,
+        routingKey: string,
+        options?: Partial<ExtendedPublishType>
     ) {
         if (this.state.exchanges.length > 1) {
             throw new HaredoError(`Can't publish to more than one exchange`);
         }
         await this.setup();
-        let routingKey: string;
-        let options: Partial<ExtendedPublishType>;
-        if (typeof optRoutingKey === 'string') {
-            routingKey = optRoutingKey;
-            options = optPublishSettings;
-        } else {
-            options = optRoutingKey;
-        }
         if (!(message instanceof PreparedMessage)) {
             const content = this.state.json ? JSON.stringify(message) : message.toString();
-            message = new PreparedMessage<T>({ content, routingKey, options });
+            message = new PreparedMessage<TMessage>({ content, routingKey, options });
         } else {
             message = message.clone({ routingKey, options });
         }
-        if (this.state.exchanges.length) {
-            return this.publishToExchange(message, this.state.exchanges[0].exchange);
-        }
-        return this.publishToQueue(message, this.state.queue);
+        return this.publishToExchange(message, this.state.exchanges[0].exchange);
     }
 
-    private async publishToExchange(message: PreparedMessage<T>, exchange: Exchange<T>) {
+    private async publishToExchange(message: PreparedMessage<TMessage>, exchange: Exchange<TMessage>) {
         if (this.state.confirm) {
             return new Promise<boolean>(async (resolve, reject) => {
                 try {
@@ -415,34 +321,6 @@ export class HaredoChain<T = unknown> {
         );
     }
 
-    private async publishToQueue(message: PreparedMessage<T>, queue: Queue<T>) {
-        if (this.state.confirm) {
-            return new Promise<boolean>(async (resolve, reject) => {
-                try {
-                    const channel = await this.connectionManager.getConfirmChannelForPublishing();
-                    const response = channel.sendToQueue(
-                        queue.name,
-                        Buffer.from(stringify(message.content)),
-                        message.options,
-                        (err) => {
-                            // TODO: wrap this error with HaredoError
-                            /* istanbul ignore if */
-                            if (err) {
-                                reject(err);
-                            } else {
-                                resolve(response);
-                            }
-                        }
-                    );
-                } catch (e) /* istanbul ignore next */ {
-                    reject(e);
-                }
-            });
-        }
-        const channel = await this.connectionManager.getChannelForPublishing();
-        return channel.sendToQueue(queue.name, Buffer.from(stringify(message.content)), message.options);
-    }
-
     /**
      * Assert / Bind exchanges/queues. Will be skipped if skipSetup is set in the chain
      */
@@ -452,22 +330,7 @@ export class HaredoChain<T = unknown> {
             debug(`Skipping setup`);
             return;
         }
-        if (this.state.queue) {
-            debug(`Asserting ${this.state.queue}`);
-            await this.connectionManager.assertQueue(this.state.queue);
-            debug(`Done asserting ${this.state.queue}`);
-        }
-        await promiseMap(this.state.exchanges, async (exchangery) => {
-            debug(`Asserting ${exchangery.exchange}`);
-            await this.connectionManager.assertExchange(exchangery.exchange);
-            if (this.state.queue) {
-                const queue = this.state.queue;
-                await promiseMap(exchangery.patterns, async (pattern) => {
-                    debug(`Binding ${queue} to ${exchangery.exchange} using pattern ${pattern}`);
-                    await this.connectionManager.bindQueue(exchangery.exchange, this.state.queue, pattern);
-                });
-            }
-            debug(`Done asserting ${exchangery.exchange}`);
-        });
+        debug('Setting up');
+        await setup(this.connectionManager, this.state.queue, [].concat(this.state.exchanges));
     }
 }

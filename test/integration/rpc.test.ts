@@ -48,11 +48,11 @@ describe('RPC', () => {
         expect(result).to.equal(12);
     });
     it('should reply when a value is returned from the callback', async () => {
-        const queue = new Queue<[number, number]>('testqueue');
+        const queue = new Queue<any, number>('testqueue');
         await haredo.queue(queue).autoReply().subscribe(data => {
             return data[0] * data[1];
         });
-        const result = await haredo.queue<string>(queue).json(false).rpc(JSON.stringify([2, 3]));
+        const result = await haredo.queue(queue).json(false).rpc(JSON.stringify([2, 3]));
         expect(result).to.equal(6);
     });
     it('should not autoreply when it has not been enabled', async () => {

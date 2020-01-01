@@ -58,13 +58,14 @@ describe('Exchange', () => {
             const message = new PreparedMessage({})
                 .json({})
                 .delay(150);
-            await haredo.exchange(exchange, '').queue('test').publish(message, '');
             let messageReceived = false;
             await haredo
+                .exchange(exchange, '')
                 .queue('test')
                 .subscribe(() => {
                     messageReceived = true;
                 });
+            await haredo.exchange(exchange, '').publish(message, '');
             await delay(50);
             expect(messageReceived).to.be.false;
             await delay(200);

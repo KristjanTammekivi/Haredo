@@ -2,7 +2,7 @@
 export { Queue, QueueOptions } from './queue';
 export { Exchange, ExchangeType, XDelayedType, ExchangeOptions, xDelayedTypeStrings } from './exchange';
 export { Haredo, HaredoOptions } from './haredo';
-export { HaredoChain, AddExchange, HaredoChainState, Middleware } from './haredo-chain';
+export { HaredoChain } from './haredo-chain';
 export {
     HaredoError,
     BadArgumentsError,
@@ -18,3 +18,5 @@ export { ConsumerManager } from './consumer-manager';
 export { MessageManager } from './message-manager';
 
 export { setLoggers } from './logger';
+
+export { HaredoChainState, Middleware, StateExchangeCollection } from './state';

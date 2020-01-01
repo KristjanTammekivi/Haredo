@@ -8,8 +8,8 @@ export interface HaredoMessageEvents {
     handled: void;
 }
 
-export class HaredoMessage<T = unknown, U = unknown> {
-    public data: T;
+export class HaredoMessage<TMessage = unknown, TReply = unknown> {
+    public data: TMessage;
     public dataString: string;
     public isHandled = false;
     public isNacked = false;
@@ -17,7 +17,7 @@ export class HaredoMessage<T = unknown, U = unknown> {
     public isRespondedTo = false;
     public canReply: boolean;
     public haveReplied = false;
-    public messageReply: U;
+    public messageReply: TReply;
     public emitter = new EventEmitter as TypedEventEmitter<HaredoMessageEvents>;
     constructor(public readonly raw: Message, parseJson: boolean, public readonly consumer: Consumer) {
         this.dataString = raw.content.toString();
@@ -74,7 +74,7 @@ export class HaredoMessage<T = unknown, U = unknown> {
      *
      * Read more at [RabbitMQ Docs](https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html)
      */
-    reply(message: U) {
+    reply(message: TReply) {
         if (!this.canReply) {
             return Promise.resolve();
         }

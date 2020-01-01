@@ -2,12 +2,13 @@ import { Queue } from './queue';
 import { ConnectionManager } from './connection-manager';
 import { Consumer } from './consumer';
 import { HaredoChain } from './haredo-chain';
+import { HaredoQueueChain } from './queue-chain';
 
 export class RpcService {
     private queue = new Queue().exclusive();
     public consumer: Consumer;
     private toResolve = {} as { [correlationId: string]: { resolve: Function, reject: Function } };
-    private chain: HaredoChain;
+    private chain: HaredoQueueChain;
     private startPromise: Promise<Consumer>;
     public started = false;
     public closing = false;

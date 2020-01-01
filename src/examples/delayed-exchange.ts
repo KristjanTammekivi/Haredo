@@ -25,7 +25,7 @@ export const main = async () => {
         await haredo
             .exchange(exchange)
             .skipSetup()
-            .publish(message.json({ time: new Date().getTime() }));
+            .publish(message.json({ time: new Date().getTime() }), 'item');
         await delay(2000);
     }
 };
