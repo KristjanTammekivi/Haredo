@@ -55,7 +55,7 @@ export interface MessageChain<TMessage = unknown> {
      * Set content-type header to application/json. If content is provided it
      * will be stringified and set as content
      */
-    json(data?: TMessage): MessageChain<TMessage>;
+    json<TCustomMessage = TMessage>(data?: TCustomMessage): MessageChain<TCustomMessage>;
     /**
      * Mandatory messages will be returned to sender if they're not routed
      * Haredo doesn't implement basic.return yet so this will not do anything
@@ -127,7 +127,7 @@ export const preparedMessage = <TMessage>(state: Partial<MessageChainState<TMess
         correlationId: (correlationId: string) => preparedMessage(mergeMessageState(state, { options: { correlationId } })),
         delay: (delay: number) => preparedMessage(state).setHeader('x-delay', delay),
         expiration: (expiration: number) => preparedMessage(mergeMessageState(state, { options: { expiration } })),
-        json: (content?: TMessage) => {
+        json: <TCustomMessage = TMessage>(content?: TCustomMessage) => {
             const chain = preparedMessage(state).contentType('application/json');
             if (content !== undefined) {
                 return chain.rawContent(JSON.stringify(content));
