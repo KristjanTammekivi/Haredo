@@ -18,6 +18,12 @@ export { Consumer, MessageCallback } from './consumer';
 export { Middleware } from './state';
 export { MessageChain, preparedMessage } from './prepared-message';
 export { HaredoMessage } from './haredo-message';
+export {
+    ChannelBrokenError,
+    FailedParsingJsonError,
+    HaredoClosingError,
+    HaredoError
+} from './errors';
 
 export const q = makeQueueConfig;
 export const e = makeExchangeConfig;
