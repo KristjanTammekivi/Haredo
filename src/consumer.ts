@@ -35,6 +35,9 @@ export interface Consumer {
     emitter: TypedEventEmitter<ConsumerEvents>;
     isClosing: boolean;
     isClosed: boolean;
+    /**
+     * Wait for all current messages to finish and then close the consumer
+     */
     close: () => Promise<void>;
     prefetch: (prefetch: number) => Replies.Empty;
 }

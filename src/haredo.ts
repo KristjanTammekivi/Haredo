@@ -428,6 +428,7 @@ export interface ExchangeChain<TMessage, TReply> extends
 
     /**
      * Bind an exchange to the main exchange.
+     * See [Exchange to Exchange bindings](https://www.rabbitmq.com/e2e.html)
      *
      * For patterns there are two wildcards:
      * * `*` - one word
@@ -441,6 +442,20 @@ export interface ExchangeChain<TMessage, TReply> extends
         exchange: Exchange<TCustomMessage>,
         pattern: string | string[]
     ): ExchangeChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
+    /**
+     * Assert and bind an exchange to the main exchange.
+     * See [Exchange to Exchange bindings](https://www.rabbitmq.com/e2e.html)
+     *
+     * For patterns there are two wildcards:
+     * * `*` - one word
+     * * `#` - zero or more words
+     * A word is dot(period) delimited
+     *
+     * @param exchangeName name of the exchange to forward messages from
+     * @param pattern pattern(s) to bind
+     * @param exchangeType type of the exchange
+     * @param exchangeOpts extra options for asserting the exchange
+     */
     bindExchange(
         exchangeName: string,
         pattern: string | string[],
@@ -498,6 +513,19 @@ export interface QueueChain<TMessage, TReply> extends
         exchange: Exchange<TCustomMessage>,
         pattern: string | string[]
     ): QueueChain<MergeTypes<TMessage, TCustomMessage>, MergeTypes<TReply, TCustomReply>>;
+    /**
+     * Bind an exchange to the queue.
+     *
+     * For patterns there are two wildcards:
+     * * `*` - one word
+     * * `#` - zero or more words
+     * A word is dot(period) delimited
+     *
+     * @param exchangeName name of the exchange
+     * @param pattern pattern(s) to bind
+     * @param exchangeType Type of the exchange
+     * @param exchangeOpts Options to use for asserting the exchange
+     */
     bindExchange(
         exchangeName: string,
         pattern: string | string[],

@@ -96,3 +96,9 @@ while (true) {
     await delay(2000);
 }
 ```
+
+### Graceful shutdown
+
+Calling consumer.close() will send cancel to channel and wait for existing messages to be handled before resolving the returned promise.
+
+Calling haredoInstance.close() will gracefully close all of it's consumers
