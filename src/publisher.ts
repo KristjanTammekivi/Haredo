@@ -4,61 +4,19 @@ import { ExtendedPublishOptions } from './prepared-message';
 import { Loggers } from './state';
 import { makeTicketMachine } from './utils';
 
+type PromiseOf<T> = T extends Promise<infer U> ? U : never;
+
 export interface Publisher {
     publishToExchange: (exchange: string, routingKey: string, data: Buffer, opts: ExtendedPublishOptions, confirm: boolean) => Promise<void>;
     sendToQueue: (queue: string, data: Buffer, opts: ExtendedPublishOptions, confirm: boolean) => Promise<void>;
 }
 
 export const makePublisher = (cm: ConnectionManager, log: Loggers): Publisher => {
-    let channelPromise: Promise<Channel>;
-    let confirmChannelPromise: Promise<ConfirmChannel>;
-    let wrappedChannel: ReturnType<typeof wrapChannel>;
-    let wrappedConfirmChannel: ReturnType<typeof wrapChannel>;
-    const getChannel = async () => {
-        if (wrappedChannel) {
-            return wrappedChannel;
-        }
-        if (channelPromise) {
-            await channelPromise;
-            return wrappedChannel;
-        }
-        channelPromise = cm.getChannel();
-        log.info('Publisher', 'opening channel');
-        const channel = await channelPromise;
-        log.info('Publisher', 'channel opened');
-        wrappedChannel = wrapChannel(channel, false, log);
-        channelPromise = undefined;
-        channel.on('close', () => {
-            log.info('Publisher', 'channel closed');
-            wrappedChannel.stop();
-            wrappedChannel = undefined;
-        });
-        return wrappedChannel;
-    };
-    const getConfirmChannel = async () => {
-        if (wrappedConfirmChannel) {
-            return wrappedConfirmChannel;
-        }
-        if (confirmChannelPromise) {
-            await confirmChannelPromise;
-            return wrappedConfirmChannel;
-        }
-        confirmChannelPromise = cm.getConfirmChannel();
-        log.info('Publisher', 'opening confirm-channel');
-        const confirmChannel = await confirmChannelPromise;
-        log.info('Publisher', 'confirm-channel opened');
-        wrappedConfirmChannel = wrapChannel(confirmChannel, true, log);
-        confirmChannelPromise = undefined;
-        confirmChannel.on('close', () => {
-            log.info('Publisher', 'confirm-channel closed');
-            wrappedConfirmChannel.stop();
-            wrappedConfirmChannel = undefined;
-        });
-        return wrappedConfirmChannel;
-    };
+    const getChannel = wrappedChannelGetter(() => cm.getChannel(), log, false);
+    const getConfirmChannel = wrappedChannelGetter(() => cm.getConfirmChannel(), log, true);
     return {
         publishToExchange: async (exchange: string, routingKey: string, data: Buffer, opts: ExtendedPublishOptions, confirm: boolean) => {
-            let channel: typeof wrappedChannel;
+            let channel: PromiseOf<ReturnType<typeof getChannel>>;
             if (confirm) {
                 channel = await getConfirmChannel();
             } else {
@@ -67,7 +25,7 @@ export const makePublisher = (cm: ConnectionManager, log: Loggers): Publisher =>
             return channel.publishToExchange(exchange, routingKey, data, opts);
         },
         sendToQueue: async (queue: string, data: Buffer, opts: ExtendedPublishOptions, confirm: boolean) => {
-            let channel: typeof wrappedChannel;
+            let channel: PromiseOf<ReturnType<typeof getChannel>>;
             if (confirm) {
                 channel = await getConfirmChannel();
             } else {
@@ -75,6 +33,36 @@ export const makePublisher = (cm: ConnectionManager, log: Loggers): Publisher =>
             }
             return channel.sendToQueue(queue, data, opts);
         }
+    };
+};
+
+export const wrappedChannelGetter = <T extends Channel | ConfirmChannel>(
+    channelGetter: () => Promise<T>,
+    log: Loggers,
+    isConfirmChannel: boolean
+) => {
+    let channelPromise: Promise<Channel>;
+    let wrappedChannel: ReturnType<typeof wrapChannel>;
+    return async () => {
+        if (wrappedChannel) {
+            return wrappedChannel;
+        }
+        if (channelPromise) {
+            await channelPromise;
+            return wrappedChannel;
+        }
+        channelPromise = channelGetter();
+        log.info('Publisher', 'opening channel');
+        const channel = await channelPromise;
+        log.info('Publisher', 'channel opened');
+        wrappedChannel = wrapChannel(channel, isConfirmChannel, log);
+        channelPromise = undefined;
+        channel.on('close', () => {
+            log.info('Publisher', 'channel closed');
+            wrappedChannel.stop();
+            wrappedChannel = undefined;
+        });
+        return wrappedChannel;
     };
 };
 
