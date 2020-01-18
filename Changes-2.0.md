@@ -1,4 +1,4 @@
-# Changes in haredo@2
+# 2.0 Changes
 
 ## Split queues
 

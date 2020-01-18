@@ -121,7 +121,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                 if (consumer.isClosing) {
                     return;
                 }
-                messageInstance = makeHaredoMessage<TMessage, TReply>(message, opts.json, methods);
+                messageInstance = makeHaredoMessage<TMessage, TReply>(message, opts.json, opts.queue.getName(), methods);
                 messageManager.add(messageInstance);
                 await applyMiddleware(opts.middleware || [], cb, messageInstance, opts.autoAck, opts.autoReply, log);
                 if (opts.autoAck && !messageInstance.isHandled()) {

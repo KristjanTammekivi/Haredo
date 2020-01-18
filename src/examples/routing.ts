@@ -6,14 +6,17 @@ export const main = async () => {
     const chain = haredo({
         connection: 'amqp://guest:guest@localhost:5672/'
     });
-    const queue = q('test').autoDelete();
+    // Anonymous queue, server will assign a name when asserted
+    const queue = q().autoDelete();
     const messagesExchange = e<{ id: number; body: string }>('messages', 'topic').autoDelete();
     const usersExchange = e<{ id: number; name: string }>('users', 'topic').autoDelete();
     await chain.queue(queue)
-        .bindExchange(messagesExchange, 'message.#')
+        // * in the pattern means 1 dot-separated word
+        // could also do just '#' to match everything
+        .bindExchange(messagesExchange, 'message.*')
         .bindExchange(usersExchange, ['user.create', 'user.update'])
-        .subscribe(({ data, routingKey }) => {
-            console.log('Received message, routing key', routingKey, 'id', data.id, 'data', data);
+        .subscribe(({ data, queue, routingKey }) => {
+            console.log('Received message in queue', queue, 'routing key', routingKey, 'id', data.id, 'data', data);
         });
     let id = 0;
     while (true) {

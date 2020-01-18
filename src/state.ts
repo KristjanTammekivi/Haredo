@@ -3,7 +3,7 @@ import { Queue } from './queue';
 import { ConnectionManager } from './connection-manager';
 import { HaredoMessage } from './haredo-message';
 
-export interface Middleware<TMessage, TReply> {
+export interface Middleware<TMessage = unknown, TReply = unknown> {
     /**
      * @param message The received message
      * @param next A function that returns a promise for the next item in the callback stack.

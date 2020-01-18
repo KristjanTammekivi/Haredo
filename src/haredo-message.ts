@@ -28,6 +28,7 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown>
     isNacked: () => boolean;
     isAcked: () => boolean;
     isReplied: () => boolean;
+    getReply: () => TReply;
     headers: MessagePropertyHeaders;
     getHeader: (header: string) => string | string[];
 
@@ -37,17 +38,43 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown>
      * Either 1 for non-persistent or 2 for persistent
      */
     deliveryMode?: 1 | 2;
+    /**
+     * Priority of a message. See [priority queues](https://www.rabbitmq.com/priority.html)
+     */
     priority?: number;
+    /**
+     * Used for RPC system to match messages to their replies
+     */
     correlationId?: string;
+    /**
+     * Queue name to reply to for RPC
+     */
     replyTo?: string;
+    /**
+     * If supplied, the message will be discarded from a queue once it’s been there longer than the given number of milliseconds
+     */
     expiration?: number;
+    /**
+     * Arbitrary application-specific identifier for the message
+     */
     messageId?: string;
+    /**
+     * A timestamp for the message
+     */
     timestamp?: number;
+    /**
+     * An arbitrary application-specific type for the message
+     */
     type?: string;
+    /**
+     * If supplied, RabbitMQ will compare it to the username supplied when opening the connection, and reject messages for which it does not match
+     */
     userId?: string;
+    /**
+     * An arbitrary identifier for the originating application
+     */
     appId?: string;
 
-    messageCount?: number;
     consumerTag?: string;
     deliveryTag: number;
     /**
@@ -56,6 +83,7 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown>
     redelivered: boolean;
     exchange: string;
     routingKey: string;
+    queue: string;
 }
 
 export interface Methods<TReply = unknown> {
@@ -81,6 +109,7 @@ export interface Methods<TReply = unknown> {
 export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
     raw: Message,
     parseJson: boolean,
+    queue: string,
     methods: Methods<TReply>
 ): HaredoMessage<TMessage, TReply> => {
     const state = {
@@ -88,6 +117,7 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
         isAcked: false,
         isNacked: false,
         isReplied: false,
+        reply: undefined as TReply,
     };
 
     const dataString = raw.content.toString();
@@ -99,10 +129,12 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
         raw,
         dataString,
         data,
+        queue,
         isHandled: () => state.isHandled,
         isAcked: () => state.isAcked,
         isNacked: () => state.isNacked,
         isReplied: () => state.isReplied,
+        getReply: () => state.reply,
         ack: () => {
             if (state.isHandled) {
                 return;
@@ -123,10 +155,11 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
         },
         reply: (message: TReply) => {
             state.isReplied = true;
+            state.reply = message;
             return methods.reply(message);
         },
-        headers: raw.properties.headers,
         getHeader: (header: string) => raw.properties.headers[header],
+        headers: raw.properties.headers,
         appId: raw.properties.appId,
         consumerTag: raw.fields.consumerTag,
         contentEncoding: raw.properties.contentEncoding,
@@ -136,7 +169,6 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
         deliveryTag: raw.fields.deliveryTag,
         exchange: raw.fields.exchange,
         expiration: raw.properties.expiration,
-        messageCount: raw.fields.messageCount,
         messageId: raw.properties.messageId,
         priority: raw.properties.priority,
         redelivered: raw.fields.redelivered,
@@ -144,6 +176,6 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
         routingKey: raw.fields.routingKey,
         timestamp: raw.properties.timestamp,
         type: raw.properties.type,
-        userId: raw.properties.userId
+        userId: raw.properties.userId,
     };
 };

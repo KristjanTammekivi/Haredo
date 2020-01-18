@@ -1,8 +1,6 @@
 # Haredo
 
-<aside class="notice">
-Haredo 2.0 is still in under development. Most of the changes are finalized but there might still be small changes before the final release. Meanwhile feel free to use <a href="https://www.npmjs.com/package/haredo/v/1.3.2">version 1.3.2</a>
-</aside>
+<Warning>Haredo version 2 introduces breaking changes. See [2.0 Changes](Changes-2.0.md)</Warning>
 
 [![npm](https://img.shields.io/npm/v/haredo.svg)](https://www.npmjs.com/package/haredo)
 [![npm](https://img.shields.io/npm/dw/haredo.svg)](https://www.npmjs.com/package/haredo)
