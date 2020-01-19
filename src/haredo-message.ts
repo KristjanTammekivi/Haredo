@@ -25,11 +25,30 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown>
      * Returns true if message has been acked/nacked
      */
     isHandled(): boolean;
+    /**
+     * Returns true if the message has been nacked
+     */
     isNacked(): boolean;
+    /**
+     * Returns true if the message has been acked
+     */
     isAcked(): boolean;
+    /**
+     * Returns true if the message has been replied to (RPC)
+     */
     isReplied(): boolean;
+    /**
+     * Returns the reply that was sent ack (RPC)
+     */
     getReply(): TReply;
+    /**
+     * Headers of the message
+     */
     headers: MessagePropertyHeaders;
+    /**
+     * Return the specified header
+     * @param header header to return
+     */
     getHeader(header: string): string | string[];
 
     contentType?: string;
@@ -75,14 +94,29 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown>
      */
     appId?: string;
 
+    /**
+     * consumerTag of the consumer the message originates from
+     */
     consumerTag?: string;
+    /**
+     * deliveryTag of the message (used to identify the message between consumer and broker)
+     */
     deliveryTag: number;
     /**
      * True if the message has been sent to a consumer at least once
      */
     redelivered: boolean;
-    exchange: string;
-    routingKey: string;
+    /**
+     * Name of the exchange the message originates from
+     */
+    exchange?: string;
+    /**
+     * Routingkey. If routingkey was not set then this equals to the name of the queue
+     */
+    routingKey?: string;
+    /**
+     * Name of the queue this message was consumed from
+     */
     queue: string;
 }
 

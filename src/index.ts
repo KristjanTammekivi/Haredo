@@ -17,7 +17,7 @@ export { Exchange, ExchangeOptions, ExchangeType, makeExchangeConfig } from './e
 export { Consumer, MessageCallback } from './consumer';
 export { Middleware } from './state';
 export { MessageChain, preparedMessage } from './prepared-message';
-export { HaredoMessage } from './haredo-message';
+export { HaredoMessage, makeHaredoMessage } from './haredo-message';
 export {
     ChannelBrokenError,
     FailedParsingJsonError,
