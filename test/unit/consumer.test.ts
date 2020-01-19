@@ -36,6 +36,7 @@ describe('unit/consumer', () => {
             json: true,
             middleware: [],
             queue: makeQueueConfig('test'),
+            backoff: null,
             reestablish: true,
             setup: async () => {}
         }, { debug: () => {}, info: () => {}, warning: () => {}, error: () => {}});

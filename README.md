@@ -95,6 +95,20 @@ while (true) {
 }
 ```
 
+### Message throttling
+
+```typescript
+await rabbit.queue('my-queue')
+    .backoff(standardBackoff({
+        failThreshold: 3,
+        failSpan: 5000,
+        failTimeout: 5000
+    }))
+    .subscribe(() => {
+        throw new Error('Nack this message for me')
+    });
+```
+
 ### Graceful shutdown
 
 Calling consumer.close() will send cancel to channel and wait for existing messages to be handled before resolving the returned promise.

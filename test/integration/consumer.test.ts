@@ -89,7 +89,6 @@ describe('integration/consumer', () => {
     it('should nack if subscribe callback fails', async () => {
         let nackSpy: SinonSpy;
         await rabbit.queue('test')
-            .failThreshold(1)
             .subscribe(async (message) => {
                 nackSpy = spy(message, 'nack')
                 throw new Error('whoopsiedaisy');
@@ -101,7 +100,6 @@ describe('integration/consumer', () => {
     it('should nack if subscribe middleware fails', async () => {
         let nackSpy: SinonSpy;
         await rabbit.queue('test')
-            .failThreshold(1)
             .use((message) => {
                 nackSpy = spy(message, 'nack');
                 throw new Error();

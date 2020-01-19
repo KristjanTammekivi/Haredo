@@ -8,6 +8,7 @@ import { makeConnectionManager } from './connection-manager';
 import { MessageCallback, Consumer, makeConsumer } from './consumer';
 import { MessageChain, isMessageChain, preparedMessage, mergeMessageState, ExtendedPublishOptions } from './prepared-message';
 import { generateCorrelationId } from './rpc';
+import { FailureBackoff } from './backoffs';
 
 // TODO: make this file smaller
 // TODO: add a configuration option for max connection attempts
@@ -142,6 +143,7 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
                 prefetch: state.prefetch,
                 queue: state.queue,
                 reestablish: state.reestablish ?? true,
+                backoff: state.backoff,
                 setup: addSetup(state)
             }, state.log);
             state.connectionManager.addConsumer(consumer);
@@ -159,14 +161,8 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
         autoReply: (autoReply = true) => {
             return queueChain(merge(state, { autoReply }));
         },
-        failSpan: (failSpan = 5000) => {
-            return queueChain(merge(state, { failSpan }));
-        },
-        failThreshold: (failThreshold = Infinity) => {
-            return queueChain(merge(state, { failThreshold }));
-        },
-        failTimeout: (failTimeout = 5000) => {
-            return queueChain(merge(state, { failTimeout }));
+        backoff: (backoff: FailureBackoff) => {
+            return queueChain(merge(state, { backoff }));
         },
         skipSetup: (skipSetup = true) => {
             return queueChain(merge(state, { skipSetup }));
@@ -606,29 +602,10 @@ export interface QueueChain<TMessage, TReply> extends
      */
     autoReply(autoReply?: boolean): QueueChain<TMessage, TReply>;
     /**
-     * Set the failSpan, the amount of time in milliseconds during which {failThreshold}
-     * amount of nacked messages can happen before the subscriber waits {failTimeout}
-     * milliseconds until passing the next message to subscriber callback.
-     *
-     * @param failSpan defaults to 5000
+     * Provide a failurebackoff to control the rate of messages in case of errors.
+     * Bundled together with haredo comes standardBackoff
      */
-    failSpan(failSpan: number): QueueChain<TMessage, TReply>;
-    /**
-     * Set the amount of fails the system will allow in {failSpan} milliseconds
-     * before the subscriber waits for {failTimeout} milliseconds until passing
-     * the next message to subscriber callback
-     *
-     * @param failThreshold  defaults to Infinity
-     */
-    failThreshold(failThreshold: number): QueueChain<TMessage, TReply>;
-    /**
-     * Set the failTimeout, the amount of time in milliseconds to wait until
-     * passing the next message to subscriber callback after {failThreshold}
-     * amount of nacked messages happen within {failSpan
-     *
-     * @param failTimeout defaults to 5000
-     */
-    failTimeout(failTimeout: number): QueueChain<TMessage, TReply>;
+    backoff(backoff: FailureBackoff): QueueChain<TMessage, TReply>;
     /**
      * Don't run automatic setup. Useful for faster publishing.
      *

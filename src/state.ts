@@ -2,6 +2,7 @@ import { Exchange } from './exchange';
 import { Queue } from './queue';
 import { ConnectionManager } from './connection-manager';
 import { HaredoMessage } from './haredo-message';
+import { FailureBackoff } from './backoffs';
 
 export interface Middleware<TMessage = unknown, TReply = unknown> {
     /**
@@ -34,9 +35,7 @@ export interface HaredoChainState<TMessage = unknown, TReply = unknown> {
     queue: Queue;
     bindings: StateExchangeCollection[];
     exchange: Exchange;
-    failThreshold: number;
-    failSpan: number;
-    failTimeout: number;
+    backoff: FailureBackoff;
     reestablish: boolean;
     json: boolean;
     confirm: boolean;
@@ -60,9 +59,7 @@ export const defaultState = <TMessage, TReply>(
         bindings: [].concat(newState.bindings || []),
         prefetch: newState.prefetch || 0,
         reestablish: newState.reestablish ?? true,
-        failSpan: newState.failSpan,
-        failThreshold: newState.failThreshold,
-        failTimeout: newState.failTimeout,
+        backoff: newState.backoff,
         json: newState.json ?? true,
         confirm: newState.confirm,
         skipSetup: newState.skipSetup,

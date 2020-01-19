@@ -9,6 +9,7 @@ import { ChannelBrokenError } from './errors';
 import { initialChain } from './haredo';
 import { head, tail } from './utils';
 import { makeMessageManager } from './message-manager';
+import { FailureBackoff } from './backoffs';
 
 export interface MessageCallback<TMessage = unknown, TReply = unknown> {
     (message: HaredoMessage<TMessage, TReply>): Promise<TReply | void> | TReply | void;
@@ -21,6 +22,7 @@ export interface ConsumerOpts {
     json: boolean;
     queue: Queue;
     reestablish: boolean;
+    backoff: FailureBackoff;
     setup(): Promise<any>;
     middleware: Middleware<unknown, unknown>[];
 }
@@ -95,6 +97,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
             if (message === null) {
                 return;
             }
+            await opts.backoff?.take();
             let messageInstance: HaredoMessage<TMessage, TReply>;
             const methods: Methods<TReply> = {
                 ack: () => {
@@ -102,12 +105,14 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                         throw new ChannelBrokenError();
                     }
                     channel.ack(message);
+                    opts.backoff?.ack?.();
                 },
                 nack: (requeue = true) => {
                     if (!channel) {
                         throw new ChannelBrokenError();
                     }
                     channel.nack(message, false, requeue);
+                    opts.backoff?.nack?.(requeue);
                 },
                 reply: async (reply) => {
                     if (!(message.properties.replyTo && message.properties.correlationId)) {
@@ -128,10 +133,12 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                 messageInstance = makeHaredoMessage<TMessage, TReply>(message, opts.json, opts.queue.getName(), methods);
                 messageManager.add(messageInstance);
                 await applyMiddleware(opts.middleware || [], cb, messageInstance, opts.autoAck, opts.autoReply, log);
+                opts.backoff?.pass?.();
                 if (opts.autoAck && !messageInstance.isHandled()) {
                     messageInstance.ack();
                 }
             } catch (e) {
+                opts.backoff?.fail?.();
                 if (!messageInstance) {
                     log.error('Consumer', 'failed initializing a message instance', e);
                     methods.nack(false);

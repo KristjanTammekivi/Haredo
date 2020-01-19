@@ -18,6 +18,7 @@ export { Consumer, MessageCallback } from './consumer';
 export { Middleware } from './state';
 export { MessageChain, preparedMessage } from './prepared-message';
 export { HaredoMessage, makeHaredoMessage } from './haredo-message';
+export { FailureBackoff, StandardBackoffOptions, standardBackoff } from './backoffs';
 export {
     ChannelBrokenError,
     FailedParsingJsonError,

@@ -57,15 +57,6 @@ describe('unit/chain', () => {
         expect(chain.queue('test').reestablish().getState()).to.have.property('reestablish' as keyof HaredoChainState, true);
         expect(chain.queue('test').reestablish(false).getState()).to.have.property('reestablish' as keyof HaredoChainState, false);
     });
-    it('should set failSpan', () => {
-        expect(chain.queue('test').failSpan(1234).getState()).to.have.property('failSpan' as keyof HaredoChainState, 1234);
-    });
-    it('should set failThreshold', () => {
-        expect(chain.queue('test').failThreshold(1234).getState()).to.have.property('failThreshold' as keyof HaredoChainState, 1234);
-    });
-    it('should set failTimeout', () => {
-        expect(chain.queue('test').failTimeout(1234).getState()).to.have.property('failTimeout' as keyof HaredoChainState, 1234);
-    });
     it('should set priority', () => {
         expect(chain.queue('test').priority(1234).getState()).to.have.property('priority' as keyof HaredoChainState, 1234);
     });

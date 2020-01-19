@@ -8,7 +8,7 @@ export const head = <T>(arr: T[]): T => arr[0];
 export const tail = <T>(arr: T[]): T[] => arr.slice(1);
 
 export const delay = (ms: number) => {
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
         setTimeout(resolve, ms);
     });
 };
