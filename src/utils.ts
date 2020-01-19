@@ -39,11 +39,11 @@ export const parseJSON = (data: string) => {
 };
 
 export interface TicketMachine {
-    take: () => Promise<Function>;
-    play: () => void;
-    pause: () => void;
-    stop: () => void;
-    check: () => void;
+    take(): Promise<Function>;
+    play(): void;
+    pause(): void;
+    stop(): void;
+    check(): void;
 }
 
 export const makeTicketMachine = (): TicketMachine => {

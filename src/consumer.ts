@@ -21,7 +21,7 @@ export interface ConsumerOpts {
     json: boolean;
     queue: Queue;
     reestablish: boolean;
-    setup: () => Promise<any>;
+    setup(): Promise<any>;
     middleware: Middleware<unknown, unknown>[];
 }
 
@@ -38,8 +38,8 @@ export interface Consumer {
     /**
      * Wait for all current messages to finish and then close the consumer
      */
-    close: () => Promise<void>;
-    prefetch: (prefetch: number) => Replies.Empty;
+    close(): Promise<void>;
+    prefetch(prefetch: number): Replies.Empty;
 }
 
 export const makeConsumer = async <TMessage = unknown, TReply = unknown>(

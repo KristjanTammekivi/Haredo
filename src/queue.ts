@@ -10,37 +10,37 @@ export const DEFAULT_QUEUE_OPTIONS: QueueOptions = Object.freeze({
 
 export interface Queue<TPublish = unknown, TReply = unknown> {
     metaType: 'queue';
-    getName: () => string;
-    getOpts: () => QueueOptions;
+    getName(): string;
+    getOpts(): QueueOptions;
     /**
      * if true, the queue will survive broker restarts,
      * modulo the effects of exclusive and autoDelete;
      * this defaults to true if not supplied, unlike the others.
      */
-    durable: (durable?: boolean) => Queue<TPublish, TReply>;
+    durable(durable?: boolean): Queue<TPublish, TReply>;
     /**
      * if true, the queue will be deleted when the number
      * of consumers drops to zero (defaults to false)
      */
-    autoDelete: (autoDelete?: boolean) => Queue<TPublish, TReply>;
+    autoDelete(autoDelete?: boolean): Queue<TPublish, TReply>;
     /**
      * if true, scopes the queue to the connection (defaults to false)
      */
-    exclusive: (exclusive?: boolean) => Queue<TPublish, TReply>;
+    exclusive(exclusive?: boolean): Queue<TPublish, TReply>;
     /**
      * expires messages arriving in the queue after n milliseconds
      */
-    messageTtl: (messageTtl: number) => Queue<TPublish, TReply>;
+    messageTtl(messageTtl: number): Queue<TPublish, TReply>;
     /**
      * set a maximum number of messages the queue will hold. Old messages
      * will be discarded/dead lettered to make room for new ones
      */
-    maxLength: (maxLength: number) => Queue<TPublish, TReply>;
+    maxLength(maxLength: number): Queue<TPublish, TReply>;
     /**
      * the queue will be destroyed after n milliseconds of disuse,
      * where use means having consumers or being declared
      */
-    expires: (expires: number) => Queue<TPublish, TReply>;
+    expires(expires: number): Queue<TPublish, TReply>;
     /**
     * Add a dead letter exchange to route discarded messages to.
     * A message is discarded for any of 4 reasons
@@ -49,17 +49,17 @@ export interface Queue<TPublish = unknown, TReply = unknown> {
     * - Message is rejected (not implemented in Haredo)
     * - Message is nacked with requeue set to false
     */
-    dead: (dlx: string | Exchange, deadLetterRoutingKey?: string) => Queue<TPublish, TReply>;
+    dead(dlx: string | Exchange, deadLetterRoutingKey?: string): Queue<TPublish, TReply>;
     /**
      * set the name of the queue. Empty string will cause the server to assign
      * a name for it.
      */
-    name: (name: string) => Queue<TPublish, TReply>;
+    name(name: string): Queue<TPublish, TReply>;
     /**
      * Made for internal use. Mutates the state instead of doing the usual thing of returning
      * a brand new object
      */
-    mutateName: (name: string) => void;
+    mutateName(name: string): void;
 }
 
     /**

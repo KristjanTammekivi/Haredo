@@ -21,44 +21,44 @@ export interface ExchangeOptions extends Options.AssertExchange {
 
 export interface Exchange<TMessage = unknown> {
     metaType: 'exchange';
-    getName: () => string;
-    getType: () => ExchangeType;
-    getOpts: () => ExchangeOptions;
+    getName(): string;
+    getType(): ExchangeType;
+    getOpts(): ExchangeOptions;
     /**
      * if true, the exchange will survive broker restarts.
      * Defaults to true
      */
-    durable: (durable?: boolean) => Exchange<TMessage>;
+    durable(durable?: boolean): Exchange<TMessage>;
     /**
      * if true, the exchange will be destroyed once the number
      * of bindings for which it is the source drop to zero.
      * Defaults to false.
      */
-    autoDelete: (autoDelete?: boolean) => Exchange<TMessage>;
+    autoDelete(autoDelete?: boolean): Exchange<TMessage>;
     /**
      * send all unrouted messages to this exchange
      */
-    alternateExchange: (alternateExchange: string | Exchange) => Exchange<TMessage>;
+    alternateExchange(alternateExchange: string | Exchange): Exchange<TMessage>;
     /**
      * Set the exchange type as 'direct'
      */
-    direct: () => Exchange<TMessage>;
+    direct(): Exchange<TMessage>;
     /**
      * Set the exchange type as 'topic'
      */
-    topic: () => Exchange<TMessage>;
+    topic(): Exchange<TMessage>;
     /**
      * Set the exchange type as 'headers'
      */
-    headers: () => Exchange<TMessage>;
+    headers(): Exchange<TMessage>;
     /**
      * Set the exchange type as 'fanout'
      */
-    fanout: () => Exchange<TMessage>;
+    fanout(): Exchange<TMessage>;
     /**
      * Set the exchange type as 'delayed' and x-delayed-type attribute as the specified
      */
-    delayed: (xDelayedType: StandardExchangeType) => Exchange<TMessage>;
+    delayed(xDelayedType: StandardExchangeType): Exchange<TMessage>;
 }
 
 /**

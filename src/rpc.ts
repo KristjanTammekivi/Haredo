@@ -14,8 +14,8 @@ export interface Events {
 export interface StartRpc {
     consumer: Consumer;
     emitter: TypedEventEmitter<Events>;
-    add: <TReply>(correlationId: string) => { promise: Promise<TReply>, queue: string } ;
-    close: () => Promise<void>;
+    add<TReply>(correlationId: string): { promise: Promise<TReply>, queue: string } ;
+    close(): Promise<void>;
 }
 
 // TODO: add ability to timeout

@@ -7,8 +7,8 @@ import { makeTicketMachine } from './utils';
 type PromiseOf<T> = T extends Promise<infer U> ? U : never;
 
 export interface Publisher {
-    publishToExchange: (exchange: string, routingKey: string, data: Buffer, opts: ExtendedPublishOptions, confirm: boolean) => Promise<void>;
-    sendToQueue: (queue: string, data: Buffer, opts: ExtendedPublishOptions, confirm: boolean) => Promise<void>;
+    publishToExchange(exchange: string, routingKey: string, data: Buffer, opts: ExtendedPublishOptions, confirm: boolean): Promise<void>;
+    sendToQueue(queue: string, data: Buffer, opts: ExtendedPublishOptions, confirm: boolean): Promise<void>;
 }
 
 export const makePublisher = (cm: ConnectionManager, log: Loggers): Publisher => {

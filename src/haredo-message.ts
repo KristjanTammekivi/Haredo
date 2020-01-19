@@ -24,13 +24,13 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown>
     /**
      * Returns true if message has been acked/nacked
      */
-    isHandled: () => boolean;
-    isNacked: () => boolean;
-    isAcked: () => boolean;
-    isReplied: () => boolean;
-    getReply: () => TReply;
+    isHandled(): boolean;
+    isNacked(): boolean;
+    isAcked(): boolean;
+    isReplied(): boolean;
+    getReply(): TReply;
     headers: MessagePropertyHeaders;
-    getHeader: (header: string) => string | string[];
+    getHeader(header: string): string | string[];
 
     contentType?: string;
     contentEncoding?: string;
@@ -90,20 +90,20 @@ export interface Methods<TReply = unknown> {
     /**
      * Mark the message as done, removes it from the queue
      */
-    ack: () => void;
+    ack(): void;
     /**
      * Nack the message. If requeue is false (defaults to true)
      * then the message will be discarded. Otherwise it will be returned to
      * the front of the queue
      */
-    nack: (requeue?: boolean) => void;
+    nack(requeue?: boolean): void;
     /**
      * Reply to the message. Only works if the message has a
      * replyTo and correlationId have been set on the message.
      * If autoReply has been set on the chain, then You can just return a
      * non-undefined value from the subscribe callback
      */
-    reply: (message: TReply) => Promise<void>;
+    reply(message: TReply): Promise<void>;
 }
 
 export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(

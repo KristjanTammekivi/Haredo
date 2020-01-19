@@ -23,7 +23,7 @@ export interface LogItem {
 export interface HaredoOptions {
     connection?: Options.Connect | string;
     socketOpts?: any;
-    logger?: (log: LogItem) => void;
+    logger?(log: LogItem): void;
 }
 
 export enum LogLevel {
@@ -34,8 +34,8 @@ export enum LogLevel {
 }
 
 export interface Haredo extends InitialChain<unknown, unknown> {
-    close: () => Promise<void>;
-    connect: () => Promise<void>;
+    close(): Promise<void>;
+    connect(): Promise<void>;
 }
 
 export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOptions): Haredo => {
