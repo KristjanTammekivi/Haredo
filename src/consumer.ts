@@ -39,6 +39,10 @@ export interface Consumer {
      * Wait for all current messages to finish and then close the consumer
      */
     close(): Promise<void>;
+    /**
+     * Change the prefetch
+     * @param prefetch Amount of messages to be unacked in the consumer
+     */
     prefetch(prefetch: number): Replies.Empty;
 }
 
