@@ -1,91 +1,181 @@
 import { Message, MessagePropertyHeaders } from 'amqplib';
-import { Consumer } from './consumer';
-import { MessageAlreadyHandledError, FailedParsingJsonError } from './errors';
-import { EventEmitter } from 'events';
-import { TypedEventEmitter } from './events';
+import { makeEmitter, TypedEventEmitter } from './events';
+import { parseJSON } from './utils';
 
 export interface HaredoMessageEvents {
     handled: void;
 }
 
-export class HaredoMessage<T = unknown, U = unknown> {
-    public data: T;
-    public dataString: string;
-    public isHandled = false;
-    public isNacked = false;
-    public isAcked = false;
-    public isRespondedTo = false;
-    public canReply: boolean;
-    public haveReplied = false;
-    public messageReply: U;
-    public emitter = new EventEmitter as TypedEventEmitter<HaredoMessageEvents>;
-    constructor(public readonly raw: Message, parseJson: boolean, public readonly consumer: Consumer) {
-        this.dataString = raw.content.toString();
-        if (parseJson) {
-            try {
-                this.data = JSON.parse(this.dataString);
-            } catch (e) {
-                throw new FailedParsingJsonError(this.dataString);
-            }
-        } else {
-            this.data = this.dataString as any;
-        }
-        this.canReply = raw.properties.correlationId && raw.properties.replyTo;
-    }
+export interface HaredoMessage<TMessage = unknown, TReply = unknown>
+    extends Methods<TReply> {
+    emitter: TypedEventEmitter<HaredoMessageEvents>;
     /**
-     * Return the headers for this message
+     * Raw message from amqplib
      */
-    getHeaders() {
-        return this.raw.properties.headers;
-    }
+    raw: Message;
     /**
-     * Return a specific header for the message
+     * Message contents
      */
-    getHeader<T extends keyof MessagePropertyHeaders>(header: T): MessagePropertyHeaders[T] {
-        return this.getHeaders()[header];
-    }
+    data: TMessage;
     /**
-     * Manually ack a message. Will throw an error if this message is already handled
+     * Unparsed message data
      */
-    ack() {
-        if (this.isHandled) {
-            throw new MessageAlreadyHandledError('A message can only be acked/nacked once');
-        }
-        this.consumer.ack(this);
-        this.isHandled = true;
-        this.isAcked = true;
-        this.emitter.emit('handled');
-    }
+    dataString: string;
     /**
-     * Manually nack a message. Will throw an error if message is already handled. If optional parameter
-     * requeue is true (defaults to True) then the message is put back in the head of the queue
+     * Returns true if message has been acked/nacked
      */
-    nack(requeue = true) {
-        if (this.isHandled) {
-            throw new MessageAlreadyHandledError('A message can only be acked/nacked once');
-        }
-        this.consumer.nack(this, requeue);
-        this.isHandled = true;
-        this.isNacked = true;
-        this.emitter.emit('handled');
-    }
+    isHandled(): boolean;
+    isNacked(): boolean;
+    isAcked(): boolean;
+    isReplied(): boolean;
+    getReply(): TReply;
+    headers: MessagePropertyHeaders;
+    getHeader(header: string): string | string[];
+
+    contentType?: string;
+    contentEncoding?: string;
     /**
-     * Reply to a message via RPC, if message can be replied to (if message has a replyTo queue name and correlationId)
-     *
-     * Read more at [RabbitMQ Docs](https://www.rabbitmq.com/tutorials/tutorial-six-javascript.html)
+     * Either 1 for non-persistent or 2 for persistent
      */
-    reply(message: U) {
-        if (!this.canReply) {
-            return Promise.resolve();
-        }
-        if (this.haveReplied) {
-            return Promise.resolve();
-        }
-        this.haveReplied = true;
-        this.messageReply = message;
-        return this.consumer.reply(this.raw.properties.replyTo, this.raw.properties.correlationId, message);
-    }
-    toString() {
-        return `HaredoMessage ${ this.dataString }`;
-    }
+    deliveryMode?: 1 | 2;
+    /**
+     * Priority of a message. See [priority queues](https://www.rabbitmq.com/priority.html)
+     */
+    priority?: number;
+    /**
+     * Used for RPC system to match messages to their replies
+     */
+    correlationId?: string;
+    /**
+     * Queue name to reply to for RPC
+     */
+    replyTo?: string;
+    /**
+     * If supplied, the message will be discarded from a queue once it’s been there longer than the given number of milliseconds
+     */
+    expiration?: number;
+    /**
+     * Arbitrary application-specific identifier for the message
+     */
+    messageId?: string;
+    /**
+     * A timestamp for the message
+     */
+    timestamp?: number;
+    /**
+     * An arbitrary application-specific type for the message
+     */
+    type?: string;
+    /**
+     * If supplied, RabbitMQ will compare it to the username supplied when opening the connection, and reject messages for which it does not match
+     */
+    userId?: string;
+    /**
+     * An arbitrary identifier for the originating application
+     */
+    appId?: string;
+
+    consumerTag?: string;
+    deliveryTag: number;
+    /**
+     * True if the message has been sent to a consumer at least once
+     */
+    redelivered: boolean;
+    exchange: string;
+    routingKey: string;
+    queue: string;
 }
+
+export interface Methods<TReply = unknown> {
+    /**
+     * Mark the message as done, removes it from the queue
+     */
+    ack(): void;
+    /**
+     * Nack the message. If requeue is false (defaults to true)
+     * then the message will be discarded. Otherwise it will be returned to
+     * the front of the queue
+     */
+    nack(requeue?: boolean): void;
+    /**
+     * Reply to the message. Only works if the message has a
+     * replyTo and correlationId have been set on the message.
+     * If autoReply has been set on the chain, then You can just return a
+     * non-undefined value from the subscribe callback
+     */
+    reply(message: TReply): Promise<void>;
+}
+
+export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
+    raw: Message,
+    parseJson: boolean,
+    queue: string,
+    methods: Methods<TReply>
+): HaredoMessage<TMessage, TReply> => {
+    const state = {
+        isHandled: false,
+        isAcked: false,
+        isNacked: false,
+        isReplied: false,
+        reply: undefined as TReply,
+    };
+
+    const dataString = raw.content.toString();
+    const data = parseJson ? parseJSON(dataString) : dataString;
+
+    const emitter = makeEmitter<HaredoMessageEvents>();
+    return {
+        emitter,
+        raw,
+        dataString,
+        data,
+        queue,
+        isHandled: () => state.isHandled,
+        isAcked: () => state.isAcked,
+        isNacked: () => state.isNacked,
+        isReplied: () => state.isReplied,
+        getReply: () => state.reply,
+        ack: () => {
+            if (state.isHandled) {
+                return;
+            }
+            state.isAcked = true;
+            state.isHandled = true;
+            methods.ack();
+            emitter.emit('handled');
+        },
+        nack: (requeue = true) => {
+            if (state.isHandled) {
+                return;
+            }
+            state.isNacked = true;
+            state.isHandled = true;
+            methods.nack(requeue);
+            emitter.emit('handled');
+        },
+        reply: (message: TReply) => {
+            state.isReplied = true;
+            state.reply = message;
+            return methods.reply(message);
+        },
+        getHeader: (header: string) => raw.properties.headers[header],
+        headers: raw.properties.headers,
+        appId: raw.properties.appId,
+        consumerTag: raw.fields.consumerTag,
+        contentEncoding: raw.properties.contentEncoding,
+        contentType: raw.properties.contentType,
+        correlationId: raw.properties.correlationId,
+        deliveryMode: raw.properties.deliveryMode,
+        deliveryTag: raw.fields.deliveryTag,
+        exchange: raw.fields.exchange,
+        expiration: raw.properties.expiration,
+        messageId: raw.properties.messageId,
+        priority: raw.properties.priority,
+        redelivered: raw.fields.redelivered,
+        replyTo: raw.properties.replyTo,
+        routingKey: raw.fields.routingKey,
+        timestamp: raw.properties.timestamp,
+        type: raw.properties.type,
+        userId: raw.properties.userId,
+    };
+};

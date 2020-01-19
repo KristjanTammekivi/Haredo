@@ -1,85 +1,49 @@
-import 'mocha';
-import * as CM from '../../src/connection-manager';
+import rewiremock from 'rewiremock';
+import { stub, SinonStub } from 'sinon';
+import { EventEmitter } from 'events';
 import { expect, use } from 'chai';
+import { delay } from '../../src/utils';
+
+import * as sinonChai from 'sinon-chai';
 import * as chaiAsPromised from 'chai-as-promised';
 
-import rewiremock from 'rewiremock';
-import * as sinon from 'sinon';
-import { delay } from 'bluebird';
-import { HaredoClosingError } from '../../src/errors';
-import { EventEmitter } from 'events';
-
+use(sinonChai);
 use(chaiAsPromised);
 
-describe('Unit: ConnectionManager', () => {
-    let ConnectionManager: typeof CM.ConnectionManager;
-    let connectionMock: { [key: string]: sinon.SinonSpy | sinon.SinonStub };
-    let connectStub: sinon.SinonStub;
-    let confirmChannelMock: any;
-    let channelMock: any;
+describe('unit/connection-manager', () => {
+    let connectionManager: typeof import("../../src/connection-manager");
+    let connectionMock: EventEmitter &  { close(): void };
+    let connectStub: SinonStub;
+    const noop = () => {};
+    const loggers = {
+        debug: noop,
+        info: noop,
+        warning: noop,
+        error: noop
+    };
+
     beforeEach(async () => {
-        confirmChannelMock = new EventEmitter();
-        channelMock = new EventEmitter();
-        connectionMock = {
-            close: sinon.stub(() => { return delay(10); }) as any,
-            on: sinon.spy(),
-            createConfirmChannel: sinon.stub().returns(confirmChannelMock),
-            createChannel: sinon.stub().returns(channelMock)
-        };
-        connectStub = sinon.stub().returns(connectionMock);
-        ({ ConnectionManager } = await rewiremock.module(() => import('../../src/connection-manager'), () => {
-            return {
-                amqplib: {
-                    connect: async (...args: any[]) => {
-                        return connectStub(args)
-                    }
-                }
+        connectionMock = Object.assign(new EventEmitter(), { async close() {} });
+        connectStub = stub().resolves(connectionMock);
+        connectionManager = await rewiremock.module(() => import('../../src/connection-manager'), () => ({
+            amqplib: {
+                connect: connectStub
             }
-        }))
+        }));
     });
-    afterEach(() => {
-        rewiremock.clear();
-    });
+
     it('should return connection', async () => {
-        const manager = new ConnectionManager({});
-        const connection = await manager.getConnection();
+        const cm = connectionManager.makeConnectionManager({}, {}, loggers);
+        const connection = await cm.getConnection();
         expect(connection).to.equal(connectionMock);
-        expect(connectStub.callCount).to.equal(1);
-        manager.close();
     });
-    it('should not call connect once on simultaneous getConnection calls', async () => {
-        const manager = new ConnectionManager({});
-        await Promise.all([
-            manager.getConnection(),
-            manager.getConnection()
-        ]);
-        expect(connectStub.callCount).to.eql(1);
-        manager.close();
-    });
-    it('should throw error when trying to get a connection while closing', async () => {
-        const manager = new ConnectionManager();
-        await manager.getConnection();
-        await manager.close();
-        await expect(manager.getConnection()).to.be.rejectedWith(HaredoClosingError);
-    });
-    it('should return existing confirmChannel when getConfirmChannelForPublishing is called', async () => {
-        const manager = new ConnectionManager();
-        const channel1 = await manager.getConfirmChannelForPublishing();
-        const channel2 = await manager.getConfirmChannelForPublishing();
-        expect(channel1).to.equal(channel2);
-        expect(connectionMock.createConfirmChannel.callCount).to.equal(1);
-    });
-    it('should not create two publisher channels in a race condition', async () => {
-        const manager = new ConnectionManager();
-        await Promise.all([
-            manager.getChannelForPublishing(),
-            manager.getChannelForPublishing(),
-        ]);
-        expect(connectionMock.createChannel.callCount).to.equal(1);
-        await Promise.all([
-            manager.getConfirmChannelForPublishing(),
-            manager.getConfirmChannelForPublishing(),
-        ]);
-        expect(connectionMock.createConfirmChannel.callCount).to.equal(1);
-    });
+
+    it('should reopen connection if it closes', async () => {
+        const cm = connectionManager.makeConnectionManager({}, {}, loggers);
+        const connection = await cm.getConnection();
+        connection.emit('close');
+        await delay(10);
+        expect(connectStub).to.be.calledTwice;
+    })
+
 });

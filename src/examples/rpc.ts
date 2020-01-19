@@ -1,26 +1,30 @@
-import { Queue } from '../queue';
-import { Haredo } from '../haredo';
+import { q, haredo } from '..';
 import { delay } from '../utils';
 
 export const main = async () => {
-    console.log('starting example');
-    const haredo = new Haredo({
+    const rabbit = haredo({
         connection: 'amqp://guest:guest@localhost:5672/'
     });
-    await haredo.connect();
-    const queue = new Queue<number[]>('sum').expires(2000);
-    await haredo.queue(queue).subscribe((data, msg) => {
-        console.log('Calculating sum', data.join(' + '));
-        return (data.reduce((acc, item) => acc + item));
-    });
-    let i = 1;
+    const queue = q<number[], number>('sum');
+
+    await rabbit
+        .queue(queue)
+        .autoReply()
+        .subscribe(({ data }) => {
+            return data.reduce((acc, item) => acc + item, 0);
+        });
+
     while (true) {
-        const result = await haredo.queue(queue)
-            .rpc([i - 1, i, i + 1]);
-        i += 1;
-        console.log('Sum is', result);
-        await delay(2000);
+        const numbers = [randomBetween(1, 100), randomBetween(1, 100), randomBetween(1, 100)];
+        console.log('Asking for sum of', numbers);
+        const result = await rabbit.queue(queue).rpc(numbers);
+        console.log('Result is', result);
+        await delay(1000);
     }
 };
 
-process.nextTick(() => main());
+const randomBetween = (min: number, max: number) => {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+process.nextTick(main);

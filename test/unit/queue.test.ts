@@ -1,63 +1,33 @@
-import 'mocha';
 import { expect } from 'chai';
-import { Queue, Exchange } from '../../src';
+import { makeQueueConfig } from '../../src/queue';
+import { makeExchangeConfig } from '../../src/exchange';
 
-describe('Unit: Queue', () => {
-    it('should set queue as non-durable', () => {
-        const queue = new Queue().durable(false);
-        expect(queue.opts.durable).to.be.false;
-    });
-    it('should set queue as durable', () => {
-        const queue = new Queue().durable(false).durable();
-        expect(queue.opts.durable).to.be.true;
+describe('unit/queue', ()=> {
+    it('should set durable', () => {
+        expect(makeQueueConfig('test').durable().getOpts()).to.have.property('durable', true);
     });
     it('should set autoDelete', () => {
-        const queue = new Queue().autoDelete();
-        expect(queue.opts.autoDelete).to.be.true;
+        expect(makeQueueConfig('test').autoDelete().getOpts()).to.have.property('autoDelete', true);
     });
-    it('should set queue as non-exclusive', () => {
-        const queue = new Queue().exclusive(false);
-        expect(queue.opts.exclusive).to.be.false;
+    it('should set exclusive', () => {
+        expect(makeQueueConfig('test').exclusive().getOpts()).to.have.property('exclusive', true);
     });
-    it('should set queue as exclusive', () => {
-        const queue = new Queue().exclusive(false).exclusive();
-        expect(queue.opts.exclusive).to.be.true;
+    it('should set messageTtl', () => {
+        expect(makeQueueConfig('test').messageTtl(250).getOpts()).to.have.property('messageTtl', 250);
     });
-    it('should set queue expiry', () => {
-        const queue = new Queue().expires(200);
-        expect(queue.opts.expires).to.eql(200);
+    it('should set maxLength', () => {
+        expect(makeQueueConfig('test').maxLength(250).getOpts()).to.have.property('maxLength', 250);
     });
-    it('should set queue messageTtl', () => {
-        const queue = new Queue().messageTtl(200);
-        expect(queue.opts.messageTtl).to.eql(200);
+    it('should set expires', () => {
+        expect(makeQueueConfig('test').expires(250).getOpts()).to.have.property('expires', 250);
     });
-    it('should set queue maxLength', () => {
-        const queue = new Queue().maxLength(50);
-        expect(queue.opts.maxLength).to.eql(50)
+    it('should set name', () => {
+        expect(makeQueueConfig('test').name('queue2').getName()).to.equal('queue2');
     });
-    it('should set queue dlx', () => {
-        const exchange = new Exchange('test');
-        const queue = new Queue().dead(exchange, 'item.created');
-        expect(queue.opts.deadLetterExchange).to.eql(exchange.name);
-        expect(queue.opts.deadLetterRoutingKey).to.eql('item.created');
-        const queue2 = new Queue().dead('myexchange');
-        expect(queue2.opts.deadLetterExchange).to.eql('myexchange');
-    });
-    it('should determine equality', () => {
-        const queue1 = new Queue('test').durable();
-        const queue2 = new Queue('test').durable();
-        const queue3 = new Queue('test').durable().autoDelete();
-        expect(queue1.isEqual(queue2)).to.be.true;
-        expect(queue2.isEqual(queue3)).to.be.false;
-    });
-    it('should coerce to a string', () => {
-        const queue = new Queue('test').durable();
-        expect(queue.toString()).to.eql('Queue test opts:durable=true,exclusive=false,arguments={}');
-        const queue2 = new Queue().durable();
-        expect(queue2.toString()).to.eql('Queue opts:durable=true,exclusive=false,arguments={}');
-    });
-    it('should clone a new object', () => {
-        const queue = new Queue();
-        expect(queue.clone() === queue).to.be.false;
+    it('should set dead letter exchange', () => {
+        expect(makeQueueConfig('test').dead('test', 'testrk').getOpts()).to.have.property('deadLetterExchange', 'test');
+        expect(makeQueueConfig('test').dead('test', 'testrk').getOpts()).to.have.property('deadLetterRoutingKey', 'testrk');
+        const exchange = makeExchangeConfig('testexchange', 'direct');
+        expect(makeQueueConfig('test').dead(exchange).getOpts()).to.have.property('deadLetterExchange', exchange.getName());
     });
 });

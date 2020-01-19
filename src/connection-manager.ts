@@ -1,186 +1,141 @@
-import { Options, Connection, connect, Channel, ConfirmChannel } from 'amqplib';
-import { makeLogger } from './logger';
-import { Queue } from './queue';
-import { Exchange } from './exchange';
-import { ConsumerManager } from './consumer-manager';
-import { delay } from './utils';
-import { HaredoError, HaredoClosingError } from './errors';
-import { EventEmitter } from 'events';
-import { TypedEventEmitter } from './events';
-import { RpcService } from './rpc-service';
+import { Connection, connect, Options, Channel, ConfirmChannel } from 'amqplib';
+import { HaredoClosingError } from './errors';
+import { makeEmitter, TypedEventEmitter } from './events';
+import { delay, promiseMap } from './utils';
+import { Consumer } from './consumer';
+import { StartRpc, startRpc } from './rpc';
+import { initialChain } from './haredo';
+import { Loggers } from './state';
+import { makePublisher, Publisher } from './publisher';
 
-const { info, error, debug } = makeLogger('ConnectionManager');
-
-interface Events {
-    close: void;
-    error: HaredoError;
-    connectionclose: void;
+export interface Events {
     connected: Connection;
+    error: Error;
+    connectionclose: never;
 }
 
-export class ConnectionManager {
-    closing = false;
-    closed = false;
-    private closePromise: Promise<void>;
-    connection: Connection;
-    connectionPromise: Promise<Connection>;
-    connectionOpts: string | Options.Connect;
-    consumerManager = new ConsumerManager();
-    socketOpts: any;
-    private publishChannel: Channel;
-    private publishConfirmChannel: ConfirmChannel;
-    private publishChannelPromise: Promise<Channel>;
-    private publishConfirmChannelPromise: Promise<ConfirmChannel>;
-    public emitter = new EventEmitter() as TypedEventEmitter<Events>;
-    public rpcService: RpcService;
+export interface ConnectionManager {
+    addConsumer: (consumer: Consumer) => void;
+    emitter: TypedEventEmitter<Events>;
+    close: () => Promise<void>;
+    getConnection(): Promise<Connection>;
+    getChannel(): Promise<Channel>;
+    getConfirmChannel(): Promise<ConfirmChannel>;
+    publisher: Publisher;
+    rpc<TReply>(correlationId: string): Promise<{ promise: Promise<TReply>, queue: string }>;
+}
 
-    constructor(opts: string | Options.Connect = 'amqp://localhost:5672', socketOpts: any = {}) {
-        this.connectionOpts = opts;
-        this.socketOpts = socketOpts;
-        this.rpcService = new RpcService(this);
-    }
+export const makeConnectionManager = (connectionOpts: string | Options.Connect, socketOpts: any, log: Loggers): ConnectionManager => {
+    let connection: Connection;
+    let connectionPromise: Promise<Connection>;
+    let closed = false;
+    const emitter = makeEmitter<Events>();
+    let consumers = [] as Consumer[];
+    let rpcPromise: Promise<StartRpc>;
 
-    async getConnection() {
-        if (this.closing) {
+    const addConsumer = (consumer: Consumer) => {
+        consumers = consumers.concat(consumer);
+        consumer.emitter.on('close', () => {
+            consumers = consumers.filter(x => x !== consumer);
+        });
+    };
+
+    const closeConsumers = async () => {
+        log.info('ConnectionManager', 'closing consumers');
+        await promiseMap(consumers, async (consumer) => {
+            await consumer.close();
+        });
+        log.info('ConnectionManager', 'done closing consumers');
+    };
+
+    const getConnection = async () => {
+        if (closed) {
+            log.error('ConnectionManager', 'closed, cannot create a new connection');
             const error = new HaredoClosingError();
-            this.emitter.emit('error', error);
+            emitter.emit('error', error);
             /* istanbul ignore next for some reason throw error seems as uncovered */
             throw error;
         }
-        if (this.connectionPromise) {
-            return this.connectionPromise;
+        if (!connectionPromise) {
+            connectionPromise = loopGetConnection();
         }
-        this.connectionPromise = this.loopGetConnection();
-        return this.connectionPromise;
-    }
+        return connectionPromise;
+    };
 
-    private async loopGetConnection () {
-        while (true) {
+    const cm: Partial<ConnectionManager> = {
+        addConsumer,
+        emitter,
+        getConnection,
+        close: async () => {
+            log.info('ConnectionManager', 'closing...');
             try {
-                const connection = await Promise.resolve(connect(this.connectionOpts, this.socketOpts));
-                connection.on('error', /* istanbul ignore next */ (err) => {
-                    error('connection error', err);
+                await connectionPromise;
+            } catch (e) {
+                log.error('ConnectionManager', 'getting initial connection failed', e);
+            }
+            const rpc = await rpcPromise;
+            await rpc?.close();
+            await closeConsumers();
+            closed = true;
+            log.info('ConnectionManager', 'closing rabbitmq connection');
+            await connection?.close();
+            log.info('ConnectionManager', 'closed');
+        },
+        getChannel: async () => {
+            const connection = await getConnection();
+            const channel = await connection.createChannel();
+            channel.on('error', () => { });
+            return channel;
+        },
+        getConfirmChannel: async () => {
+            const connection = await getConnection();
+            const channel = await connection.createConfirmChannel();
+            channel.on('error', () => { });
+            return channel;
+        }
+    };
+
+    cm.publisher = makePublisher(cm as ConnectionManager, log);
+
+    const rpc = async <TReply>(correlationId: string) => {
+        if (!rpcPromise) {
+            rpcPromise = startRpc(initialChain({ log, connectionManager: cm as ConnectionManager }), log);
+        }
+        const rpc = await rpcPromise;
+        return rpc.add<TReply>(correlationId);
+    };
+
+    const loopGetConnection = async () => {
+        log.info('ConnectionManager', 'connecting');
+        while (true) {
+            if (closed) {
+                throw new HaredoClosingError();
+            }
+            try {
+                connection = await connect(connectionOpts, socketOpts);
+                connection.on('error', /* istanbul ignore next */(err) => {
+                    log.error('ConnectionManager', err);
                 });
                 connection.on('close', async () => {
-                    this.emitter.emit('connectionclose');
-                    info('connection closed');
-                    this.connectionPromise = undefined;
-                    this.connection = undefined;
-                    if (!this.closing) {
-                        await this.getConnection();
+                    emitter.emit('connectionclose');
+                    log.info('ConnectionManager', 'connection closed');
+                    connectionPromise = undefined;
+                    connection = undefined;
+                    if (!closed) {
+                        log.info('ConnectionManager', 'reopening connection');
+                        await getConnection();
                     }
                 });
-                this.connection = connection;
-                this.emitter.emit('connected', connection);
+                emitter.emit('connected', connection);
                 return connection;
             } catch (e) /* istanbul ignore next */ {
-                error('failed to connect', e);
+                log.error('ConnectionManager', e);
                 await delay(1000);
             }
         }
-    }
+    };
 
-    async getChannel() {
-        const connection = await this.getConnection();
-        debug('creating channel');
-        const channel = await connection.createChannel();
-        // Without this channel errors will crash the application
-        channel.on('error', /* istanbul ignore next */ (err) => {
-            error('Channel error', err);
-        });
-        return channel;
-    }
+    cm.rpc = rpc;
 
-    async getConfirmChannel() {
-        const connection = await this.getConnection();
-        debug('creating confirm channel');
-        const channel = await connection.createConfirmChannel();
-        channel.on('error', /* istanbul ignore next */ (err) => {
-            error('ConfirmChannel error', err);
-        });
-        return channel;
-    }
-
-    async getChannelForPublishing() {
-        if (this.publishChannel) {
-            return this.publishChannel;
-        }
-        if (this.publishChannelPromise) {
-            return this.publishChannelPromise;
-        }
-        this.publishChannelPromise = this.getChannel();
-        this.publishChannel = await this.publishChannelPromise;
-        this.publishChannelPromise = undefined;
-        this.publishChannel.on('close', () => {
-            debug('publishchannel was closed');
-            this.publishChannel = undefined;
-        });
-        return this.publishChannel;
-    }
-
-    async getConfirmChannelForPublishing() {
-        if (this.publishConfirmChannel) {
-            return this.publishConfirmChannel;
-        }
-        if (this.publishConfirmChannelPromise) {
-            return this.publishConfirmChannelPromise;
-        }
-        this.publishConfirmChannelPromise = this.getConfirmChannel();
-        this.publishConfirmChannel = await this.publishConfirmChannelPromise;
-        this.publishConfirmChannelPromise = undefined;
-        this.publishConfirmChannel.on('close', () => {
-            debug('publishconfirmchannel was closed');
-            this.publishConfirmChannel = undefined;
-        });
-        return this.publishConfirmChannel;
-    }
-
-    async assertQueue(queue: Queue) {
-        if (queue.anonymous && queue.isPerishable()) {
-            this.emitter.once('connectionclose', () => {
-                debug('Clearing name for queue', queue);
-                queue.name = '';
-            });
-        }
-        if (!(queue.name || '').startsWith('amq.')) {
-            const channel = await this.getChannel();
-            const reply = await channel.assertQueue(queue.name, queue.opts);
-            queue.name = reply.queue;
-            await channel.close();
-            return reply;
-        }
-    }
-
-    async assertExchange(exchange: Exchange) {
-        const channel = await this.getChannel();
-        const reply = await channel.assertExchange(exchange.name, exchange.type, exchange.opts);
-        await channel.close();
-        return reply;
-    }
-
-    async bindQueue(exchange: Exchange, queue: Queue, pattern: string, args?: any) {
-        const channel = await this.getChannel();
-        await Promise.all([
-            this.assertQueue(queue),
-            this.assertExchange(exchange)
-        ]);
-        const reply = await channel.bindQueue(queue.name, exchange.name, pattern, args);
-        await channel.close();
-        return reply;
-    }
-
-    async close() {
-        this.closePromise = this.closePromise || this.internalClose();
-        return this.closePromise;
-    }
-
-    private async internalClose() {
-        await this.consumerManager.close();
-        this.closing = true;
-        if (this.connection) {
-            await this.connection.close();
-        }
-        this.closed = true;
-        this.emitter.emit('close');
-    }
-}
+    return cm as ConnectionManager;
+};

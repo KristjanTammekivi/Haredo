@@ -1,6 +1,6 @@
 {
   "name": "haredo",
-  "version": "1.3.2",
+  "version": "2.0.0-beta.0",
   "description": "A type-safe client library for rabbitmq/amqp",
   "homepage": "https://haredo.io",
   "keywords": [
@@ -57,23 +57,21 @@
     "url": "https://github.com/KristjanTammekivi/haredo.git"
   },
   "dependencies": {
-    "amqplib": "^0.5.5",
-    "debug": "^4.0.0"
+    "amqplib": "^0.5.5"
   },
   "devDependencies": {
     "@types/amqplib": "^0.5.8",
     "@types/chai": "^4.1.7",
     "@types/chai-as-promised": "^7.1.0",
     "@types/debug": "^0.0.30",
-    "@types/mocha": "^5.2.5",
+    "@types/mocha": "^5.2.7",
     "@types/sinon": "^7.0.12",
     "@types/sinon-chai": "^3.2.2",
-    "chai": "^4.1.2",
+    "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "coveralls": "^3.0.3",
     "generate-changelog": "^1.7.1",
-    "lodash": "^4.17.15",
-    "mocha": "^5.2.0",
+    "mocha": "^6.2.0",
     "nyc": "^13.1.0",
     "rabbitmq-stats": "^1.2.2",
     "rewiremock": "^3.13.7",
@@ -85,8 +83,8 @@
     "tslint": "^5.17.0",
     "tslint-config-airbnb": "^5.11.1",
     "tslint-sonarts": "^1.9.0",
-    "typedoc": "^0.14.2",
-    "typescript": "3.5.2",
+    "typedoc": "^0.15.6",
+    "typescript": "^3.7.4",
     "typescript-tslint-plugin": "^0.4.0"
   }
 }

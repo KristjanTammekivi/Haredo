@@ -9,10 +9,6 @@ export class ChannelBrokenError extends HaredoError {
     }
 }
 
-export class MessageAlreadyHandledError extends HaredoError { }
-
-export class BadArgumentsError extends HaredoError { }
-
 export class HaredoClosingError extends HaredoError {
     /* istanbul ignore next */
     constructor() {

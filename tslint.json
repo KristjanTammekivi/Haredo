@@ -4,10 +4,7 @@
         "tslint-sonarts"
     ],
     "rules": {
-        "max-line-length": [
-            true,
-            140
-        ],
+        "max-line-length": false,
         "trailing-comma": false,
         "indent": [
             true,
@@ -40,7 +37,9 @@
         "no-parameter-reassignment": false,
         "no-identical-functions": false,
         "object-shorthand-properties-first": false,
-        "interface-over-type-literal": true
+        "interface-over-type-literal": true,
+        "bool-param-default": false,
+        "no-duplicate-string": false
     },
     "linterOptions": {
         "exclude": [

@@ -1,6 +1,6 @@
 node_modules
+coverage
 dist
 .nyc_output
-coverage
 docs
 yarn-error.log

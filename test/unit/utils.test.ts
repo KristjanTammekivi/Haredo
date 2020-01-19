@@ -1,40 +1,21 @@
 import 'mocha';
-import { expect, use } from 'chai';
 
-import * as chaiAsPromised from 'chai-as-promised';
-import { HaredoError, BadArgumentsError } from '../../src/index';
-import { flatObjectIsEqual, swallowRejection, swallowError } from '../../src/utils';
-use(chaiAsPromised);
+import { expect } from 'chai';
+import { merge } from '../../src/utils';
 
-describe('utils', () => {
-    describe('flatObjectIsEqual', () => {
-        it('should return true for two empty literals', () => {
-            expect(flatObjectIsEqual({}, {})).to.be.true;
+describe('unit/utils', () => {
+    describe('merge', () => {
+        it('should clone objects', () => {
+            const base = {};
+            const top = {};
+            const merged = merge(base, top);
+            expect(merged).to.not.equal(base).and.not.equal(top);
         });
-        it('should return false for different values for same properties', () => {
-            expect(flatObjectIsEqual({ a: false }, { a: true })).to.be.false;
+        it('should merge primitive properties', () => {
+            expect(merge({ a: 1 }, { b: 2 })).to.eql({ a: 1, b: 2})
         });
-        it('should return false for extra properties', () => {
-            expect(flatObjectIsEqual({ a: false }, {})).to.be.false;
-            expect(flatObjectIsEqual({}, { a: false })).to.be.false;
-        });
-    });
-    describe('swallowRejection', () => {
-        it('should swallow specified error', async () => {
-            await expect(swallowRejection(HaredoError, Promise.reject(new HaredoError()))).to.not.be.rejected;
-        });
-        it('should reject non-specified errors', async () => {
-            await expect(swallowRejection(BadArgumentsError, Promise.reject(new HaredoError('test')))).to.be.rejectedWith('test');
-        });
-    });
-    describe('swallowError', () => {
-        it('should swallow specified error', () => {
-            const fn = () => swallowError(BadArgumentsError, () => { throw new BadArgumentsError() });
-            expect(fn).to.not.throw();
-        });
-        it('should swallow specified error', () => {
-            const fn = () => swallowError(BadArgumentsError, () => { throw new HaredoError() });
-            expect(fn).to.throw(HaredoError);
+        it('should overwrite primitive properties', () => {
+            expect(merge({ a: 1 }, { a: 2 })).to.eql({ a: 2 })
         });
     });
 });

@@ -1,224 +1,156 @@
-import 'source-map-support/register';
-import 'mocha';
-import { expect, use } from 'chai';
-import { spy } from 'sinon';
-
-import * as chaiAsPromised from 'chai-as-promised';
-use(chaiAsPromised);
+import { Haredo, haredo } from '../../src/haredo';
+import { setup, teardown, checkQueue, getSingleMessage } from './helpers/amqp';
+import { delay } from '../../src/utils';
+import { spy, SinonSpy } from 'sinon';
 
 import * as sinonChai from 'sinon-chai';
+import * as chaiAsPromised from 'chai-as-promised';
+import { use, expect } from 'chai';
+import { isConsumerClosed } from './helpers/utils';
+
 use(sinonChai);
+use(chaiAsPromised);
 
-import { Haredo, Queue, Exchange } from '../../src';
-import { setup, teardown, getSingleMessage } from './helpers/amqp';
-import { EventEmitter } from 'events';
-import { delay } from '../../src/utils';
-import { Connection } from 'amqplib';
-
-describe('Consumer', () => {
-    let haredo: Haredo;
-    let connection: Connection;
+describe('integration/consumer', () => {
+    let rabbit: Haredo;
     beforeEach(async () => {
         await setup();
-        haredo = new Haredo({
-            connection: 'amqp://guest:guest@localhost:5672/test'
+        rabbit = haredo({
+            connection: 'amqp://localhost:5672/test'
         });
-        connection = await haredo.connect();
     });
     afterEach(async () => {
-        await haredo.close();
+        rabbit.close();
         await teardown();
     });
-    describe('cancel', () => {
-        it('should close channel', async () => {
-            const consumer = await haredo.queue('test').subscribe(async (data, message) => {
-                await message.ack();
-            });
-            const channelClosedPromise = eventToPromise(consumer.channel, 'close');
-            await consumer.cancel();
-            await expect(channelClosedPromise).to.eventually.be.fulfilled;
-        });
-        it('should wait for messages to be acked before closing channel', async () => {
-            await haredo.queue('test').publish('test');
-            let messageWasHandled = false;
-            const consumer = await haredo.queue('test').reestablish(false).subscribe(async (data, message) => {
-                await delay(100);
-                messageWasHandled = true;
-                await message.ack();
-            });
-            await delay(20);
-            await consumer.cancel();
-            expect(messageWasHandled).to.be.true;
-        });
+    it('should setup queue when subscribe is called', async () => {
+        await rabbit.queue('test').subscribe(() => {});
+        await checkQueue('test');
     });
-    describe('reestablish', () => {
-        it('should reestablish on channel close when reestablish is set', async () => {
-            let messageWasHandled = false;
-            const consumer = await haredo
-                .queue('test')
-                .subscribe(() => {
-                    messageWasHandled = true;
-                });
-            await consumer.channel.close();
-            await haredo.queue('test').publish({});
-            await delay(100);
-            await consumer.cancel();
-            expect(messageWasHandled).to.be.true;
-        });
-        it('should not reestablish on channel close when reestablish is false', async () => {
-            let messageWasHandled = false;
-            const consumer = await haredo
-                .queue('test')
-                .reestablish(false)
-                .prefetch(1)
-                .subscribe(() => {
-                    messageWasHandled = true;
-                });
-            await consumer.channel.close();
-            await haredo.queue('test').publish({});
+    it('should receive a message', async () => {
+        const cbSpy = spy()
+        await rabbit.queue('test2').subscribe(cbSpy);
+        await rabbit.queue('test2').publish('test');
+        await delay(20);
+        expect(cbSpy).to.be.calledOnce;
+        expect(cbSpy).to.be.calledWithMatch({ data: 'test' });
+    });
+    it('should close consumer when .close is called', async () => {
+        const consumer = await rabbit.queue('test').subscribe(() => { });
+        expect(await isConsumerClosed('test')).to.be.false;
+        await consumer.close();
+        expect(await isConsumerClosed('test')).to.be.true;
+    });
+    it('should close consumer if haredo gets closed', async () => {
+        const consumer = await rabbit.queue('test').subscribe(() => { });
+        await rabbit.close();
+        expect(consumer.isClosed).to.be.true;
+    });
+    it('should wait for message to be acked before closing consumer', async () => {
+        const consumer = await rabbit.queue('test').subscribe(async () => {
             await delay(200);
-            await consumer.cancel();
-            expect(messageWasHandled).to.be.false;
         });
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(20);
+        await consumer.close();
+        await expectFail(getSingleMessage('test'));
     });
-    it('should reconnect when connection gets killed', async () => {
-        const queue = new Queue('test');
-        let messageHandled = true;
-        await haredo.queue(queue).subscribe(msg => {
-            messageHandled = true;
-        });
-        await connection.close();
-        await delay(50);
-        await haredo.queue(queue).publish('message');
-        await delay(50);
-        expect(messageHandled).to.be.true;
-    });
-    it('should clear an anonymous queue name when connection is reestablished', async () => {
-        const queue = new Queue('').exclusive();
-        expect(queue.isPerishable()).to.be.true;
-        await haredo.queue(queue).exchange('test').subscribe(msg => {});
-        const originalName = queue.name;
-        await delay(50);
-        await connection.close();
-        await delay(50);
-        await haredo.connectionManager.getConnection();
-        await delay(50);
-        expect(queue.name).to.not.equal('');
-        expect(queue.name).to.not.equal(originalName);
-    });
-    describe('autoAck', () => {
-        it('should requeue a message when promise rejects', async () => {
-            const queue = new Queue('test');
-            await haredo.queue(queue).publish('test');
-            let messageReceived = false;
-            const consumer = await haredo.queue(queue).subscribe(async (msg) => {
-                messageReceived = true;
-                throw new Error('whoops');
-            });
-            await delay(20);
-            await consumer.cancel();
-            expect(messageReceived).to.be.true;
-            await expect(getSingleMessage(queue.name)).to.eventually.be.fulfilled;
-        });
-    });
-    it('should not requeue if failing to parse json', async () => {
-        const dlx = new Exchange('test.dead', 'fanout');
-        const dlq = new Queue('test.dead');
-        await haredo.exchange(dlx).queue(dlq).setup();
-        const queue = new Queue('test').dead(dlx);
-        const consumer = await haredo.queue(queue).subscribe(() => {});
-        consumer.emitter.on('error', () => {});
-        await haredo.queue(queue).confirm().json(false).publish('{ bad-json');
-        await delay(50);
-        expect((await getSingleMessage(dlq.name)).content).to.equal('{ bad-json');
-    });
-    describe('middleware', () => {
-        it('should call middleware', async () => {
-            const queue = new Queue('test');
-            const middlewareFn = spy((msg, next) => {
-                return next();
-            });
-            const fn = spy((data, msg) => {
-            });
-            await haredo.queue(queue).use(middlewareFn).subscribe(fn);
-            await haredo.queue(queue).publish('test');
-            await delay(50);
-            expect(fn).to.be.calledOnce;
-            expect(middlewareFn).to.be.calledOnce;
-        });
-        it('should wait until callback is finished before moving on with middleware', async () => {
-            const queue = new Queue('test');
-            let mainFinished = false;
-            let resolve: Function;
-            let reject: Function;
-            const promise = new Promise((res, rej) => {
-                resolve = res;
-                reject = rej;
-            });
-            const middlewareFn = async (msg: any, next: Function) => {
+    it('should mark isHandled in middleware', async () => {
+        let isHandledBefore: boolean;
+        let isHandledAfter: boolean;
+        const consumer = await rabbit.queue('test')
+            .use(async ({ isHandled }, next) => {
+                isHandledBefore = isHandled();
                 await next();
-                if (mainFinished) {
-                    return resolve();
-                }
-                return reject(new Error('Main callback did not finish before await finished'));
-            };
-            await haredo.queue(queue).publish('test');
-            await haredo.queue(queue).use(middlewareFn).subscribe(async () => {
-                await delay(50);
-                mainFinished = true;
+                isHandledAfter = isHandled();
+            })
+            .subscribe(async () => {});
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(50);
+        await consumer.close();
+        expect(isHandledBefore).to.equal(false);
+        expect(isHandledAfter).to.equal(true);
+    });
+    it('should work with non-promise-returning middleware', async () => {
+        let isHandledBefore: boolean;
+        let isHandledAfter: boolean;
+        const consumer = await rabbit.queue('test')
+            .use(({ isHandled }, next) => {
+                isHandledBefore = isHandled();
+                next().then(() => isHandledAfter = isHandled());
+            })
+            .subscribe(async () => { });
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(50);
+        await consumer.close();
+        expect(isHandledBefore).to.equal(false);
+        expect(isHandledAfter).to.equal(true);
+    });
+    it('should nack if subscribe callback fails', async () => {
+        let nackSpy: SinonSpy;
+        await rabbit.queue('test')
+            .failThreshold(1)
+            .subscribe(async (message) => {
+                nackSpy = spy(message, 'nack')
+                throw new Error('whoopsiedaisy');
             });
-            await delay(50);
-            await expect(promise).to.eventually.be.fulfilled;
-        });
-        it('should call multiple middleware', async () => {
-            const queue = new Queue('test');
-            const middlewareFn1 = spy((msg, next) => {
-                return next();
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(100);
+        expect(nackSpy.calledOnce).to.be.true;
+    });
+    it('should nack if subscribe middleware fails', async () => {
+        let nackSpy: SinonSpy;
+        await rabbit.queue('test')
+            .failThreshold(1)
+            .use((message) => {
+                nackSpy = spy(message, 'nack');
+                throw new Error();
+            })
+            .subscribe(() => {});
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(100);
+        expect(nackSpy.calledOnce).to.be.true;
+    });
+    it('should not autoack when it is disabled', async () => {
+        let isMessageHandled: () => boolean;
+        await rabbit.queue('test')
+            .autoAck(false)
+            .subscribe(({ isHandled, ack }) => {
+                isMessageHandled = isHandled;
+                setTimeout(async () => {
+                    ack();
+                }, 200);
             });
-            const middlewareFn2 = spy((msg, next) => {
-                return next();
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(100);
+        expect(isMessageHandled()).to.be.false;
+        await delay(120);
+        expect(isMessageHandled()).to.be.true;
+    });
+    it('should wait for all messages to be handled before closing consumer', async () => {
+        let hasDelayPassed = false;
+        const consumer = await rabbit.queue('test')
+            .subscribe(async () => {
+                await delay(200);
+                hasDelayPassed = true;
             });
-            const fn = spy((data, msg) => {});
-            await haredo.queue(queue).use(middlewareFn1).use(middlewareFn2).subscribe(fn);
-            await haredo.queue(queue).publish('test');
-            await delay(50);
-            expect(fn).to.be.calledOnce;
-            expect(middlewareFn1).to.be.calledOnce;
-            expect(middlewareFn2).to.be.calledOnce;
-        });
-        it('should call next if it was not called during middleware', async () => {
-            const queue = new Queue('test');
-            const middlewareFn = spy((msg, next) => {
-            });
-            const fn = spy((data, msg) => {
-            });
-            await haredo.queue(queue).use(middlewareFn).subscribe(fn);
-            await haredo.queue(queue).publish('test');
-            await delay(50);
-            expect(fn).to.be.calledOnce;
-            expect(middlewareFn).to.be.calledOnce;
-        });
-        it('should not call subscriber callback if middleware acks/nacks the message', async () => {
-            const queue = new Queue('test');
-            const middlewareFn = spy(async (msg, next) => {
-                msg.nack(false);
-                await next();
-            });
-            const fn = spy((data, msg) => {
-            });
-            await haredo.queue(queue).use(middlewareFn).subscribe(fn);
-            await haredo.queue(queue).publish('test');
-            await delay(50);
-            expect(fn).to.be.not.called;
-            expect(middlewareFn).to.be.calledOnce;
-        });
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(50);
+        await consumer.close();
+        expect(hasDelayPassed).to.be.true;
+        await expectFail(getSingleMessage('test'));
     });
 });
 
-export const eventToPromise = (emitter: EventEmitter, event: string) => {
-    return new Promise((resolve) => {
-        emitter.once(event, () => {
-            resolve();
-        });
-    });
-};
+export const expectFail = async (promise: Promise<any>, pattern?: string) => {
+    try {
+        await promise;
+        throw new Error('Expected promise to be rejected but it was resolved');
+    } catch (e) {
+        if (pattern) {
+            if (!e.message.includes(pattern)) {
+                throw new Error(`Expected promise to be rejected with an error matching ${ pattern }, but it was rejected with ${ e }`);
+            }
+        }
+    }
+}

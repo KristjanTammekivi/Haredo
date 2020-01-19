@@ -1,33 +1,32 @@
-import { Queue } from '../queue';
-import { Haredo } from '../haredo';
-import { Exchange } from '../exchange';
-import { PreparedMessage } from '../prepared-message';
-import { delay } from 'bluebird';
+import { haredo } from '../haredo';
+import { e } from '../index';
+import { delay } from '../utils';
+import { preparedMessage } from '../prepared-message';
 
 export const main = async () => {
-    console.log('starting example');
-    const haredo = new Haredo({
+    const rabbit = haredo({
         connection: 'amqp://guest:guest@localhost:5672/'
     });
-    interface SimpleMessage {
-        time: number;
+    interface Message {
+        id: number;
     }
-    const queue = new Queue<SimpleMessage>('my-queue').expires(2000);
-    const exchange = new Exchange<SimpleMessage>('my-delayed-exchange').delayed('direct').autoDelete();
-    const message = new PreparedMessage<SimpleMessage>({}).delay(1000).setRoutingKey('item');
-    await haredo
-        .queue(queue)
-        .exchange(exchange, 'item')
-        .subscribe((msg) => {
-            console.log('Message was delayed', new Date().getTime() - msg.time, 'ms');
+    const delayedExchange = e<Message>('my-delayed-exchange', 'x-delayed-message').delayed('topic');
+    await rabbit.queue('my-queue')
+        .bindExchange(delayedExchange, '#')
+        .subscribe(({ data, timestamp }) => {
+            console.log(`Received message in ${ Date.now() - timestamp }ms id:${ data.id } `);
         });
+    const delayedMessage = preparedMessage().routingKey('item').delay(2000);
+    let id = 0;
     while (true) {
-        await haredo
-            .exchange(exchange)
-            .skipSetup()
-            .publish(message.json({ time: new Date().getTime() }));
+        id += 1;
+        console.log('Publishing message', id);
+        const msg = delayedMessage.json({ id }).timestamp(Date.now());
+        await rabbit
+            .exchange(delayedExchange)
+            .publish(msg);
         await delay(2000);
     }
 };
 
-process.nextTick(() => main());
+process.nextTick(main);

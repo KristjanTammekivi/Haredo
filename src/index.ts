@@ -1,20 +1,29 @@
+import { makeQueueConfig } from './queue';
+import { makeExchangeConfig } from './exchange';
 
-export { Queue, QueueOptions } from './queue';
-export { Exchange, ExchangeType, XDelayedType, ExchangeOptions, xDelayedTypeStrings } from './exchange';
-export { Haredo, HaredoOptions } from './haredo';
-export { HaredoChain, AddExchange, HaredoChainState, Middleware } from './haredo-chain';
 export {
-    HaredoError,
-    BadArgumentsError,
-    ChannelBrokenError,
-    MessageAlreadyHandledError,
-    FailedParsingJsonError,
-    HaredoClosingError
-} from './errors';
-export { PreparedMessage, ExtendedPublishType, PreparedMessageOptions } from './prepared-message';
-export { HaredoMessage } from './haredo-message';
-export { Consumer, ConsumerOpts, MessageCallback } from './consumer';
-export { ConsumerManager } from './consumer-manager';
-export { MessageManager } from './message-manager';
+    ExchangeChain,
+    QueueChain,
+    ExchangePublishMethod,
+    LogLevel,
+    HaredoOptions,
+    Haredo,
+    haredo,
+    LogItem
+} from './haredo';
 
-export { setLoggers } from './logger';
+export { Queue, QueueOptions, makeQueueConfig } from './queue';
+export { Exchange, ExchangeOptions, ExchangeType, makeExchangeConfig } from './exchange';
+export { Consumer, MessageCallback } from './consumer';
+export { Middleware } from './state';
+export { MessageChain, preparedMessage } from './prepared-message';
+export { HaredoMessage } from './haredo-message';
+export {
+    ChannelBrokenError,
+    FailedParsingJsonError,
+    HaredoClosingError,
+    HaredoError
+} from './errors';
+
+export const q = makeQueueConfig;
+export const e = makeExchangeConfig;

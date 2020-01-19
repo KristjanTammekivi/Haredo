@@ -24,3 +24,4 @@ deploy:
     tags: true
     branch: master
     repo: KristjanTammekivi/Haredo
+

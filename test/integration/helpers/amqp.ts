@@ -1,11 +1,10 @@
 import { connect, Connection, Options } from 'amqplib';
-import { stringify } from '../../../src/utils';
 import { ExchangeType } from '../../../src/exchange';
 
 let connection: Connection;
 
-const RabbitStats = require('rabbitmq-stats');
-const statsInstance = RabbitStats('http://localhost:15672', 'guest', 'guest');
+const rabbitStats = require('rabbitmq-stats');
+const statsInstance = rabbitStats('http://localhost:15672', 'guest', 'guest');
 
 export const setup = async () => {
     await createVhost();
@@ -23,6 +22,21 @@ export const createVhost = async () => {
     });
 };
 
+interface GetConsumers {
+    arguments: {};
+    ack_required: boolean;
+    channel_details: [];
+    consumer_tag: string;
+    exclusive: boolean;
+    prefetch_count: number;
+    queue: {
+        name: string;
+        test: string;
+    };
+}
+
+export const getConsumers = async () => statsInstance.getVhostConsumers('test') as GetConsumers[];
+
 export const checkExchange = async (name: string, type: ExchangeType, opts?: Options.AssertExchange) => {
     const channel = await getChannel();
     await channel.checkExchange(name);
@@ -33,26 +47,24 @@ export const checkExchange = async (name: string, type: ExchangeType, opts?: Opt
 };
 
 interface GetVhostQueue {
-    garbage_collection:
-    {
+    garbage_collection: {
         max_heap_size: number,
         min_bin_vheap_size: number,
         min_heap_size: number,
         fullsweep_after: number,
         minor_gcs: number
-    },
-    consumer_details: any[],
-    incoming: any[],
-    deliveries: any[],
-    node: string,
-    arguments: any,
-    exclusive: boolean,
-    auto_delete: boolean,
-    durable: boolean,
-    vhost: string,
-    name: string
+    };
+    consumer_details: any[];
+    incoming: any[];
+    deliveries: any[];
+    node: string;
+    arguments: any;
+    exclusive: boolean;
+    auto_delete: boolean;
+    durable: boolean;
+    vhost: string;
+    name: string;
 }
-
 
 export const getVhostQueue = async (name: string): Promise<GetVhostQueue> => {
     return statsInstance.getVhostQueue('test', name);
@@ -75,8 +87,7 @@ export const verifyQueue = async (name: string, opts?: Options.AssertQueue) => {
 };
 
 export const listVhostQueues = async () => {
-    const queues = await statsInstance.getVhostQueues('test');
-    return queues;
+    return statsInstance.getVhostQueues('test');
 };
 
 export const getChannel = async () => {
@@ -91,7 +102,7 @@ export const deleteVhost = async () => {
 
 export const publishMessage = async (name: string, content: any, opts: Options.Publish) => {
     const channel = await getChannel();
-    await channel.sendToQueue(name, Buffer.from(stringify(content)), opts);
+    await channel.sendToQueue(name, Buffer.from(JSON.stringify(content)), opts);
     await channel.close();
 };
 
@@ -100,11 +111,11 @@ export const purgeQueue = async (name: string) => {
     const data = await channel.purgeQueue(name);
     await channel.close();
     return data.messageCount;
-}
+};
 
 export const getSingleMessage = async (name: string) => {
     const channel = await getChannel();
-    const message = await channel.get(name, { noAck: true })
+    const message = await channel.get(name, { noAck: true });
     await channel.close();
     if (message === false) {
         throw new Error(`No message in queue ${name}`);
