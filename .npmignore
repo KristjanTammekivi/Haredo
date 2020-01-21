@@ -4,3 +4,5 @@ src
 coverage
 test
 yarn.lock
+docs
+.travis.yml

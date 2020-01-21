@@ -66,8 +66,12 @@ export const wrappedChannelGetter = <T extends Channel | ConfirmChannel>(
     };
 };
 
-const wrapChannel = <T extends Channel | ConfirmChannel>(channel: T, confirm: boolean, log: Loggers) => {
-    const ticketMachine = makeTicketMachine();
+export const wrapChannel = <T extends Channel | ConfirmChannel>(
+    channel: T,
+    confirm: boolean,
+    log: Loggers,
+    ticketMachine = makeTicketMachine()
+) => {
     channel.on('drain', () => {
         log.debug('Publisher', `${ confirm ? 'confirm-channel' : 'channel' } drained, resuming publishing`);
         ticketMachine.play();
@@ -77,13 +81,16 @@ const wrapChannel = <T extends Channel | ConfirmChannel>(channel: T, confirm: bo
             const release = await ticketMachine.take();
             if (isConfirmChannel(channel, confirm)) {
                 return new Promise<void>((resolve, reject) => {
-                    channel.publish(exchange, routingKey, data, opts, (err) => {
+                    const ready = channel.publish(exchange, routingKey, data, opts, (err) => {
                         release();
                         if (err) {
                             return reject(err);
                         }
                         resolve();
                     });
+                    if (!ready) {
+                        ticketMachine.pause();
+                    }
                 });
             }
             const ready = channel.publish(exchange, routingKey, data, opts);
@@ -97,13 +104,16 @@ const wrapChannel = <T extends Channel | ConfirmChannel>(channel: T, confirm: bo
             const release = await ticketMachine.take();
             if (isConfirmChannel(channel, confirm)) {
                 return new Promise<void>((resolve, reject) => {
-                    channel.sendToQueue(queue, data, opts, (err) => {
+                    const ready = channel.sendToQueue(queue, data, opts, (err) => {
                         release();
                         if (err) {
                             return reject(err);
                         }
                         resolve();
                     });
+                    if (!ready) {
+                        ticketMachine.pause();
+                    }
                 });
             }
             const ready = channel.sendToQueue(queue, data, opts);
