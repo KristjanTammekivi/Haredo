@@ -42,3 +42,9 @@ haredo.queue('test')
         await nack(false);
     });
 ```
+
+### Failure backoff
+
+I've removed the options .failThreshold, .failTimeout, .failSpan and replaced it with
+.backoff(standardBackoff({...})). This allows users to write their own failure backoff
+algorithms.

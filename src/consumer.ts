@@ -138,7 +138,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                     messageInstance.ack();
                 }
             } catch (e) {
-                opts.backoff?.fail?.();
+                opts.backoff?.fail?.(e);
                 if (!messageInstance) {
                     log.error('Consumer', 'failed initializing a message instance', e);
                     methods.nack(false);

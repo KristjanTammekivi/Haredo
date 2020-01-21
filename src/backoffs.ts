@@ -4,7 +4,7 @@ export interface FailureBackoff {
     /**
      * Triggered when the message callback returns a rejection
      */
-    fail?(): void;
+    fail?(error: Error): void;
     /**
      * Triggered when a message callback resolves
      */
@@ -55,7 +55,7 @@ export const standardBackoff = (
         failThreshold = standardBackoffDefaults.failThreshold,
         failSpan = standardBackoffDefaults.failSpan,
         failTimeout = standardBackoffDefaults.failTimeout
-    }: Partial<StandardBackoffOptions>
+    }: Partial<StandardBackoffOptions> = {}
 ): FailureBackoff => {
     let errors = [] as Date[];
     let timeout: Promise<void>;
@@ -64,7 +64,7 @@ export const standardBackoff = (
             if (requeue) {
                 const error = new Date();
                 errors = errors.concat(error);
-                if (errors.length > failThreshold) {
+                if (errors.length >= failThreshold) {
                     timeout = delay(failTimeout);
                 }
                 setTimeout(() => { errors = errors.filter(x => x !== error); }, failSpan);
