@@ -1,3 +1,22 @@
+#### 2.0.1 (2020-01-21)
+
+##### Chores
+
+*  add backoff example ([e744154a](https://github.com/KristjanTammekivi/haredo/commit/e744154a4740eaf2ad59327179db55c4ca3e2d26))
+
+##### Documentation Changes
+
+*  add extra jsdocs ([13960c9a](https://github.com/KristjanTammekivi/haredo/commit/13960c9acc3b40663cb0f048900f44fa16dde9f1))
+*  add jsdocs to Consumer.prefetch ([a7c335b6](https://github.com/KristjanTammekivi/haredo/commit/a7c335b6301b3b35d51ad55a173c7b81a965dd05))
+
+##### Bug Fixes
+
+*  recommit missing haredo icon ([edd3b587](https://github.com/KristjanTammekivi/haredo/commit/edd3b587987ebb3844b7332191037ce324507687))
+
+##### Refactors
+
+*  failure backoffs ([32ec4eb3](https://github.com/KristjanTammekivi/haredo/commit/32ec4eb32091a65d11e4e72ac9d749e5e467e793))
+
 #### 1.3.2 (2019-12-30)
 
 ##### Chores
