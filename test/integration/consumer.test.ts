@@ -1,12 +1,13 @@
 import { Haredo, haredo } from '../../src/haredo';
 import { setup, teardown, checkQueue, getSingleMessage } from './helpers/amqp';
 import { delay } from '../../src/utils';
-import { spy, SinonSpy } from 'sinon';
+import { spy, SinonSpy, stub } from 'sinon';
 
 import * as sinonChai from 'sinon-chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import { use, expect } from 'chai';
 import { isConsumerClosed } from './helpers/utils';
+import { FailureBackoff } from '../../src/backoffs';
 
 use(sinonChai);
 use(chaiAsPromised);
@@ -137,6 +138,48 @@ describe('integration/consumer', () => {
         await consumer.close();
         expect(hasDelayPassed).to.be.true;
         await expectFail(getSingleMessage('test'));
+    });
+    it('should call next automatically when not called ', async () => {
+        const callStub = stub();
+        await rabbit.queue('test')
+            .use(() => {})
+            .subscribe(callStub);
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(50);
+        expect(callStub).to.have.been.calledOnce;
+    });
+    it('should not call message callback when message his handled in middleware', async () => {
+        const callStub = stub();
+        await rabbit.queue('test')
+            .use(async ({ ack }, next) => { ack(); await next() })
+            .subscribe(callStub);
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(50);
+        expect(callStub).to.not.have.been.called;
+    });
+    it('should call backoff functions', async () => {
+        const backoff = {
+            ack: spy(),
+            take: stub().returns(Promise.resolve()),
+            pass: stub(),
+            nack: spy(),
+            fail: spy()
+        } as FailureBackoff;
+        const callStub = stub().rejects(new Error('whoopsiedaisy')).onFirstCall().resolves();
+        await rabbit.queue('test')
+            .backoff(backoff)
+            .subscribe(callStub);
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(50);
+        expect(backoff.ack).to.have.been.calledOnce;
+        expect(backoff.take).to.have.been.calledOnce;
+        expect(backoff.pass).to.have.been.calledOnce;
+        expect(backoff.nack).to.not.have.been.called;
+        expect(backoff.fail).to.not.have.been.called;
+        await rabbit.queue('test').confirm().publish('test');
+        await delay(50);
+        expect(backoff.nack).to.have.been.called;
+        expect(backoff.fail).to.have.been.called;
     });
 });
 

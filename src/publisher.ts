@@ -95,6 +95,7 @@ export const wrapChannel = <T extends Channel | ConfirmChannel>(
             }
             const ready = channel.publish(exchange, routingKey, data, opts);
             if (!ready) {
+                /* istanbul ignore next */
                 log.debug('Publisher', `${confirm ? 'confirm-channel' : 'channel'} returned false on publishing, pausing publishing until drain`);
                 ticketMachine.pause();
             }
@@ -118,6 +119,7 @@ export const wrapChannel = <T extends Channel | ConfirmChannel>(
             }
             const ready = channel.sendToQueue(queue, data, opts);
             if (!ready) {
+                /* istanbul ignore next */
                 log.debug('Publisher', `${confirm ? 'confirm-channel' : 'channel'} returned false on publishing, pausing publishing until drain`);
                 ticketMachine.pause();
             }

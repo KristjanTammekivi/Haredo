@@ -101,6 +101,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
             let messageInstance: HaredoMessage<TMessage, TReply>;
             const methods: Methods<TReply> = {
                 ack: () => {
+                    /* istanbul ignore if */
                     if (!channel) {
                         throw new ChannelBrokenError();
                     }
@@ -108,6 +109,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                     opts.backoff?.ack?.();
                 },
                 nack: (requeue = true) => {
+                    /* istanbul ignore if */
                     if (!channel) {
                         throw new ChannelBrokenError();
                     }
