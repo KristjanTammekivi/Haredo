@@ -48,7 +48,7 @@ export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOpti
     };
     const connectionManager = makeConnectionManager(connection, socketOpts, log);
     return {
-        ...initialChain(merge(defaultState<unknown, unknown>({}), { connectionManager, log })),
+        ...initialChain(merge(defaultState<unknown, unknown>(), { connectionManager, log })),
         close: async () => {
             await connectionManager.close();
         },

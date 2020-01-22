@@ -49,21 +49,19 @@ export interface HaredoChainState<TMessage = unknown, TReply = unknown> {
     log: Loggers;
 }
 
-export const defaultState = <TMessage, TReply>(
-    newState: Partial<HaredoChainState<TMessage, TReply>>
-): Partial<HaredoChainState<TMessage, TReply>> => {
+export const defaultState = <TMessage, TReply>(): Partial<HaredoChainState<TMessage, TReply>> => {
     return {
-        autoAck: newState.autoAck ?? true,
-        autoReply: newState.autoReply ?? false,
-        queue: newState.queue,
-        bindings: [].concat(newState.bindings || []),
-        prefetch: newState.prefetch || 0,
-        reestablish: newState.reestablish ?? true,
-        backoff: newState.backoff,
-        json: newState.json ?? true,
-        confirm: newState.confirm,
-        skipSetup: newState.skipSetup,
-        middleware: newState.middleware || [],
-        log: newState.log
+        autoAck: true,
+        autoReply: false,
+        queue: undefined,
+        bindings: [],
+        prefetch: 0,
+        reestablish: true,
+        backoff: undefined,
+        json: true,
+        confirm: undefined,
+        skipSetup: undefined,
+        middleware: [],
+        log: undefined
     };
 };
