@@ -80,7 +80,7 @@ export const makeTicketMachine = (): TicketMachine => {
         tickets.forEach(x => x.reject(e));
         tickets.length = 0;
     };
-    const take = () => {
+    const take = async () => {
         let resolve: Function;
         let reject: Function;
         const promise = new Promise<Function>((res, rej) => {

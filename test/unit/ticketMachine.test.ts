@@ -38,4 +38,8 @@ describe('unit/ticketMachine', () => {
         tm.stop();
         await expectFail(ticket2promise);
     });
+    it('should throw when trying to get a ticket but the machine has been stopped', async () => {
+        tm.stop();
+        await expect(tm.take()).to.be.rejected;
+    });
 });
