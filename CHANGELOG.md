@@ -1,3 +1,19 @@
+#### 2.0.2 (2020-01-23)
+
+##### New Features
+
+*  implement noAck, consumer exclusivity/priority ([a526ff51](https://github.com/KristjanTammekivi/haredo/commit/a526ff5128a275f978396bfa1edaa97bede50611))
+
+##### Refactors
+
+*  clean up some unnecessary code ([486bb1c6](https://github.com/KristjanTammekivi/haredo/commit/486bb1c64198a6f68bcc20118010cae82022a082))
+
+##### Tests
+
+*  add final test for ticketMachine ([bf1f1f1f](https://github.com/KristjanTammekivi/haredo/commit/bf1f1f1ff941fdda9d7d292c3f2d9a70d9c1ea9d))
+*  increase test coverage in publishing and consuming ([4b180211](https://github.com/KristjanTammekivi/haredo/commit/4b18021108fda52b220b2fb62c4cfb43f423c5a9))
+*  increase test coverage for publisher ([504b901e](https://github.com/KristjanTammekivi/haredo/commit/504b901e9ef8304c481a6923b4197972bb8d3bfe))
+
 #### 2.0.1 (2020-01-21)
 
 ##### Chores
