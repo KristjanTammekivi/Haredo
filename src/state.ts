@@ -18,7 +18,7 @@ export interface StateExchangeCollection {
     patterns: string[];
 }
 
-export type Component = 'ConnectionManager' | 'RPC' | 'Consumer' | 'Publisher';
+export type Component = 'ConnectionManager' | 'RPC' | 'Consumer' | 'Publisher' | 'MessageManager';
 
 export type logger = (component: Component, ...msg: any[]) => void;
 

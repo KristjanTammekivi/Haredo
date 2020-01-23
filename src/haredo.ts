@@ -144,6 +144,9 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
                 queue: state.queue,
                 reestablish: state.reestablish ?? true,
                 backoff: state.backoff,
+                noAck: state.noAck ?? false,
+                priority: state.priority,
+                exclusive: state.exclusive ?? false,
                 setup: addSetup(state)
             }, state.log);
             state.connectionManager.addConsumer(consumer);

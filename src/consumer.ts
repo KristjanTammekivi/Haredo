@@ -22,6 +22,9 @@ export interface ConsumerOpts {
     json: boolean;
     queue: Queue;
     reestablish: boolean;
+    noAck: boolean;
+    priority: number;
+    exclusive: boolean;
     backoff: FailureBackoff;
     setup(): Promise<any>;
     middleware: Middleware<unknown, unknown>[];
@@ -55,9 +58,10 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
     log: Loggers
 ): Promise<Consumer> => {
     let channel: Channel;
-    let messageManager = makeMessageManager();
+    let messageManager = makeMessageManager(log);
     let consumerTag: string;
     const emitter = makeEmitter<ConsumerEvents>();
+    const { noAck, exclusive, priority } = opts;
     const close = async () => {
         consumer.isClosing = true;
         if (consumerTag && channel) {
@@ -80,7 +84,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                 await delay(5);
                 try {
                     if (!consumer.isClosing) {
-                        messageManager = makeMessageManager();
+                        messageManager = makeMessageManager(log);
                         await start();
                     }
                 } catch (e) {
@@ -105,7 +109,9 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                     if (!channel) {
                         throw new ChannelBrokenError();
                     }
-                    channel.ack(message);
+                    if (!noAck) {
+                        channel.ack(message);
+                    }
                     opts.backoff?.ack?.();
                 },
                 nack: (requeue = true) => {
@@ -113,7 +119,9 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                     if (!channel) {
                         throw new ChannelBrokenError();
                     }
-                    channel.nack(message, false, requeue);
+                    if (!noAck) {
+                        channel.nack(message, false, requeue);
+                    }
                     opts.backoff?.nack?.(requeue);
                 },
                 reply: async (reply) => {
@@ -146,10 +154,12 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                     methods.nack(false);
                 } else {
                     log.error('Consumer', 'error while handling message', e, messageInstance);
-                    messageInstance.nack(true);
+                    if (!noAck) {
+                        messageInstance.nack(true);
+                    }
                 }
             }
-        }));
+        }, { noAck, priority, exclusive }));
     };
     const consumer = {
         close,

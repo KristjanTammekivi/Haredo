@@ -1,3 +1,4 @@
+import 'source-map-support/register';
 import { Haredo, haredo } from '../../src/haredo';
 import { setup, teardown, getSingleMessage, publishMessage } from './helpers/amqp';
 import { expect } from 'chai';
