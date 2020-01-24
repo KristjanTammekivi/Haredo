@@ -78,7 +78,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
         await opts.setup();
         channel = await connectionManager.getChannel();
         channel.once('close', async () => {
-            log.info('Consumer', 'channel closed');
+            log.info({ component: 'Consumer', msg: 'channel closed' });
             channel = null;
             if (opts.reestablish) {
                 await delay(5);
@@ -87,9 +87,10 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                         messageManager = makeMessageManager(log);
                         await start();
                     }
-                } catch (e) {
-                    log.error('Consumer', 'Failed to restart consumer', e);
-                    emitter.emit('error', e);
+                } catch (error) {
+                    // TODO: attempt again
+                    log.error({ component: 'Consumer', msg: 'Failed to restart consumer', error });
+                    emitter.emit('error', error);
                 }
             }
             if (!consumer.isClosing) {
@@ -147,13 +148,13 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                 if (opts.autoAck && !messageInstance.isHandled()) {
                     messageInstance.ack();
                 }
-            } catch (e) {
-                opts.backoff?.fail?.(e);
+            } catch (error) {
+                opts.backoff?.fail?.(error);
                 if (!messageInstance) {
-                    log.error('Consumer', 'failed initializing a message instance', e);
+                    log.error({ component: 'Consumer', error, msg: 'failed initializing a message instance', rawMessage: message });
                     methods.nack(false);
                 } else {
-                    log.error('Consumer', 'error while handling message', e, messageInstance);
+                    log.error({ component: 'Consumer', error, msg: 'error while handling message', message: messageInstance, rawMessage: message });
                     if (!noAck) {
                         messageInstance.nack(true);
                     }
@@ -186,7 +187,7 @@ export const applyMiddleware = async <TMessage, TReply>(middleware: Middleware<T
         await head(middleware)(msg, () => {
             nextWasCalled = true;
             if (msg.isHandled()) {
-                log.warning('Consumer', 'message was handled in the middleware but middleware called next() anyway');
+                log.warning({ component: 'Consumer', msg: 'message was handled in the middleware but middleware called next() anyway', message: msg, rawMessage: msg.raw });
                 return;
             }
             return applyMiddleware(tail(middleware), cb, msg, autoAck, autoReply, log);

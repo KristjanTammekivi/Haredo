@@ -41,16 +41,16 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     };
 
     const closeConsumers = async () => {
-        log.info('ConnectionManager', 'closing consumers');
+        log.info({ component: 'ConnectionManager', msg: 'closing consumers' });
         await promiseMap(consumers, async (consumer) => {
             await consumer.close();
         });
-        log.info('ConnectionManager', 'done closing consumers');
+        log.info({ component: 'ConnectionManager', msg: 'done closing consumers' });
     };
 
     const getConnection = async () => {
         if (closed) {
-            log.error('ConnectionManager', 'closed, cannot create a new connection');
+            log.error({ component: 'ConnectionManager', msg: 'closed, cannot create a new connection' });
             const error = new HaredoClosingError();
             emitter.emit('error', error);
             /* istanbul ignore next for some reason throw error seems as uncovered */
@@ -67,19 +67,19 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
         emitter,
         getConnection,
         close: async () => {
-            log.info('ConnectionManager', 'closing...');
+            log.info({ component: 'ConnectionManager', msg: 'closing...' });
             try {
                 await connectionPromise;
-            } catch (e) {
-                log.error('ConnectionManager', 'getting initial connection failed', e);
+            } catch (error) {
+                log.error({ component: 'ConnectionManager', msg: 'getting initial connection failed', error });
             }
             const rpc = await rpcPromise;
             await rpc?.close();
             await closeConsumers();
             closed = true;
-            log.info('ConnectionManager', 'closing rabbitmq connection');
+            log.info({ component: 'ConnectionManager', msg: 'closing rabbitmq connection' });
             await connection?.close();
-            log.info('ConnectionManager', 'closed');
+            log.info({ component: 'ConnectionManager', msg: 'closed' });
         },
         getChannel: async () => {
             const connection = await getConnection();
@@ -106,30 +106,30 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     };
 
     const loopGetConnection = async () => {
-        log.info('ConnectionManager', 'connecting');
+        log.info({ component: 'ConnectionManager', msg: 'connecting' });
         while (true) {
             if (closed) {
                 throw new HaredoClosingError();
             }
             try {
                 connection = await connect(connectionOpts, socketOpts);
-                connection.on('error', /* istanbul ignore next */(err) => {
-                    log.error('ConnectionManager', err);
+                connection.on('error', /* istanbul ignore next */(error) => {
+                    log.error({ component: 'ConnectionManager', msg: 'connection error', error });
                 });
                 connection.on('close', async () => {
                     emitter.emit('connectionclose');
-                    log.info('ConnectionManager', 'connection closed');
+                    log.info({ component: 'ConnectionManager', msg: 'connection closed' });
                     connectionPromise = undefined;
                     connection = undefined;
                     if (!closed) {
-                        log.info('ConnectionManager', 'reopening connection');
+                        log.info({ component: 'ConnectionManager', msg: 'reopening connection' });
                         await getConnection();
                     }
                 });
                 emitter.emit('connected', connection);
                 return connection;
-            } catch (e) /* istanbul ignore next */ {
-                log.error('ConnectionManager', e);
+            } catch (error) /* istanbul ignore next */ {
+                log.error({ component: 'ConnectionManager', msg: 'error while connecting', error });
                 await delay(1000);
             }
         }

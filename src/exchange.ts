@@ -97,3 +97,11 @@ export const makeExchangeConfig = <TMessage>(name: string, type: ExchangeType, o
         delayed: (xDelayedType: StandardExchangeType) => makeExchangeConfig(name, 'x-delayed-message', cloneOpts({ arguments: { 'x-delayed-type': xDelayedType } }))
     };
 };
+
+/**
+ * Returns true if passed in object is an exchange. Acts as a type guard for Exchange.
+ * @param obj Object to check
+ */
+export const isHaredoExchange = (obj: any): obj is Exchange => {
+    return obj?.metaType === 'exchange';
+};

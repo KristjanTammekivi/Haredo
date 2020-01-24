@@ -26,6 +26,13 @@ export const omit = <T, K extends keyof T>(item: T, ...keys: K[]) => {
     return omittedItem;
 };
 
+export const omitUndefined = <T extends Record<string, any>>(item: T) => {
+    const undefinedKeys = Object.keys(item).filter((key) => {
+        return item[key] === undefined;
+    });
+    return omit(item, ...undefinedKeys) as T;
+};
+
 export const merge = <T>(base: T, top: T): T => {
     return Object.assign({}, base, top);
 };

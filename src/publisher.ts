@@ -52,13 +52,13 @@ export const wrappedChannelGetter = <T extends Channel | ConfirmChannel>(
             return wrappedChannel;
         }
         channelPromise = channelGetter();
-        log.info('Publisher', 'opening channel');
+        log.info({ component: 'Publisher', msg: 'opening channel' });
         const channel = await channelPromise;
-        log.info('Publisher', 'channel opened');
+        log.info({ component: 'Publisher', msg: 'channel opened' });
         wrappedChannel = wrapChannel(channel, isConfirmChannel, log);
         channelPromise = undefined;
         channel.on('close', () => {
-            log.info('Publisher', 'channel closed');
+            log.info({ component: 'Publisher', msg: 'channel closed' });
             wrappedChannel.stop();
             wrappedChannel = undefined;
         });
@@ -73,7 +73,7 @@ export const wrapChannel = <T extends Channel | ConfirmChannel>(
     ticketMachine = makeTicketMachine()
 ) => {
     channel.on('drain', () => {
-        log.debug('Publisher', `${ confirm ? 'confirm-channel' : 'channel' } drained, resuming publishing`);
+        log.debug({ component: 'Publisher', msg: `${ confirm ? 'confirm-channel' : 'channel' } drained, resuming publishing` });
         ticketMachine.play();
     });
     return {
@@ -96,7 +96,7 @@ export const wrapChannel = <T extends Channel | ConfirmChannel>(
             const ready = channel.publish(exchange, routingKey, data, opts);
             if (!ready) {
                 /* istanbul ignore next */
-                log.debug('Publisher', `${confirm ? 'confirm-channel' : 'channel'} returned false on publishing, pausing publishing until drain`);
+                log.debug({ component: 'Publisher', msg: `${confirm ? 'confirm-channel' : 'channel'} returned false on publishing, pausing publishing until drain` });
                 ticketMachine.pause();
             }
             release();
@@ -120,7 +120,7 @@ export const wrapChannel = <T extends Channel | ConfirmChannel>(
             const ready = channel.sendToQueue(queue, data, opts);
             if (!ready) {
                 /* istanbul ignore next */
-                log.debug('Publisher', `${confirm ? 'confirm-channel' : 'channel'} returned false on publishing, pausing publishing until drain`);
+                log.debug({ component: 'Publisher', msg: `${confirm ? 'confirm-channel' : 'channel'} returned false on publishing, pausing publishing until drain` });
                 ticketMachine.pause();
             }
             release();

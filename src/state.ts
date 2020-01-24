@@ -3,6 +3,7 @@ import { Queue } from './queue';
 import { ConnectionManager } from './connection-manager';
 import { HaredoMessage } from './haredo-message';
 import { FailureBackoff } from './backoffs';
+import { Message } from 'amqplib';
 
 export interface Middleware<TMessage = unknown, TReply = unknown> {
     /**
@@ -20,13 +21,13 @@ export interface StateExchangeCollection {
 
 export type Component = 'ConnectionManager' | 'RPC' | 'Consumer' | 'Publisher' | 'MessageManager';
 
-export type logger = (component: Component, ...msg: any[]) => void;
+export type Logger = (logItem: { component: Component, msg: string, message?: HaredoMessage, rawMessage?: Message, error?: Error }) => void;
 
 export interface Loggers {
-    debug: logger;
-    info: logger;
-    warning: logger;
-    error: logger;
+    debug: Logger;
+    info: Logger;
+    warning: Logger;
+    error: Logger;
 }
 
 export interface HaredoChainState<TMessage = unknown, TReply = unknown> {

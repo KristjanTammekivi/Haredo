@@ -21,9 +21,9 @@ export const makeMessageManager = (logger: Loggers) => {
         messages = messages.filter(x => x !== message);
     };
     const drain = async () => {
-        logger.info('MessageManager', 'Draining');
+        logger.info({ component: 'MessageManager', msg: 'Draining' });
         if (!isDrained()) {
-            await promiseMap(messages, async ({ data, isHandled, emitter }) => {
+            await promiseMap(messages, async ({ isHandled, emitter }) => {
                 /* istanbul ignore if */
                 if (isHandled()) {
                     return;
@@ -31,7 +31,7 @@ export const makeMessageManager = (logger: Loggers) => {
                 await typedEventToPromise(emitter, 'handled');
             });
         }
-        logger.info('MessageManager', 'No messages left, done');
+        logger.info({ component: 'MessageManager', msg: 'No messages left, done' });
     };
     return {
         length,

@@ -26,14 +26,14 @@ export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, 
     const queue = makeQueueConfig('').durable(false).autoDelete();
     let isClosing = false;
     const emitter = makeEmitter<Events>();
-    info('RPC', 'starting consumer');
+    info({ component: 'RPC', msg: 'starting consumer' });
     const consumer = await haredo
         .queue(queue)
         .noAck()
         .subscribe(({ correlationId, data }) => {
             const listener = openListeners[correlationId];
             if (listener) {
-                debug('RPC', `resolving correlationId ${correlationId}`);
+                debug({ component: 'RPC', msg: `resolving correlationId ${correlationId}` });
                 listener.resolve(data);
                 delete openListeners[correlationId];
                 emitter.emit('resolve');
@@ -41,19 +41,19 @@ export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, 
                     emitter.emit('drain');
                 }
             } else {
-                warning('RPC', `received unknown correlationId ${correlationId}`);
+                warning({ component: 'RPC', msg: `received unknown correlationId ${correlationId}` });
             }
         });
     const add = <TReply>(correlationId: string) => {
         if (isClosing) {
-            error('RPC', 'not attaching rpc listener since RPC service is closing');
+            error({ component: 'RPC', msg: 'not attaching rpc listener since RPC service is closing' });
             throw new HaredoClosingError();
         }
         return {
             queue: queue.getName(),
             // tslint:disable-next-line: no-useless-cast
             promise: new Promise((resolve, reject) => {
-                debug('RPC', `attached listening for correlationId ${correlationId}`);
+                debug({ component: 'RPC', msg: `attached listening for correlationId ${correlationId}` });
                 openListeners[correlationId] = { resolve, reject };
             }) as Promise<TReply>
         };
@@ -62,19 +62,19 @@ export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, 
         return Object.keys(openListeners).length === 0;
     };
     const close = async () => {
-        info('RPC', 'closing...');
+        info({ component: 'RPC', msg: 'closing...' });
         isClosing = true;
         if (isDrained()) {
-            info('RPC', 'no more listeners, closing consumer');
+            info({ component: 'RPC', msg: 'no more listeners, closing consumer' });
             await consumer.close();
-            info('RPC', 'closed');
+            info({ component: 'RPC', msg: 'closed' });
             return;
         }
-        info('RPC', `waiting for ${ Object.keys(openListeners).length } replies before closing`);
+        info({ component: 'RPC', msg:  `waiting for ${ Object.keys(openListeners).length } replies before closing` });
         await typedEventToPromise(emitter, 'drain');
-        info('RPC', 'no more listeners, closing consumer');
+        info({ component: 'RPC', msg:  'no more listeners, closing consumer' });
         await consumer.close();
-        info('RPC', 'closed');
+        info({ component: 'RPC', msg:  'closed' });
     };
     return {
         consumer,

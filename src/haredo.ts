@@ -1,14 +1,15 @@
-import { Options } from 'amqplib';
+import { Options, Message } from 'amqplib';
 import { Queue, makeQueueConfig } from './queue';
 import { Exchange, StandardExchangeType, ExchangeType, ExchangeOptions, makeExchangeConfig } from './exchange';
 
-import { HaredoChainState, Middleware, defaultState, Loggers } from './state';
-import { MergeTypes, promiseMap, merge, omit } from './utils';
+import { HaredoChainState, Middleware, defaultState, Loggers, Logger } from './state';
+import { MergeTypes, promiseMap, merge, omit, omitUndefined } from './utils';
 import { makeConnectionManager } from './connection-manager';
 import { MessageCallback, Consumer, makeConsumer } from './consumer';
-import { MessageChain, isMessageChain, preparedMessage, mergeMessageState, ExtendedPublishOptions } from './prepared-message';
+import { MessageChain, isHaredoPreparedMessage, preparedMessage, mergeMessageState, ExtendedPublishOptions } from './prepared-message';
 import { generateCorrelationId } from './rpc';
 import { FailureBackoff } from './backoffs';
+import { HaredoMessage } from './haredo-message';
 
 // TODO: make this file smaller
 // TODO: add a configuration option for max connection attempts
@@ -17,7 +18,10 @@ import { FailureBackoff } from './backoffs';
 export interface LogItem {
     level: LogLevel;
     component: string;
-    msg: any[];
+    msg: any;
+    message?: HaredoMessage;
+    rawMessage?: Message;
+    error?: Error;
     timestamp: Date;
 }
 
@@ -39,12 +43,16 @@ export interface Haredo extends InitialChain<unknown, unknown> {
     connect(): Promise<void>;
 }
 
+const makeLogger = (level: LogLevel, logger: (log: LogItem) => void): Logger =>
+    ({ component, msg, message, rawMessage, error }) =>
+        logger(omitUndefined({ component, msg, message, rawMessage, error, level, timestamp: new Date() }));
+
 export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOptions): Haredo => {
     const log: Loggers = {
-        debug: (component: string, ...args: any[]) => logger({ component, level: LogLevel.DEBUG, msg: args, timestamp: new Date() }),
-        info: (component: string, ...args: any[]) => logger({ component, level: LogLevel.INFO, msg: args, timestamp: new Date() }),
-        warning: (component: string, ...args: any[]) => logger({ component, level: LogLevel.WARNING, msg: args, timestamp: new Date() }),
-        error: (component: string, ...args: any[]) => logger({ component, level: LogLevel.ERROR, msg: args, timestamp: new Date() })
+        debug: makeLogger(LogLevel.DEBUG, logger),
+        info: makeLogger(LogLevel.INFO, logger),
+        warning: makeLogger(LogLevel.WARNING, logger),
+        error: makeLogger(LogLevel.ERROR, logger)
     };
     const connectionManager = makeConnectionManager(connection, socketOpts, log);
     return {
@@ -243,7 +251,7 @@ const prepMessage = <TMessage, TReply>(
     routingKey?: string,
     options: Options.Publish = {}
 ): MessageChain<TMessage> => {
-    if (!isMessageChain(message)) {
+    if (!isHaredoPreparedMessage(message)) {
         if (state.json) {
             message = preparedMessage({}).json(message);
         } else {

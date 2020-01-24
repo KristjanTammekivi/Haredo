@@ -6,8 +6,8 @@ export interface HaredoMessageEvents {
     handled: void;
 }
 
-export interface HaredoMessage<TMessage = unknown, TReply = unknown>
-    extends Methods<TReply> {
+export interface HaredoMessage<TMessage = unknown, TReply = unknown> extends Methods<TReply> {
+    metaType: 'message';
     emitter: TypedEventEmitter<HaredoMessageEvents>;
     /**
      * Raw message from amqplib
@@ -211,5 +211,14 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
         timestamp: raw.properties.timestamp,
         type: raw.properties.type,
         userId: raw.properties.userId,
+        metaType: 'message'
     };
+};
+
+/**
+ * Returns true if passed in object is an message. Acts as a type guard for Message.
+ * @param obj Object to check
+ */
+export const isHaredoMessage = (obj: any): obj is Message => {
+    return obj?.metaType === 'message';
 };

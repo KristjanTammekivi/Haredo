@@ -96,3 +96,11 @@ export const makeQueueConfig = <TPublish = unknown, TReply = unknown>(name?: str
 };
 
 export const padString = (str: string) => ` ${str} `;
+
+/**
+ * Returns true if passed in object is an queue. Acts as a type guard for Queue.
+ * @param obj Object to check
+ */
+export const isHaredoQueue = (obj: any): obj is Queue => {
+    return obj?.metaType === 'queue';
+};

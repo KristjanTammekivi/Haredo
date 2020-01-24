@@ -110,10 +110,6 @@ export interface MessageChain<TMessage = unknown> {
     setHeaders(headers: Record<string, any>): MessageChain<TMessage>;
 }
 
-export const isMessageChain = (msg: any): msg is MessageChain => {
-    return msg?.metaType === 'preparedMessage';
-};
-
 export const preparedMessage = <TMessage>(state: Partial<MessageChainState<TMessage>> = {}): MessageChain<TMessage> => {
     return {
         metaType: 'preparedMessage',
@@ -165,3 +161,11 @@ export const mergeHeaders = (base: Record<string, any> = {}, top: Record<string,
     ...base,
     ...top
 });
+
+/**
+ * Returns true if the passed in object is a preparedMessage chain. Acts as a type quard for MessageChain
+ * @param obj item to check
+ */
+export const isHaredoPreparedMessage = (obj: any): obj is MessageChain => {
+    return obj?.metaType === 'preparedMessage';
+};
