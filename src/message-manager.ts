@@ -14,7 +14,7 @@ export const makeMessageManager = (logger: Loggers) => {
     const add = (message: HaredoMessage) => {
         messages = messages.concat(message);
         message.emitter.once('handled', () => {
-
+            remove(message);
         });
     };
     const remove = (message: HaredoMessage) => {
