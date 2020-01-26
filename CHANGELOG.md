@@ -1,3 +1,23 @@
+### 2.1.0 (2020-01-26)
+
+##### Documentation Changes
+
+*  add documentation on haredo.connect and haredo.close ([4df10ab6](https://github.com/KristjanTammekivi/haredo/commit/4df10ab698bb78db855c69d5626d42c8303a4746))
+
+##### New Features
+
+*  minor logging overhaul to give user more information ([149cd8a8](https://github.com/KristjanTammekivi/haredo/commit/149cd8a8cb0eae127bc7fd035e1d52e906eb4fe7))
+
+##### Bug Fixes
+
+*  message not being removed from message manager ([508a4e27](https://github.com/KristjanTammekivi/haredo/commit/508a4e27c95bae90348010950101bfb5b7df3566))
+
+##### Tests
+
+*  add haredo.connect in a test so it's not uncovered ([4bfc01e4](https://github.com/KristjanTammekivi/haredo/commit/4bfc01e4194c6728373d26e7d7c6530f8ffbabc9))
+*  add some strategic istanbul-ignores in connection-manager ([accfc37d](https://github.com/KristjanTammekivi/haredo/commit/accfc37d1b5636f7392765322481405130e0a977))
+*  increase test coverage for isHaredo... methods ([c04413eb](https://github.com/KristjanTammekivi/haredo/commit/c04413eb2edcd843d53f50bfe466232ad3c618c5))
+
 #### 2.0.2 (2020-01-23)
 
 ##### New Features
