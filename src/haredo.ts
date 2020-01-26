@@ -18,7 +18,7 @@ import { HaredoMessage } from './haredo-message';
 export interface LogItem {
     level: LogLevel;
     component: string;
-    msg: any;
+    msg: string;
     message?: HaredoMessage;
     rawMessage?: Message;
     error?: Error;
