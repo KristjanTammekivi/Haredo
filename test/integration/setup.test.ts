@@ -8,6 +8,7 @@ describe('integration/setup', () => {
         rabbit = haredo({
             connection: 'amqp://guest:guest@localhost:5672/test'
         });
+        await rabbit.connect();
     });
     afterEach(async () => {
         rabbit.close();
