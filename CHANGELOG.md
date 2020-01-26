@@ -1,3 +1,9 @@
+#### 2.1.1 (2020-01-26)
+
+##### Other Changes
+
+*  specify msg as string now ([aa1359e3](https://github.com/KristjanTammekivi/haredo/commit/aa1359e39f2389dacd38ab1c59649cc8cb826233))
+
 ### 2.1.0 (2020-01-26)
 
 ##### Documentation Changes
