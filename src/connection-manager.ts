@@ -49,11 +49,11 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     };
 
     const getConnection = async () => {
+        /* istanbul ignore if */
         if (closed) {
-            log.error({ component: 'ConnectionManager', msg: 'closed, cannot create a new connection' });
             const error = new HaredoClosingError();
+            log.error({ component: 'ConnectionManager', msg: 'closed, cannot create a new connection', error });
             emitter.emit('error', error);
-            /* istanbul ignore next for some reason throw error seems as uncovered */
             throw error;
         }
         if (!connectionPromise) {
@@ -71,6 +71,7 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
             try {
                 await connectionPromise;
             } catch (error) {
+                /* istanbul ignore next */
                 log.error({ component: 'ConnectionManager', msg: 'getting initial connection failed', error });
             }
             const rpc = await rpcPromise;
@@ -108,6 +109,7 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     const loopGetConnection = async () => {
         log.info({ component: 'ConnectionManager', msg: 'connecting' });
         while (true) {
+            /* istanbul ignore if */
             if (closed) {
                 throw new HaredoClosingError();
             }
