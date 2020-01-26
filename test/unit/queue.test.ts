@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { makeQueueConfig } from '../../src/queue';
+import { makeQueueConfig, isHaredoQueue } from '../../src/queue';
 import { makeExchangeConfig } from '../../src/exchange';
 
 describe('unit/queue', ()=> {
@@ -29,5 +29,14 @@ describe('unit/queue', ()=> {
         expect(makeQueueConfig('test').dead('test', 'testrk').getOpts()).to.have.property('deadLetterRoutingKey', 'testrk');
         const exchange = makeExchangeConfig('testexchange', 'direct');
         expect(makeQueueConfig('test').dead(exchange).getOpts()).to.have.property('deadLetterExchange', exchange.getName());
+    });
+    it('should correctly identify a exchange chain', () => {
+        expect(isHaredoQueue(makeQueueConfig('test'))).to.be.true;
+    });
+    it('should not identify queues as exchanges', () => {
+        expect(isHaredoQueue(makeExchangeConfig('test', 'fanout'))).to.be.false;
+    });
+    it('should not throw on null', () => {
+        expect(isHaredoQueue(null)).to.be.false;
     });
 });

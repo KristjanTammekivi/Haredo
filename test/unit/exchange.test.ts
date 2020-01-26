@@ -1,5 +1,6 @@
 import { expect } from 'chai';
-import { makeExchangeConfig } from '../../src/exchange';
+import { makeExchangeConfig, isHaredoExchange } from '../../src/exchange';
+import { makeQueueConfig } from '../../src/queue';
 
 describe('unit/exchange', ()=> {
     it('should set durable', () => {
@@ -30,5 +31,14 @@ describe('unit/exchange', ()=> {
     it('should set type to delayed', () => {
         expect(makeExchangeConfig('test', 'fanout').delayed('fanout').getType()).to.equal('x-delayed-message');
         expect(makeExchangeConfig('test', 'fanout').delayed('fanout').getOpts().arguments['x-delayed-type']).to.equal('fanout');
+    });
+    it('should correctly identify a exchange chain', () => {
+        expect(isHaredoExchange(makeExchangeConfig('test', 'fanout'))).to.be.true;
+    });
+    it('should not identify queues as exchanges', () => {
+        expect(isHaredoExchange(makeQueueConfig('test'))).to.be.false;
+    });
+    it('should not throw on null', () => {
+        expect(isHaredoExchange(null)).to.be.false;
     });
 });

@@ -1,4 +1,4 @@
-import { preparedMessage } from '../../src/prepared-message';
+import { preparedMessage, isHaredoPreparedMessage } from '../../src/prepared-message';
 import { expect } from 'chai';
 
 describe('prepared-message', () => {
@@ -93,5 +93,8 @@ describe('prepared-message', () => {
     it('should merge headers', () => {
         const message = preparedMessage().setHeader('headera', 'test1').setHeader('headerb', 'test2');
         expect(message.getState().options.headers).to.eql({ headera: 'test1', headerb: 'test2' });
+    });
+    it('should not misidentify null', () => {
+        expect(isHaredoPreparedMessage(null)).to.be.false;
     });
 });

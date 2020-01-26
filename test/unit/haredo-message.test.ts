@@ -1,7 +1,8 @@
-import { makeHaredoMessage } from '../../src/haredo-message';
+import { makeHaredoMessage, isHaredoMessage } from '../../src/haredo-message';
 import { Message } from 'amqplib';
 import { expect } from 'chai';
 import { spy } from 'sinon';
+import { makeQueueConfig } from '../../src/queue';
 
 describe('HaredoMessage', () => {
     let raw: Message;
@@ -53,5 +54,14 @@ describe('HaredoMessage', () => {
         expect(isNacked()).to.be.false;
         expect(nackSpy).to.not.be.called;
         expect(ackSpy).to.be.calledOnce;
+    });
+    it('should correctly identify a exchange chain', () => {
+        expect(isHaredoMessage(makeHaredoMessage(raw, true, 'testqueue', { } as any))).to.be.true;
+    });
+    it('should not identify queues as exchanges', () => {
+        expect(isHaredoMessage(makeQueueConfig('test'))).to.be.false;
+    });
+    it('should not throw on null', () => {
+        expect(isHaredoMessage(null)).to.be.false;
     });
 });
