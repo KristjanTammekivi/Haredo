@@ -39,7 +39,14 @@ export enum LogLevel {
 }
 
 export interface Haredo extends InitialChain<unknown, unknown> {
+    /**
+     * Cancel all consumers, wait for them to finish processing their messages
+     * and then close the connection to the broker
+     */
     close(): Promise<void>;
+    /**
+     * Connect to RabbitMQ. Note: this is not needed, Haredo connects automatically
+     */
     connect(): Promise<void>;
 }
 
