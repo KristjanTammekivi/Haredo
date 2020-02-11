@@ -71,7 +71,7 @@
     "chai-as-promised": "^7.1.1",
     "coveralls": "^3.0.3",
     "generate-changelog": "^1.7.1",
-    "mocha": "^6.2.0",
+    "mocha": "^7.0.1",
     "nyc": "^13.1.0",
     "rabbitmq-stats": "^1.2.2",
     "rewiremock": "^3.13.7",
