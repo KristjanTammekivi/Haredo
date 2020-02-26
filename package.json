@@ -85,6 +85,6 @@
     "tslint-sonarts": "^1.9.0",
     "typedoc": "^0.16.9",
     "typescript": "^3.7.4",
-    "typescript-tslint-plugin": "^0.4.0"
+    "typescript-tslint-plugin": "^0.5.5"
   }
 }
