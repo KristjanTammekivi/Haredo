@@ -63,7 +63,7 @@
     "@types/amqplib": "^0.5.8",
     "@types/chai": "^4.1.7",
     "@types/chai-as-promised": "^7.1.0",
-    "@types/debug": "^0.0.30",
+    "@types/debug": "^4.1.5",
     "@types/mocha": "^7.0.1",
     "@types/sinon": "^7.0.12",
     "@types/sinon-chai": "^3.2.2",
@@ -85,6 +85,6 @@
     "tslint-sonarts": "^1.9.0",
     "typedoc": "^0.16.9",
     "typescript": "^3.7.4",
-    "typescript-tslint-plugin": "^0.4.0"
+    "typescript-tslint-plugin": "^0.5.5"
   }
 }
