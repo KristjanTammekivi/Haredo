@@ -72,7 +72,7 @@
     "coveralls": "^3.0.3",
     "generate-changelog": "^1.7.1",
     "mocha": "^7.0.1",
-    "nyc": "^13.1.0",
+    "nyc": "^15.0.0",
     "rabbitmq-stats": "^1.2.2",
     "rewiremock": "^3.13.7",
     "rimraf": "^3.0.2",
