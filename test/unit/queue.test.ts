@@ -44,4 +44,9 @@ describe('unit/queue', ()=> {
             'x-max-priority': 10
         });
     });
+    it('should set x-queue-type', () => {
+        expect(makeQueueConfig('test').type('quorum').getOpts().arguments).to.eql({
+            'x-queue-type': 'quorum'
+        });
+    });
 });

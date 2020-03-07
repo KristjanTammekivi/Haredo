@@ -66,6 +66,11 @@ export interface Queue<TPublish = unknown, TReply = unknown> {
      * @param priority integer between 1 and 255
      */
     maxPriority(priority: number): Queue<TPublish, TReply>;
+    /**
+     * Set the type of the queue. Available choices are 'classic' or 'quorum'
+     * (the latter available since [RabbitMQ 3.8.0](https://www.rabbitmq.com/quorum-queues.html))
+     */
+    type(type: 'classic' | 'quorum'): Queue<TPublish, TReply>;
 }
 
     /**
@@ -102,7 +107,8 @@ export const makeQueueConfig = <TPublish = unknown, TReply = unknown>(name?: str
         },
         name: (name: string) => makeQueueConfig(name, cloneOpts({})),
         mutateName: (newName: string) => { name = newName; },
-        maxPriority: priority => makeQueueConfig(name, cloneOpts({ arguments: { 'x-max-priority': priority } }))
+        maxPriority: priority => makeQueueConfig(name, cloneOpts({ arguments: { 'x-max-priority': priority } })),
+        type: type => makeQueueConfig(name, cloneOpts({ arguments: { 'x-queue-type': type } }))
     };
 };
 
