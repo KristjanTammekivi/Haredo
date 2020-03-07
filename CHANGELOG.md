@@ -1,3 +1,38 @@
+#### 2.1.2 (2020-03-07)
+
+##### Chores
+
+* **deps-dev:**
+  *  bump @types/mocha from 7.0.1 to 7.0.2 ([55789659](https://github.com/KristjanTammekivi/haredo/commit/557896598fb6792e3fbf5b72440d3416f22512da))
+  *  bump @types/chai from 4.2.9 to 4.2.10 ([aeeb1026](https://github.com/KristjanTammekivi/haredo/commit/aeeb1026df2f5042b3290515f7c2906bfd30225a))
+  *  bump typescript from 3.8.2 to 3.8.3 ([8e7a8147](https://github.com/KristjanTammekivi/haredo/commit/8e7a8147e9a688b9c7ff02aee5c7c50f7c2cdfc3))
+  *  bump typedoc from 0.16.10 to 0.16.11 ([3d29b48f](https://github.com/KristjanTammekivi/haredo/commit/3d29b48f97a0701eaf9976bb92b3dd251718886c))
+  *  bump nyc from 13.3.0 to 15.0.0 ([c9c531ea](https://github.com/KristjanTammekivi/haredo/commit/c9c531ea24a3aefe34333f2a3c9b60b5b74288b8))
+  *  bump mocha from 7.0.1 to 7.1.0 ([c8ca610f](https://github.com/KristjanTammekivi/haredo/commit/c8ca610fae143eab95742f6f5a8fe884eda22b22))
+  *  bump @types/sinon from 7.5.1 to 7.5.2 ([2bffce6e](https://github.com/KristjanTammekivi/haredo/commit/2bffce6e3400215597bbd538d3bec869655d23b7))
+  *  bump @types/chai-as-promised from 7.1.0 to 7.1.2 ([9d393a06](https://github.com/KristjanTammekivi/haredo/commit/9d393a0644d473679db36330116959e5d847392b))
+  *  bump sinon from 7.3.2 to 9.0.0 ([861f1fd7](https://github.com/KristjanTammekivi/haredo/commit/861f1fd7ed378962de94b785b85564848f14a684))
+  *  bump typedoc from 0.16.9 to 0.16.10 ([4ae53c9c](https://github.com/KristjanTammekivi/haredo/commit/4ae53c9c813d715129f66de0043ba656bae15c6c))
+  *  bump sinon-chai from 3.3.0 to 3.5.0 ([78916498](https://github.com/KristjanTammekivi/haredo/commit/789164989588af89bf70291ae5aa0228eca39728))
+  *  bump tslint from 5.17.0 to 5.20.1 ([e4557c24](https://github.com/KristjanTammekivi/haredo/commit/e4557c24539f97d268b294969a2a825504e01044))
+  *  bump typescript-tslint-plugin from 0.4.0 to 0.5.5 ([dcb3edb8](https://github.com/KristjanTammekivi/haredo/commit/dcb3edb8cf8026638481aab0d7ee1240d08cadc2))
+  *  bump @types/debug from 0.0.30 to 4.1.5 ([09f3a851](https://github.com/KristjanTammekivi/haredo/commit/09f3a8512b8002be752e010c971278ebfc36cfc7))
+  *  bump ts-node from 8.3.0 to 8.6.2 ([3c5cf15c](https://github.com/KristjanTammekivi/haredo/commit/3c5cf15c0a97cb5f58576a81d9bbc4140db45074))
+  *  bump @types/sinon-chai from 3.2.2 to 3.2.3 ([6a3b5ae2](https://github.com/KristjanTammekivi/haredo/commit/6a3b5ae2aa6fa3020dbde1e7b80379ce44eb90c0))
+  *  bump typescript from 3.7.4 to 3.8.2 ([fe2b9737](https://github.com/KristjanTammekivi/haredo/commit/fe2b9737ade7795bd46e75a5c2c42f26e16e28c0))
+  *  bump @types/amqplib from 0.5.11 to 0.5.13 ([e0bd0741](https://github.com/KristjanTammekivi/haredo/commit/e0bd0741b5c78efd60d1e56d87331a3fc7f2a28b))
+  *  bump @types/mocha from 5.2.7 to 7.0.1 ([697a10db](https://github.com/KristjanTammekivi/haredo/commit/697a10dbbeb7627704306d912236a211fe92dfe4))
+  *  bump @types/chai from 4.1.7 to 4.2.9 ([9f7e3575](https://github.com/KristjanTammekivi/haredo/commit/9f7e3575da244fb63da2a00bc0d8d728dc480bf8))
+  *  bump tslint-config-airbnb from 5.11.1 to 5.11.2 ([67334253](https://github.com/KristjanTammekivi/haredo/commit/67334253493f2f4081894bc2bc17f4c350fabcec))
+  *  bump rimraf from 2.6.3 to 3.0.2 ([73e1e928](https://github.com/KristjanTammekivi/haredo/commit/73e1e928641f18e8a553f8d9797e6b3f8413215c))
+  *  bump generate-changelog from 1.7.1 to 1.8.0 ([040b4905](https://github.com/KristjanTammekivi/haredo/commit/040b490520bb4cbc955cb21f519b0c485db93ad6))
+  *  bump coveralls from 3.0.3 to 3.0.9 ([62770405](https://github.com/KristjanTammekivi/haredo/commit/62770405b888625fe97553223c9869a1d82ba5a0))
+  *  bump rewiremock from 3.13.7 to 3.13.9 ([b4f2148a](https://github.com/KristjanTammekivi/haredo/commit/b4f2148a3a2a917b17681beb6ffda3642bd63b62))
+  *  bump mocha from 6.2.0 to 7.0.1 ([40648cf4](https://github.com/KristjanTammekivi/haredo/commit/40648cf45e7debbc0d5c7303d232214c3acbe725))
+  *  bump typedoc from 0.15.6 to 0.16.9 ([54722d06](https://github.com/KristjanTammekivi/haredo/commit/54722d06befc4aac246b5ce1195553ab458d61d6))
+  *  bump source-map-support from 0.5.12 to 0.5.16 ([ca80952b](https://github.com/KristjanTammekivi/haredo/commit/ca80952b32aea26910902f5baf55a772ee02b95f))
+  *  bump @types/sinon from 7.0.12 to 7.5.1 ([d2ea7aa3](https://github.com/KristjanTammekivi/haredo/commit/d2ea7aa362aefcd9be3db3d51be764625298bb94))
+
 #### 2.1.1 (2020-01-26)
 
 ##### Other Changes
