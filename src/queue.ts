@@ -60,6 +60,12 @@ export interface Queue<TPublish = unknown, TReply = unknown> {
      * a brand new object
      */
     mutateName(name: string): void;
+    /**
+     * Declare the queue as a priority queue and set the maximum priority the
+     * queue should support. Read more at [rabbitmq.com](https://www.rabbitmq.com/priority.html)
+     * @param priority integer between 1 and 255
+     */
+    maxPriority(priority: number): Queue<TPublish, TReply>;
 }
 
     /**
@@ -73,6 +79,10 @@ export const makeQueueConfig = <TPublish = unknown, TReply = unknown>(name?: str
     const cloneOpts = (top: Partial<QueueOptions>): QueueOptions => ({
         ...opts,
         ...top,
+        arguments: {
+            ...opts?.arguments,
+            ...top?.arguments
+        }
     });
     return {
         metaType: 'queue',
@@ -91,7 +101,8 @@ export const makeQueueConfig = <TPublish = unknown, TReply = unknown>(name?: str
             return makeQueueConfig(name, cloneOpts({ deadLetterExchange, deadLetterRoutingKey }));
         },
         name: (name: string) => makeQueueConfig(name, cloneOpts({})),
-        mutateName: (newName: string) => { name = newName; }
+        mutateName: (newName: string) => { name = newName; },
+        maxPriority: priority => makeQueueConfig(name, cloneOpts({ arguments: { 'x-max-priority': priority } }))
     };
 };
 

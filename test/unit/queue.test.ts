@@ -39,4 +39,9 @@ describe('unit/queue', ()=> {
     it('should not throw on null', () => {
         expect(isHaredoQueue(null)).to.be.false;
     });
+    it('should set x-max-priority', () => {
+        expect(makeQueueConfig('test').maxPriority(10).getOpts().arguments).to.eql({
+            'x-max-priority': 10
+        });
+    });
 });
