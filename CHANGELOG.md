@@ -1,3 +1,14 @@
+### 2.2.0 (2020-03-07)
+
+##### Chores
+
+*  bump testing rabbitmq version to 3.8.2 ([19824a32](https://github.com/KristjanTammekivi/haredo/commit/19824a32c5db15f0acfa636379880c5749215c50))
+
+##### New Features
+
+*  quorum queue support ([1417a7f2](https://github.com/KristjanTammekivi/haredo/commit/1417a7f2436b7b38315a891cdf076cd1b3cb9cbe))
+*  priority queues ([b88de879](https://github.com/KristjanTammekivi/haredo/commit/b88de8795fd92f990ce3b0d3303fcb6fa853805a))
+
 #### 2.1.2 (2020-03-07)
 
 ##### Chores
