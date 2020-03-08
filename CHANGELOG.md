@@ -1,3 +1,9 @@
+#### 2.2.1 (2020-03-08)
+
+##### Bug Fixes
+
+*  E2E bindings ([d61a24a6](https://github.com/KristjanTammekivi/haredo/commit/d61a24a6b5e5d0fc3a4de74b883189d9cdcfeacb))
+
 ### 2.2.0 (2020-03-07)
 
 ##### Chores
