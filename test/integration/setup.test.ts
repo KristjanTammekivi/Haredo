@@ -1,5 +1,6 @@
 import { Haredo, haredo } from '../../src/haredo';
 import { setup, teardown, checkQueue, checkExchange } from './helpers/amqp';
+import { makeExchangeConfig } from '../../src/exchange';
 
 describe('integration/setup', () => {
     let rabbit: Haredo;
@@ -21,5 +22,10 @@ describe('integration/setup', () => {
     it('should set up an exchange', async () => {
         await rabbit.exchange('test', 'direct').setup();
         await checkExchange('test', 'direct')
+    });
+    it('should skipSetup if it is called', async () => {
+        const exchange = makeExchangeConfig('test', 'direct');
+        await rabbit.exchange(exchange).skipSetup().setup();
+        await rabbit.exchange(exchange.fanout()).setup();
     });
 });

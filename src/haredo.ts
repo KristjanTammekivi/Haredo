@@ -101,11 +101,15 @@ const addSetup = (state: Partial<HaredoChainState>) => async () => {
         if (state.exchange) {
             await channel.assertExchange(state.exchange.getName(), state.exchange.getType(), state.exchange.getOpts());
         }
-        if (state.bindings) {
+        if (state.bindings?.length) {
             await promiseMap(state.bindings, async (binding) => {
                 await channel.assertExchange(binding.exchange.getName(), binding.exchange.getType(), binding.exchange.getOpts());
                 await promiseMap(binding.patterns, async (pattern) => {
-                    await channel.bindQueue(state.queue.getName(), binding.exchange.getName(), pattern);
+                    if (state.queue) {
+                        await channel.bindQueue(state.queue.getName(), binding.exchange.getName(), pattern);
+                    } else {
+                        await channel.bindExchange(state.exchange.getName(), binding.exchange.getName(), pattern);
+                    }
                 });
             });
         }
