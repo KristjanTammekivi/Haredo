@@ -132,6 +132,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                     await initialChain({ connectionManager })
                         .queue(message.properties.replyTo)
                         .skipSetup()
+                        .confirm()
                         .publish(opts.json ? JSON.stringify(reply) : reply, {
                             correlationId: message.properties.correlationId
                         });
@@ -145,9 +146,6 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                 messageManager.add(messageInstance);
                 await applyMiddleware(opts.middleware || [], cb, messageInstance, opts.autoAck, opts.autoReply, log);
                 opts.backoff?.pass?.();
-                if (opts.autoAck && !messageInstance.isHandled()) {
-                    messageInstance.ack();
-                }
             } catch (error) {
                 opts.backoff?.fail?.(error);
                 if (!messageInstance) {
