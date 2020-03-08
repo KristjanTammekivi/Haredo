@@ -66,4 +66,15 @@ describe('integration/rpc', () => {
         await rabbit.close();
         expect(await promise).to.equal('world');
     });
+    it('should silently not reply when messageInstance.reply is called but correlationId is not present', async () => {
+        let replyDidNotThrow = false;
+        await rabbit.queue('test')
+            .subscribe(async ({ reply }) => {
+                await reply('Should be fine');
+                replyDidNotThrow = true;
+            });
+        await rabbit.queue('test').publish('hello', { replyTo: 'somewhere else' });
+        await delay(500);
+        expect(replyDidNotThrow).to.be.true;
+    });
 });
