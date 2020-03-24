@@ -1,3 +1,30 @@
+#### 2.2.2 (2020-03-24)
+
+##### Chores
+
+* **deps-dev:**
+  *  bump typedoc from 0.17.1 to 0.17.3 ([2cae26e0](https://github.com/KristjanTammekivi/haredo/commit/2cae26e0dc4e25bd0e7e8876fd6e58fa63f1c1ee))
+  *  bump ts-node from 8.7.0 to 8.8.1 ([ece68d0f](https://github.com/KristjanTammekivi/haredo/commit/ece68d0fc614638d697ef7afaeff04710cda824f))
+  *  bump mocha from 7.1.0 to 7.1.1 ([5ad777db](https://github.com/KristjanTammekivi/haredo/commit/5ad777db6ba0e01a37939150deb167fd2cdf0887))
+  *  bump coveralls from 3.0.9 to 3.0.11 ([60dfceae](https://github.com/KristjanTammekivi/haredo/commit/60dfceae8e072de59073329ec7506986e16fa5c5))
+  *  bump ts-node from 8.6.2 to 8.7.0 ([d957608d](https://github.com/KristjanTammekivi/haredo/commit/d957608d8c471b0a12b94ca341d9748d2ebf3812))
+  *  bump typedoc from 0.17.0 to 0.17.1 ([56e2f0ea](https://github.com/KristjanTammekivi/haredo/commit/56e2f0ea88b226d74bb2dc38dc6f7736988ca32c))
+  *  bump @types/chai from 4.2.10 to 4.2.11 ([61d2a1c1](https://github.com/KristjanTammekivi/haredo/commit/61d2a1c11736c8392c69ecd2add76c11b720de54))
+  *  bump typedoc from 0.16.11 to 0.17.0 ([c2bbed78](https://github.com/KristjanTammekivi/haredo/commit/c2bbed78e57a9d606ddb31e739a914c199d6f7cd))
+  *  bump sinon from 9.0.0 to 9.0.1 ([bb2d9a33](https://github.com/KristjanTammekivi/haredo/commit/bb2d9a33c90b2aa536f9739ee92f5060c901478e))
+
+##### Documentation Changes
+
+*  fix outdated "new Haredo" in README.md ([16aa2dc5](https://github.com/KristjanTammekivi/haredo/commit/16aa2dc52ce117b6aca5c8132cf7ca6f26f57f5b))
+
+##### New Features
+
+*  publish replies via a confirm channel ([1f0901ab](https://github.com/KristjanTammekivi/haredo/commit/1f0901abb39eacc71fcbe02ce9d2d00cccba28d8))
+
+##### Tests
+
+*  increase coverage in consumer ([4c813a64](https://github.com/KristjanTammekivi/haredo/commit/4c813a648b972ff9569476c04dac3490b4a18f56))
+
 #### 2.2.1 (2020-03-08)
 
 ##### Bug Fixes
