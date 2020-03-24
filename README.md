@@ -38,8 +38,8 @@ Working examples are available on [github](https://github.com/KristjanTammekivi/
 ### Initializing
 
 ```typescript
-import { Haredo } from 'haredo';
-const haredo = new Haredo({
+import { haredo } from 'haredo';
+const rabbit = haredo({
     connection: 'amqp://localhost:5672/'
 });
 ```
@@ -47,25 +47,25 @@ const haredo = new Haredo({
 ### Publishing to an exchange
 
 ```typescript
-haredo.excange('my-exchange').publish({ id: 5, status: 'active' }, 'item.created');
+rabbit.excange('my-exchange').publish({ id: 5, status: 'active' }, 'item.created');
 ```
 
 ### Publishing to a queue
 
 ```typescript
-haredo.queue('my-queue').publish({ id: 5, status: 'inactive' }, 'item.modified');
+rabbit.queue('my-queue').publish({ id: 5, status: 'inactive' }, 'item.modified');
 ```
 
 ### RPC
 
 ```typescript
-haredo.queue('sum')
+rabbit.queue('sum')
     // With autoReply on, returned value from callback is automatically replied
     // Alternative is to use the reply/1 method on the message
     .autoReply()
     .subscribe(({ data }) => data[0] + data[1]);
 
-const response = await haredo.queue('sum').rpc([30, 12])
+const response = await rabbit.queue('sum').rpc([30, 12])
 ```
 
 ### Delayed messages
