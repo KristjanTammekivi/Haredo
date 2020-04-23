@@ -53,7 +53,7 @@ rabbit.excange('my-exchange').publish({ id: 5, status: 'active' }, 'item.created
 ### Publishing to a queue
 
 ```typescript
-rabbit.queue('my-queue').publish({ id: 5, status: 'inactive' }, 'item.modified');
+rabbit.queue('my-queue').publish({ id: 5, status: 'inactive' });
 ```
 
 ### RPC
