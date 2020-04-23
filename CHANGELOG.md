@@ -1,3 +1,22 @@
+#### 2.2.3 (2020-04-23)
+
+##### Chores
+
+* **deps-dev:**
+  *  bump source-map-support from 0.5.16 to 0.5.18 ([35b6dee0](https://github.com/KristjanTammekivi/haredo/commit/35b6dee087d6091f08520a32e1315ca52f147bde))
+  *  bump coveralls from 3.0.11 to 3.0.13 ([dd5748cf](https://github.com/KristjanTammekivi/haredo/commit/dd5748cf6e38feef9e10624d28cc14ae67d87ca0))
+  *  bump ts-node from 8.8.1 to 8.9.0 ([5b72c58f](https://github.com/KristjanTammekivi/haredo/commit/5b72c58f278c3fed7ba3ed5ce3d435db8e122f14))
+  *  bump sinon from 9.0.1 to 9.0.2 ([b80987c6](https://github.com/KristjanTammekivi/haredo/commit/b80987c62de749d02c62e988d50dc09a24fbac38))
+  *  bump typedoc from 0.17.3 to 0.17.4 ([dc3d88a8](https://github.com/KristjanTammekivi/haredo/commit/dc3d88a8ad4ebfe1e8e85f4e9fe15bfeaa576692))
+  *  bump nyc from 15.0.0 to 15.0.1 ([5c24df5b](https://github.com/KristjanTammekivi/haredo/commit/5c24df5b430fa23204db438d59a72af2f41b26be))
+  *  bump @types/sinon from 7.5.2 to 9.0.0 ([e9806789](https://github.com/KristjanTammekivi/haredo/commit/e980678903d4e6d14f51cd2548c9345758a9b689))
+  *  bump @types/sinon-chai from 3.2.3 to 3.2.4 ([cd7870ad](https://github.com/KristjanTammekivi/haredo/commit/cd7870ad839952621bbef4f9f503ab53b49e7b33))
+
+##### Documentation Changes
+
+*  add an old idea about rpc timeouts ([d55da736](https://github.com/KristjanTammekivi/haredo/commit/d55da736adfaba3b94834174fabdc918c376e42a))
+*  correct publishing to queue ([b0c7f92d](https://github.com/KristjanTammekivi/haredo/commit/b0c7f92db774d7dbef8040825869aea2e5713816))
+
 #### 2.2.2 (2020-03-24)
 
 ##### Chores
