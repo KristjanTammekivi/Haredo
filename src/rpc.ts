@@ -18,7 +18,7 @@ export interface StartRpc {
     close(): Promise<void>;
 }
 
-// TODO: add ability to timeout
+// TODO: add ability to timeout. Maybe use messageTTL combined with DLX?
 // TODO: add ability to force close
 
 export const startRpc = async <TMessage, TReply>(haredo: InitialChain<TMessage, TReply>, { info, debug, warning, error }: Loggers): Promise<StartRpc> => {
