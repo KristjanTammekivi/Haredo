@@ -1,3 +1,22 @@
+### 2.3.0 (2020-05-12)
+
+##### Chores
+
+* **deps-dev:**
+  *  bump rewiremock from 3.14.0 to 3.14.1 ([09dc28fd](https://github.com/KristjanTammekivi/haredo/commit/09dc28fd957f1bd825bde6273a523bda645c50e8))
+  *  bump rewiremock from 3.13.9 to 3.14.0 ([a2c28c35](https://github.com/KristjanTammekivi/haredo/commit/a2c28c358be8a7cc829d37d9ef64e19f2d2f81e4))
+  *  bump ts-node from 8.9.1 to 8.10.1 ([e05ecddd](https://github.com/KristjanTammekivi/haredo/commit/e05ecddde01f0a41e87029323b141479e4003c71))
+  *  bump ts-node from 8.9.0 to 8.9.1 ([bf4e49fe](https://github.com/KristjanTammekivi/haredo/commit/bf4e49fe884b3ee479b2a286bfd3d8944db15a86))
+  *  bump typedoc from 0.17.4 to 0.17.6 ([8077268c](https://github.com/KristjanTammekivi/haredo/commit/8077268c339982769e3cd42f5d1c721b4ffab86b))
+  *  bump coveralls from 3.0.14 to 3.1.0 ([676fc86b](https://github.com/KristjanTammekivi/haredo/commit/676fc86bfd4591bb3d32135e836600ba5cf87a19))
+  *  bump source-map-support from 0.5.18 to 0.5.19 ([fe7a32f3](https://github.com/KristjanTammekivi/haredo/commit/fe7a32f33294f3b90e42300de016f41e113ece4c))
+  *  bump mocha from 7.1.1 to 7.1.2 ([7766f96d](https://github.com/KristjanTammekivi/haredo/commit/7766f96ddc80fe8a82dbd128e366889a99775eea))
+  *  bump coveralls from 3.0.13 to 3.0.14 ([e49398b8](https://github.com/KristjanTammekivi/haredo/commit/e49398b8c1533638591077bf92ed96fc1013211c))
+
+##### New Features
+
+*  passive queues/exchanges ([60657f63](https://github.com/KristjanTammekivi/haredo/commit/60657f63feaef1e09da73b305e9f38fa110446f4))
+
 #### 2.2.3 (2020-04-23)
 
 ##### Chores
