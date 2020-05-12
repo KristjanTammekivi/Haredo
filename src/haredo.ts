@@ -1,15 +1,14 @@
-import { Options, Message } from 'amqplib';
-import { Queue, makeQueueConfig } from './queue';
-import { Exchange, StandardExchangeType, ExchangeType, ExchangeOptions, makeExchangeConfig } from './exchange';
-
-import { HaredoChainState, Middleware, defaultState, Loggers, Logger } from './state';
-import { MergeTypes, promiseMap, merge, omit, omitUndefined } from './utils';
-import { makeConnectionManager } from './connection-manager';
-import { MessageCallback, Consumer, makeConsumer } from './consumer';
-import { MessageChain, isHaredoPreparedMessage, preparedMessage, mergeMessageState, ExtendedPublishOptions } from './prepared-message';
-import { generateCorrelationId } from './rpc';
+import { Message, Options, Replies } from 'amqplib';
 import { FailureBackoff } from './backoffs';
+import { makeConnectionManager } from './connection-manager';
+import { Consumer, makeConsumer, MessageCallback } from './consumer';
+import { Exchange, ExchangeOptions, ExchangeType, makeExchangeConfig, StandardExchangeType } from './exchange';
 import { HaredoMessage } from './haredo-message';
+import { ExtendedPublishOptions, isHaredoPreparedMessage, mergeMessageState, MessageChain, preparedMessage } from './prepared-message';
+import { makeQueueConfig, Queue } from './queue';
+import { generateCorrelationId } from './rpc';
+import { defaultState, HaredoChainState, Logger, Loggers, Middleware } from './state';
+import { merge, MergeTypes, omitUndefined, promiseMap } from './utils';
 
 // TODO: make this file smaller
 // TODO: add a configuration option for max connection attempts
@@ -95,15 +94,31 @@ const addSetup = (state: Partial<HaredoChainState>) => async () => {
     });
     try {
         if (typeof state.queue !== 'undefined') {
-            const queueData = await channel.assertQueue(state.queue.getName(), omit(state.queue.getOpts()));
+            const { preferences, ...queueOpts } = state.queue.getOpts();
+            let queueData: Replies.AssertQueue;
+            if (preferences?.passive) {
+                queueData = await channel.checkQueue(state.queue.getName());
+            } else {
+                queueData = await channel.assertQueue(state.queue.getName(), queueOpts);
+            }
             state.queue.mutateName(queueData.queue);
         }
         if (state.exchange) {
-            await channel.assertExchange(state.exchange.getName(), state.exchange.getType(), state.exchange.getOpts());
+            const { preferences, ...exchangeOpts } = state.exchange.getOpts();
+            if (preferences?.passive) {
+                await channel.checkExchange(state.exchange.getName());
+            } else {
+                await channel.assertExchange(state.exchange.getName(), state.exchange.getType(), exchangeOpts);
+            }
         }
         if (state.bindings?.length) {
             await promiseMap(state.bindings, async (binding) => {
-                await channel.assertExchange(binding.exchange.getName(), binding.exchange.getType(), binding.exchange.getOpts());
+                const { preferences, ...exchangeOpts } = binding.exchange.getOpts();
+                if (preferences?.passive) {
+                    await channel.checkExchange(binding.exchange.getName());
+                } else {
+                    await channel.assertExchange(binding.exchange.getName(), binding.exchange.getType(), exchangeOpts);
+                }
                 await promiseMap(binding.patterns, async (pattern) => {
                     if (state.queue) {
                         await channel.bindQueue(state.queue.getName(), binding.exchange.getName(), pattern);

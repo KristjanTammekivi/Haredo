@@ -1,7 +1,11 @@
 import { Options } from 'amqplib';
 import { Exchange } from './exchange';
 
-export type QueueOptions = Options.AssertQueue;
+export interface QueueOptions extends Options.AssertQueue {
+    preferences?: {
+        passive?: boolean;
+    };
+}
 
 export const DEFAULT_QUEUE_OPTIONS: QueueOptions = Object.freeze({
     durable: true,
@@ -71,6 +75,12 @@ export interface Queue<TPublish = unknown, TReply = unknown> {
      * (the latter available since [RabbitMQ 3.8.0](https://www.rabbitmq.com/quorum-queues.html))
      */
     type(type: 'classic' | 'quorum'): Queue<TPublish, TReply>;
+    /**
+     * Don't assert the queue (if queue doesn't exist then create it, if it exists but with a different
+     * configuration, then throw an error) but just check it (if queue doesn't exist then throw an error)
+     * @param passive true to do a checkQueue instead of assertQueue
+     */
+    passive(passive?: boolean): Queue<TPublish, TReply>;
 }
 
     /**
@@ -108,7 +118,8 @@ export const makeQueueConfig = <TPublish = unknown, TReply = unknown>(name?: str
         name: (name: string) => makeQueueConfig(name, cloneOpts({})),
         mutateName: (newName: string) => { name = newName; },
         maxPriority: priority => makeQueueConfig(name, cloneOpts({ arguments: { 'x-max-priority': priority } })),
-        type: type => makeQueueConfig(name, cloneOpts({ arguments: { 'x-queue-type': type } }))
+        type: type => makeQueueConfig(name, cloneOpts({ arguments: { 'x-queue-type': type } })),
+        passive: (passive = true) => makeQueueConfig(name, cloneOpts({ preferences: { passive } }))
     };
 };
 

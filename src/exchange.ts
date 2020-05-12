@@ -17,6 +17,9 @@ export interface ExchangeOptions extends Options.AssertExchange {
     arguments: {
         [XDELAYEDTYPEKEY]?: StandardExchangeType;
     };
+    preferences?: {
+        passive?: boolean;
+    };
 }
 
 export interface Exchange<TMessage = unknown> {
@@ -59,6 +62,8 @@ export interface Exchange<TMessage = unknown> {
      * Set the exchange type as 'delayed' and x-delayed-type attribute as the specified
      */
     delayed(xDelayedType: StandardExchangeType): Exchange<TMessage>;
+    /** Use checkExchange instead of assertExchange for setup */
+    passive(passive?: boolean): Exchange<TMessage>;
 }
 
 /**
@@ -75,6 +80,10 @@ export const makeExchangeConfig = <TMessage>(name: string, type: ExchangeType, o
         arguments: {
             ...opts.arguments,
             ...top.arguments
+        },
+        preferences: {
+            ...opts.preferences,
+            ...top.preferences
         }
     });
     return {
@@ -94,7 +103,8 @@ export const makeExchangeConfig = <TMessage>(name: string, type: ExchangeType, o
         fanout: () => makeExchangeConfig(name, 'fanout', opts),
         headers: () => makeExchangeConfig(name, 'headers', opts),
         topic: () => makeExchangeConfig(name, 'topic', opts),
-        delayed: (xDelayedType: StandardExchangeType) => makeExchangeConfig(name, 'x-delayed-message', cloneOpts({ arguments: { 'x-delayed-type': xDelayedType } }))
+        delayed: (xDelayedType: StandardExchangeType) => makeExchangeConfig(name, 'x-delayed-message', cloneOpts({ arguments: { 'x-delayed-type': xDelayedType } })),
+        passive: (passive = true) => makeExchangeConfig(name, type, cloneOpts({ preferences: { passive } }))
     };
 };
 

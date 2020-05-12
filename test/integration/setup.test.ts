@@ -1,6 +1,7 @@
-import { Haredo, haredo } from '../../src/haredo';
-import { setup, teardown, checkQueue, checkExchange } from './helpers/amqp';
 import { makeExchangeConfig } from '../../src/exchange';
+import { Haredo, haredo } from '../../src/haredo';
+import { makeQueueConfig } from '../../src/queue';
+import { checkExchange, checkQueue, setup, teardown } from './helpers/amqp';
 
 describe('integration/setup', () => {
     let rabbit: Haredo;
@@ -27,5 +28,23 @@ describe('integration/setup', () => {
         const exchange = makeExchangeConfig('test', 'direct');
         await rabbit.exchange(exchange).skipSetup().setup();
         await rabbit.exchange(exchange.fanout()).setup();
+    });
+    it('should not create queue if passive is true', async () => {
+        const queue = makeQueueConfig('test').type('quorum');
+        await rabbit.queue(queue).setup();
+        await rabbit.queue(queue.type('classic').passive()).setup();
+    });
+    it('should not create exchange if passive is true', async () => {
+        const exchange = makeExchangeConfig('test', 'direct');
+        await rabbit.exchange(exchange).setup();
+        await rabbit.exchange(exchange.fanout().passive()).setup();
+    });
+    it('should not create exchanges to bind from if passive is true', async () => {
+        const exchange = makeExchangeConfig('test', 'direct');
+        const queue = makeQueueConfig('test');
+        await rabbit.exchange(exchange.fanout()).setup();
+        await rabbit.queue(queue)
+            .bindExchange(exchange.passive(), '#')
+            .setup();
     });
 });
