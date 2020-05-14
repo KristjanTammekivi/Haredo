@@ -1,3 +1,10 @@
+#### 2.3.1 (2020-05-14)
+
+##### Chores
+
+* **deps:**  bump amqplib from 0.5.5 to 0.5.6 ([aef49da2](https://github.com/KristjanTammekivi/haredo/commit/aef49da235226da60ad4a4aea50ccec4de06cfef))
+* **deps-dev:**  bump typescript from 3.8.3 to 3.9.2 ([8096b87c](https://github.com/KristjanTammekivi/haredo/commit/8096b87c5c27960e12493adb8fc99ecb4820c919))
+
 ### 2.3.0 (2020-05-12)
 
 ##### Chores
