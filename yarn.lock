@@ -2455,9 +2455,9 @@ resolve@^1.1.6, resolve@^1.3.2:
     path-parse "^1.0.6"
 
 rewiremock@^3.13.7:
-  version "3.14.1"
-  resolved "https://registry.yarnpkg.com/rewiremock/-/rewiremock-3.14.1.tgz#3d8b76e3caf9142f175e5030ab369e3d7cf0d9f5"
-  integrity sha512-fxjaEv7Iq/mXURg0WLhcss/9jr5VJ8pPduTnYxwjwVaPNSaUZxVowxU9WwLdrQllxWLecb72WnGkurFL1m8Cxw==
+  version "3.14.2"
+  resolved "https://registry.yarnpkg.com/rewiremock/-/rewiremock-3.14.2.tgz#a3bb62dc1f50190d20248fb3361b34a62871f532"
+  integrity sha512-oNdLZhl9wcs1PRI/tukZCgNkKSyC8y74a0WBC2w0eRfB1kSh16ckAxtqYh8LeZBogXZQhLA4qHFa8uq5/8wK9w==
   dependencies:
     babel-runtime "^6.26.0"
     compare-module-exports "^2.1.0"
