@@ -1,3 +1,25 @@
+### 2.4.0 (2020-05-29)
+
+##### Chores
+
+* **deps-dev:**
+  *  bump ts-node from 8.10.1 to 8.10.2 ([c4e1f38f](https://github.com/KristjanTammekivi/haredo/commit/c4e1f38fb44b3d709d401a5763b907e3a368c842))
+  *  bump mocha from 7.1.2 to 7.2.0 ([01ea30a6](https://github.com/KristjanTammekivi/haredo/commit/01ea30a6f4e3c9693ad8e9b0579bb5b6c894eaf5))
+  *  bump @types/sinon from 9.0.3 to 9.0.4 ([2c6d6ba8](https://github.com/KristjanTammekivi/haredo/commit/2c6d6ba87994079692d398a97c5e04c97367c2ce))
+  *  bump @types/sinon from 9.0.1 to 9.0.3 ([3c5079c1](https://github.com/KristjanTammekivi/haredo/commit/3c5079c1165f4fd58f363a4b686ccc241ded7b36))
+  *  bump typescript from 3.9.2 to 3.9.3 ([dfac9ad8](https://github.com/KristjanTammekivi/haredo/commit/dfac9ad8fa4b2e06b2b9372e684cb37187f98e64))
+  *  bump rewiremock from 3.14.1 to 3.14.2 ([fdf0c8f1](https://github.com/KristjanTammekivi/haredo/commit/fdf0c8f13313b636e44e8071d3c900f20df7aed7))
+  *  bump @types/sinon from 9.0.0 to 9.0.1 ([876335f6](https://github.com/KristjanTammekivi/haredo/commit/876335f68a8ddb3b618fc14cabef24fd80633824))
+  *  bump typedoc from 0.17.6 to 0.17.7 ([fa4acdfe](https://github.com/KristjanTammekivi/haredo/commit/fa4acdfe73c236529ccab0639b63d59937578733))
+
+##### New Features
+
+*  export connection options so users don't have to import them from amqplib ([acfefa7e](https://github.com/KristjanTammekivi/haredo/commit/acfefa7eb4a2ce340714f1159234780ecda46cf9))
+
+##### Bug Fixes
+
+*  wipe queue names that start with amq. ([dc9a6745](https://github.com/KristjanTammekivi/haredo/commit/dc9a6745b324b4dba7b2e13f71dcdd9534ed6ffe))
+
 #### 2.3.1 (2020-05-14)
 
 ##### Chores
