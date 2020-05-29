@@ -96,10 +96,15 @@ const addSetup = (state: Partial<HaredoChainState>) => async () => {
         if (typeof state.queue !== 'undefined') {
             const { preferences, ...queueOpts } = state.queue.getOpts();
             let queueData: Replies.AssertQueue;
+            const queueInitialName = state.queue.getName();
+            // amq. prefixed queue names are only allowed as server-assigned.
+            // In case of reconnection we want to wipe the name and let server
+            // assign a new name.
+            const queueName = /^amq\./.test(queueInitialName) ? '' : queueInitialName;
             if (preferences?.passive) {
-                queueData = await channel.checkQueue(state.queue.getName());
+                queueData = await channel.checkQueue(queueName);
             } else {
-                queueData = await channel.assertQueue(state.queue.getName(), queueOpts);
+                queueData = await channel.assertQueue(queueName, queueOpts);
             }
             state.queue.mutateName(queueData.queue);
         }

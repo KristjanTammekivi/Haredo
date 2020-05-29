@@ -1,3 +1,4 @@
+import { expect } from 'chai';
 import { makeExchangeConfig } from '../../src/exchange';
 import { Haredo, haredo } from '../../src/haredo';
 import { makeQueueConfig } from '../../src/queue';
@@ -46,5 +47,12 @@ describe('integration/setup', () => {
         await rabbit.queue(queue)
             .bindExchange(exchange.passive(), '#')
             .setup();
+    });
+    it('should delete queue name on setup if it starts with "amq."', async () => {
+        const initialQueueName = 'amq.reserved-prefix-queue';
+        const queue = makeQueueConfig(initialQueueName);
+        await rabbit.queue(queue).setup();
+        expect(queue.getName()).to.not.equal(initialQueueName);
+        expect(queue.getName()).to.match(/^amq\..*/);
     });
 });
