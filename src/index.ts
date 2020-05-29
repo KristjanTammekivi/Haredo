@@ -1,5 +1,6 @@
 import { makeQueueConfig } from './queue';
 import { makeExchangeConfig } from './exchange';
+import { Options } from 'amqplib';
 
 export {
     ExchangeChain,
@@ -28,3 +29,5 @@ export {
 
 export const q = makeQueueConfig;
 export const e = makeExchangeConfig;
+
+export type ConnectionOptions = Options.Connect;
