@@ -1,3 +1,24 @@
+### 2.5.0 (2020-07-16)
+
+##### Chores
+
+*  upgrade typescript to 3.9.6 ([267a0a33](https://github.com/KristjanTammekivi/haredo/commit/267a0a33f35f160023d07487b8f2fedfdf36178c))
+*  fix test rabbitmq dockerfile build ([a3d0f931](https://github.com/KristjanTammekivi/haredo/commit/a3d0f931988a5b6da448a8265f17d5bafc6c7184))
+* **deps:**  bump amqplib from 0.5.6 to 0.6.0 ([6026ade6](https://github.com/KristjanTammekivi/haredo/commit/6026ade6c54482deab80ca4dd82f96d13313658e))
+* **deps-dev:**
+  *  bump @types/mocha from 7.0.2 to 8.0.0 ([f0ff9b62](https://github.com/KristjanTammekivi/haredo/commit/f0ff9b6270aeee9732ed4757a4eea4ba0fd8ebfe))
+  *  bump @types/chai-as-promised from 7.1.2 to 7.1.3 ([07f4932c](https://github.com/KristjanTammekivi/haredo/commit/07f4932c13ddc96ef27f219774e9fbe94a28f5f2))
+  *  bump typescript from 3.9.5 to 3.9.6 ([d5ab2f28](https://github.com/KristjanTammekivi/haredo/commit/d5ab2f289c2fab9b72e65478bb141de4a91dbc32))
+  *  bump typedoc from 0.17.7 to 0.17.8 ([cddea081](https://github.com/KristjanTammekivi/haredo/commit/cddea081235589bbcc5ae7963cf9a0c71578d74d))
+  *  bump rewiremock from 3.14.2 to 3.14.3 ([e0894765](https://github.com/KristjanTammekivi/haredo/commit/e08947654b0441c0b1bc0c71a589047d209f2102))
+  *  bump typescript from 3.9.3 to 3.9.5 ([ef9a442f](https://github.com/KristjanTammekivi/haredo/commit/ef9a442f95fc8f817f93fdcfbfaea892311fd182))
+  *  bump mocha from 7.2.0 to 8.0.1 ([fe96a46f](https://github.com/KristjanTammekivi/haredo/commit/fe96a46f22a854445a23c39d793ea4d2346a106a))
+  *  bump nyc from 15.0.1 to 15.1.0 ([9c3b6370](https://github.com/KristjanTammekivi/haredo/commit/9c3b637085115bc7bd4bd0a42296c0e0b25c3a70))
+
+##### New Features
+
+*  check connection opts to make sure there are no extra opts ([d33bbb53](https://github.com/KristjanTammekivi/haredo/commit/d33bbb53e46a4130edaabd0d91f2dee42aa3f40a))
+
 ### 2.4.0 (2020-05-29)
 
 ##### Chores
