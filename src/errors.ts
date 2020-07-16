@@ -1,5 +1,12 @@
 export class HaredoError extends Error {
-    name: 'HaredoError';
+    name = 'HaredoError';
+}
+
+export class InvalidOptionsError extends HaredoError {
+    name = 'InvalidOptionsError';
+    constructor(public key: string) {
+        super(`Error, connection object contains unknown key: ${ key }`);
+    }
 }
 
 export class ChannelBrokenError extends HaredoError {

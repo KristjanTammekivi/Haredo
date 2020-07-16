@@ -9,6 +9,7 @@ import { makeQueueConfig, Queue } from './queue';
 import { generateCorrelationId } from './rpc';
 import { defaultState, HaredoChainState, Logger, Loggers, Middleware } from './state';
 import { merge, MergeTypes, omitUndefined, promiseMap } from './utils';
+import { InvalidOptionsError } from './errors';
 
 // TODO: make this file smaller
 // TODO: add a configuration option for max connection attempts
@@ -54,6 +55,7 @@ const makeLogger = (level: LogLevel, logger: (log: LogItem) => void): Logger =>
         logger(omitUndefined({ component, msg, message, rawMessage, error, level, timestamp: new Date() }));
 
 export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOptions): Haredo => {
+    validateConnectionOptions(connection);
     const log: Loggers = {
         debug: makeLogger(LogLevel.DEBUG, logger),
         info: makeLogger(LogLevel.INFO, logger),
@@ -70,6 +72,18 @@ export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOpti
             await connectionManager.getConnection();
         }
     };
+};
+
+const validateConnectionOptions = (connectionOpts: string | Options.Connect) => {
+    if (typeof connectionOpts === 'string') {
+        return;
+    }
+    const allowedKeys: (keyof Options.Connect)[] = ['frameMax', 'heartbeat', 'hostname', 'locale', 'password', 'port', 'protocol', 'username', 'vhost'];
+    for (const key of Object.keys(connectionOpts)) {
+        if (!allowedKeys.includes(key as keyof Options.Connect)) {
+            throw new InvalidOptionsError(key);
+        }
+    }
 };
 
 export interface ChainFunction<TMessage = unknown> {
