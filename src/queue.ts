@@ -81,6 +81,17 @@ export interface Queue<TPublish = unknown, TReply = unknown> {
      * @param passive true to do a checkQueue instead of assertQueue
      */
     passive(passive?: boolean): Queue<TPublish, TReply>;
+    /**
+     * Set the limit of how many times a delivery can be done. Only available for quorum queues
+     * @param limit
+     */
+    deliveryLimit(limit: number): Queue<TPublish, TReply>;
+    /**
+     * Set an argument for a queue
+     * @param name name of argument, ie x-max-in-memory-bytes
+     * @param value
+     */
+    argument(name: string, value: any): Queue<TPublish, TReply>;
 }
 
     /**
@@ -99,6 +110,7 @@ export const makeQueueConfig = <TPublish = unknown, TReply = unknown>(name?: str
             ...top?.arguments
         }
     });
+    const argument = (argName: string, value: any) => makeQueueConfig(name, cloneOpts({ arguments: { [argName]: value } }));
     return {
         metaType: 'queue',
         getName: () => name,
@@ -117,9 +129,11 @@ export const makeQueueConfig = <TPublish = unknown, TReply = unknown>(name?: str
         },
         name: (name: string) => makeQueueConfig(name, cloneOpts({})),
         mutateName: (newName: string) => { name = newName; },
-        maxPriority: priority => makeQueueConfig(name, cloneOpts({ arguments: { 'x-max-priority': priority } })),
-        type: type => makeQueueConfig(name, cloneOpts({ arguments: { 'x-queue-type': type } })),
-        passive: (passive = true) => makeQueueConfig(name, cloneOpts({ preferences: { passive } }))
+        maxPriority: priority => argument('x-max-priority', priority),
+        type: type => argument('x-queue-type', type),
+        passive: (passive = true) => makeQueueConfig(name, cloneOpts({ preferences: { passive } })),
+        deliveryLimit: limit => argument('x-delivery-limit', limit),
+        argument
     };
 };
 
