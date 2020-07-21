@@ -118,6 +118,10 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown> extends Met
      * Name of the queue this message was consumed from
      */
     queue: string;
+    /**
+     * Amount of attempts the broker has done to deliver the message
+     */
+    deliveryCount?: number;
 }
 
 export interface Methods<TReply = unknown> {
@@ -211,7 +215,8 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
         timestamp: raw.properties.timestamp,
         type: raw.properties.type,
         userId: raw.properties.userId,
-        metaType: 'message'
+        metaType: 'message',
+        deliveryCount: raw.properties.headers['x-delivery-count']
     };
 };
 
