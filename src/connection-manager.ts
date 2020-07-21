@@ -129,6 +129,7 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
                     }
                 });
                 emitter.emit('connected', connection);
+                log.info({ component: 'ConnectionManager', msg: 'connected' });
                 return connection;
             } catch (error) /* istanbul ignore next */ {
                 log.error({ component: 'ConnectionManager', msg: 'error while connecting', error });
