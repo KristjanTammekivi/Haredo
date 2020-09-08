@@ -1849,10 +1849,10 @@ lodash@4.17.10:
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.10.tgz#1b7793cf7259ea38fb3661d4d38b3260af8ae4e7"
   integrity sha512-UejweD1pDoXu+AD825lWwp4ZGtSwgnpZxb3JDViD7StjQz+Nb/6l093lx4OQ0foGWNRoc19mWy7BzL+UAK2iVg==
 
-lodash@^4.13.1, lodash@^4.17.13, lodash@^4.17.15:
-  version "4.17.15"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
-  integrity sha512-8xOcRHvCjnocdS5cpwXQXVzmmh5e5+saE2QGoeQmbKmRS6J3VQppPOIt0MnmE+4xlZoumy0GPG0D0MVIQbNA1A==
+lodash@^4.13.1, lodash@^4.17.13, lodash@^4.17.20:
+  version "4.17.20"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.20.tgz#b44a9b6297bcb698f1c51a3545a2b3b368d59c52"
+  integrity sha512-PlhdFcillOINfeV7Ni6oF1TAEayyZBoZ8bcshTHqOYJYlrqzRK5hagpagky5o4HfCzzd1TRkXPMFq6cKk9rGmA==
 
 log-driver@^1.2.7:
   version "1.2.7"
@@ -1866,10 +1866,10 @@ log-symbols@3.0.0:
   dependencies:
     chalk "^2.4.2"
 
-lunr@^2.3.8:
-  version "2.3.8"
-  resolved "https://registry.yarnpkg.com/lunr/-/lunr-2.3.8.tgz#a8b89c31f30b5a044b97d2d28e2da191b6ba2072"
-  integrity sha512-oxMeX/Y35PNFuZoHp+jUj5OSEmLCaIH4KTFJh7a93cHBoFmpw2IoPs22VIz7vyO2YUnx2Tn9dzIwO2P/4quIRg==
+lunr@^2.3.9:
+  version "2.3.9"
+  resolved "https://registry.yarnpkg.com/lunr/-/lunr-2.3.9.tgz#18b123142832337dd6e964df1a5a7707b25d35e1"
+  integrity sha512-zTU3DaZaF3Rt9rhN3uBMGQD3dD2/vFQqnvZCDv4dl5iOzq2IZQqTxu90r4E5J+nP70J3ilqVCrbho2eWaeW8Ow==
 
 make-dir@^3.0.0, make-dir@^3.0.2:
   version "3.0.2"
@@ -2586,25 +2586,20 @@ safer-buffer@^2.0.2, safer-buffer@^2.1.0, safer-buffer@~2.1.0:
   resolved "https://registry.yarnpkg.com/safer-buffer/-/safer-buffer-2.1.2.tgz#44fa161b0187b9549dd84bb91802f9bd8385cd6a"
   integrity sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==
 
-semver@^5.3.0:
-  version "5.7.0"
-  resolved "https://registry.yarnpkg.com/semver/-/semver-5.7.0.tgz#790a7cf6fea5459bac96110b29b60412dc8ff96b"
-  integrity sha512-Ya52jSX2u7QKghxeoFGpLwCtGlt7j0oY9DYb5apt9nPlJ42ID+ulTXESnt/qAQcoSERyZ5sl3LDIOw0nAn/5DA==
-
-semver@^5.4.1:
+semver@^5.3.0, semver@^5.4.1:
   version "5.7.1"
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.7.1.tgz#a954f931aeba508d307bbf069eff0c01c96116f7"
   integrity sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ==
 
-semver@^6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/semver/-/semver-6.0.0.tgz#05e359ee571e5ad7ed641a6eec1e547ba52dea65"
-  integrity sha512-0UewU+9rFapKFnlbirLi3byoOuhrSsli/z/ihNnvM24vgF+8sNBiI1LZPBSH9wJKUwaUbw+s3hToDLCXkrghrQ==
-
-semver@^6.3.0:
+semver@^6.0.0, semver@^6.3.0:
   version "6.3.0"
   resolved "https://registry.yarnpkg.com/semver/-/semver-6.3.0.tgz#ee0a64c8af5e8ceea67687b133761e1becbd1d3d"
   integrity sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==
+
+semver@^7.3.2:
+  version "7.3.2"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-7.3.2.tgz#604962b052b81ed0786aae84389ffba70ffd3938"
+  integrity sha512-OrOb32TeeambH6UrhtShmF7CRDqhL6/5XpPNp2DuRH6+9QLw/orhp72j87v8Qa1ScDkvrrBNpZcDejAirJmfXQ==
 
 serialize-javascript@4.0.0:
   version "4.0.0"
@@ -3078,28 +3073,29 @@ typedarray-to-buffer@^3.1.5:
   dependencies:
     is-typedarray "^1.0.0"
 
-typedoc-default-themes@^0.10.2:
-  version "0.10.2"
-  resolved "https://registry.yarnpkg.com/typedoc-default-themes/-/typedoc-default-themes-0.10.2.tgz#743380a80afe62c5ef92ca1bd4abe2ac596be4d2"
-  integrity sha512-zo09yRj+xwLFE3hyhJeVHWRSPuKEIAsFK5r2u47KL/HBKqpwdUSanoaz5L34IKiSATFrjG5ywmIu98hPVMfxZg==
+typedoc-default-themes@^0.11.1:
+  version "0.11.1"
+  resolved "https://registry.yarnpkg.com/typedoc-default-themes/-/typedoc-default-themes-0.11.1.tgz#1c5d62d973cb1ddf83b724e023c7869ebcded3f2"
+  integrity sha512-1yl8pbhjrLywqGJx9TfT+wzP+ntudPYjgJdpCj+s5ed2etBkqZPOCBMKwpaN9o6pdoFQF195PggqWTLVEkaRQQ==
   dependencies:
-    lunr "^2.3.8"
+    lunr "^2.3.9"
 
-typedoc@^0.18.0:
-  version "0.18.0"
-  resolved "https://registry.yarnpkg.com/typedoc/-/typedoc-0.18.0.tgz#8bf53ddd7df5b8966b52c946929a09549d78682b"
-  integrity sha512-UgDQwapCGQCCdYhEQzQ+kGutmcedklilgUGf62Vw6RdI29u6FcfAXFQfRTiJEbf16aK3YnkB20ctQK1JusCRbA==
+typedoc@^0.19.1:
+  version "0.19.1"
+  resolved "https://registry.yarnpkg.com/typedoc/-/typedoc-0.19.1.tgz#1c92608fc4944c6e2223cf3a43b603272b4ac94d"
+  integrity sha512-EqZpRJQUnkwHA1yBhaDExEXUZIiWKddkrDXhRcfUzpnu6pizxNmVTw5IZ3mu682Noa4zQCniE0YNjaAwHQodrA==
   dependencies:
     fs-extra "^9.0.1"
     handlebars "^4.7.6"
     highlight.js "^10.0.0"
-    lodash "^4.17.15"
-    lunr "^2.3.8"
+    lodash "^4.17.20"
+    lunr "^2.3.9"
     marked "^1.1.1"
     minimatch "^3.0.0"
     progress "^2.0.3"
+    semver "^7.3.2"
     shelljs "^0.8.4"
-    typedoc-default-themes "^0.10.2"
+    typedoc-default-themes "^0.11.1"
 
 typescript-tslint-plugin@^0.5.5:
   version "0.5.5"
