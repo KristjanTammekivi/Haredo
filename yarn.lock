@@ -2880,9 +2880,9 @@ typedoc@^0.19.1:
     typedoc-default-themes "^0.11.4"
 
 typescript-tslint-plugin@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/typescript-tslint-plugin/-/typescript-tslint-plugin-1.0.0.tgz#ad40bbbcfbbfe2953dc8aa2de57aa30ad748ee4e"
-  integrity sha512-4pl0M6/2PVRba4LbmPk/cbc45mc+8JuI69F7hjzg1LsTNZ6orZxy9W8hMrRwKADBHRp6elnF6TOU9jLRzvXstQ==
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/typescript-tslint-plugin/-/typescript-tslint-plugin-1.0.1.tgz#9c18e1ad7a3f2883c764794d4a0e6121ea3b2d20"
+  integrity sha512-akj+J1FDoEv8y5uSs6f6SfkY3ywnhnTifDvOmwejSs4U+a18p73YoetrllKCDf14iq0VMNwIgCxNY/v88K6QYg==
   dependencies:
     minimatch "^3.0.4"
     mock-require "^3.0.3"
