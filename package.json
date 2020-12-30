@@ -28,7 +28,7 @@
     "release:major": "changelog -M && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --major && git push && git push --tags",
     "release:minor": "changelog -m && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --minor && git push && git push --tags",
     "release:patch": "changelog -p && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --patch && git push && git push --tags",
-    "generate-docs": "typedoc --out docs --excludeNotExported"
+    "generate-docs": "typedoc --out docs src/index.ts"
   },
   "nyc": {
     "include": [
@@ -83,7 +83,7 @@
     "tslint": "^5.17.0",
     "tslint-config-airbnb": "^5.11.1",
     "tslint-sonarts": "^1.9.0",
-    "typedoc": "^0.19.1",
+    "typedoc": "^0.20.4",
     "typescript": "^3.9.6",
     "typescript-tslint-plugin": "^1.0.0"
   }
