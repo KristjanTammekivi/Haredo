@@ -83,7 +83,7 @@
     "tslint": "^5.17.0",
     "tslint-config-airbnb": "^5.11.1",
     "tslint-sonarts": "^1.9.0",
-    "typedoc": "^0.19.1",
+    "typedoc": "^0.20.4",
     "typescript": "^3.9.6",
     "typescript-tslint-plugin": "^1.0.0"
   }
