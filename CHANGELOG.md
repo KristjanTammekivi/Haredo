@@ -1,3 +1,23 @@
+#### 2.6.1 (2021-03-09)
+
+##### Chores
+
+* **deps:**
+  *  bump elliptic from 6.5.3 to 6.5.4 ([498ebd93](https://github.com/KristjanTammekivi/haredo/commit/498ebd938d044a4b9fb261c62c4f18d2344480f0))
+  *  bump amqplib from 0.7.0 to 0.7.1 ([403066ed](https://github.com/KristjanTammekivi/haredo/commit/403066eddb0f183f1d05ae0d9f0448aff82afd94))
+  *  [security] bump elliptic from 6.5.3 to 6.5.4 ([c7d06d1b](https://github.com/KristjanTammekivi/haredo/commit/c7d06d1b4d8976a799663644dbc55a1a392f7876))
+* **deps-dev:**
+  *  bump @types/sinon from 9.0.10 to 9.0.11 ([866fc7c1](https://github.com/KristjanTammekivi/haredo/commit/866fc7c1e65cf42fe5a7dc16facbde5d268b7f10))
+  *  bump mocha from 8.3.0 to 8.3.1 ([eb9cf0f0](https://github.com/KristjanTammekivi/haredo/commit/eb9cf0f09d116bea6a40ffed3c50c520963098bc))
+  *  bump typedoc from 0.20.29 to 0.20.30 ([75ab6311](https://github.com/KristjanTammekivi/haredo/commit/75ab631139ede248bbe7adba1094a5d4360c81de))
+  *  bump chai from 4.3.1 to 4.3.3 ([fb8aeaeb](https://github.com/KristjanTammekivi/haredo/commit/fb8aeaeb79d3687b87cb11a305f03e958369cacb))
+  *  bump typedoc from 0.20.28 to 0.20.29 ([d505d680](https://github.com/KristjanTammekivi/haredo/commit/d505d6802c53968118475583975bc11d5f57548e))
+  *  bump chai from 4.3.0 to 4.3.1 ([ee80a36e](https://github.com/KristjanTammekivi/haredo/commit/ee80a36ebb27fd6b4bb1f5496cddbee7050efcc7))
+
+##### Other Changes
+
+*  update amqplib version in package.json ([272c52bf](https://github.com/KristjanTammekivi/haredo/commit/272c52bfcc26538da031901e32a2c0e1f29f45e5))
+
 ### 2.6.0 (2021-02-23)
 
 ##### Chores
