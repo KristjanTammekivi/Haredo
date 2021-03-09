@@ -295,7 +295,7 @@ ajv@^6.5.5:
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
 
-amqplib@^0.7.0:
+amqplib@^0.7.1:
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/amqplib/-/amqplib-0.7.1.tgz#1ac60934cbddb445bdc9c648310a0d232a53b3af"
   integrity sha512-KePK3tTOLGU4emTo+PwSDMbc123jrxo13FpRpim1LzJoSlQrIBB2/kMeCC40jK/Zb0olHGaABjLqXDsdK46iLA==
