@@ -30,4 +30,4 @@ export {
 export const q = makeQueueConfig;
 export const e = makeExchangeConfig;
 
-export type ConnectionOptions = Options.Connect;
+export { ConnectionOptions } from './connection-manager';
