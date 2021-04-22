@@ -106,3 +106,14 @@ export const makeTicketMachine = (): TicketMachine => {
         stop
     };
 };
+
+export const walkUntilEnd = <T>(arr: T[]): () => T => {
+    let currentIndex = 0;
+    return () => {
+        const item = arr[currentIndex];
+        if (currentIndex + 1 < arr.length) {
+            currentIndex += 1;
+        }
+        return item;
+    };
+};

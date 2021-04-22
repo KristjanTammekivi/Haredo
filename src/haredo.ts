@@ -1,6 +1,6 @@
 import { Message, Options, Replies } from 'amqplib';
 import { FailureBackoff } from './backoffs';
-import { makeConnectionManager } from './connection-manager';
+import { ConnectionOptions, makeConnectionManager } from './connection-manager';
 import { Consumer, makeConsumer, MessageCallback } from './consumer';
 import { Exchange, ExchangeOptions, ExchangeType, makeExchangeConfig, StandardExchangeType } from './exchange';
 import { HaredoMessage } from './haredo-message';
@@ -26,7 +26,7 @@ export interface LogItem {
 }
 
 export interface HaredoOptions {
-    connection?: Options.Connect | string;
+    connection?: ConnectionOptions | string;
     socketOpts?: any;
     logger?(log: LogItem): void;
 }

@@ -1,7 +1,7 @@
 import { Connection, connect, Options, Channel, ConfirmChannel } from 'amqplib';
 import { HaredoClosingError } from './errors';
 import { makeEmitter, TypedEventEmitter } from './events';
-import { delay, promiseMap } from './utils';
+import { delay, promiseMap, walkUntilEnd } from './utils';
 import { Consumer } from './consumer';
 import { StartRpc, startRpc } from './rpc';
 import { initialChain } from './haredo';
@@ -25,7 +25,19 @@ export interface ConnectionManager {
     rpc<TReply>(correlationId: string): Promise<{ promise: Promise<TReply>, queue: string }>;
 }
 
-export const makeConnectionManager = (connectionOpts: string | Options.Connect, socketOpts: any, log: Loggers): ConnectionManager => {
+export type ConnectionOptions = Options.Connect & {
+    /**
+     * An array of reconnection delays.
+     * For example
+     * [1000, 10000, 60000] would mean that after first attempt of connecting
+     * there's a delay of 1s, then 10s and all the rest after 60s until a
+     * successful connection to RabbitMQ is made
+     * @default [1000]
+    */
+    reconnectDelays?: number[];
+};
+
+export const makeConnectionManager = (connectionOpts: string | ConnectionOptions, socketOpts: any, log: Loggers): ConnectionManager => {
     let connection: Connection;
     let connectionPromise: Promise<Connection>;
     let closed = false;
@@ -108,6 +120,11 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
 
     const loopGetConnection = async () => {
         log.info({ component: 'ConnectionManager', msg: 'connecting' });
+        let reconnectDelays = [1000];
+        if (isConnectionOpts(connectionOpts) && connectionOpts.reconnectDelays) {
+            reconnectDelays = connectionOpts.reconnectDelays;
+        }
+        const walker = walkUntilEnd(reconnectDelays);
         while (true) {
             /* istanbul ignore if */
             if (closed) {
@@ -133,7 +150,7 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
                 return connection;
             } catch (error) /* istanbul ignore next */ {
                 log.error({ component: 'ConnectionManager', msg: 'error while connecting', error });
-                await delay(1000);
+                await delay(walker());
             }
         }
     };
@@ -141,4 +158,8 @@ export const makeConnectionManager = (connectionOpts: string | Options.Connect, 
     cm.rpc = rpc;
 
     return cm as ConnectionManager;
+};
+
+const isConnectionOpts = (x: any): x is ConnectionOptions => {
+    return typeof x === 'object';
 };
