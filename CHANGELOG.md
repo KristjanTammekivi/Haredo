@@ -1,3 +1,25 @@
+#### 2.6.2 (2021-04-22)
+
+##### Chores
+
+* **deps-dev:**
+  *  bump @types/sinon from 9.0.11 to 10.0.0 ([fb31f79f](https://github.com/KristjanTammekivi/haredo/commit/fb31f79fc2cd59f8a36fcc9b2260d2f09945d6f7))
+  *  bump @types/chai from 4.2.15 to 4.2.16 ([3b120e7b](https://github.com/KristjanTammekivi/haredo/commit/3b120e7b855307c6319381e9fad3c16b63dc693d))
+  *  bump typedoc from 0.20.34 to 0.20.35 ([0b111a3e](https://github.com/KristjanTammekivi/haredo/commit/0b111a3e4b11b78449f467a2f6a09f9493ea65e5))
+  *  bump typedoc from 0.20.33 to 0.20.34 ([e6185585](https://github.com/KristjanTammekivi/haredo/commit/e618558588a9f0f79279ce4d6bac8b99f3efae52))
+  *  bump sinon from 9.2.4 to 10.0.0 ([59a1befe](https://github.com/KristjanTammekivi/haredo/commit/59a1befee2d8984f6c1a78c57649567631556818))
+  *  bump sinon-chai from 3.5.0 to 3.6.0 ([97d23f83](https://github.com/KristjanTammekivi/haredo/commit/97d23f835f84ca22043866a0ad2b233be3b15f7d))
+  *  bump @types/mocha from 8.2.1 to 8.2.2 ([73975861](https://github.com/KristjanTammekivi/haredo/commit/73975861a5fb112a317948cba66b25826f58254e))
+  *  bump typedoc from 0.20.32 to 0.20.33 ([ac895d09](https://github.com/KristjanTammekivi/haredo/commit/ac895d090c5016c8f50ab71903a8f63ee1853d60))
+  *  bump chai from 4.3.3 to 4.3.4 ([c7f06c9d](https://github.com/KristjanTammekivi/haredo/commit/c7f06c9d50e0221ab83c14283d210ceca7fd462d))
+  *  bump typedoc from 0.20.30 to 0.20.32 ([48527586](https://github.com/KristjanTammekivi/haredo/commit/4852758674d8e578fcebe63512110ede0a64d790))
+  *  bump mocha from 8.3.1 to 8.3.2 ([302b5ffc](https://github.com/KristjanTammekivi/haredo/commit/302b5ffc34b32ba4facb53973c2fa43119cd3de4))
+* **deps:**  [security] bump y18n from 4.0.0 to 4.0.1 ([011ec159](https://github.com/KristjanTammekivi/haredo/commit/011ec159f6ffbb7e8bbc88326567f60605f09492))
+
+##### Other Changes
+
+*  add ability to set reconnect delays ([7703c28e](https://github.com/KristjanTammekivi/haredo/commit/7703c28e6d295d483fde02e74a8259308f545d58))
+
 #### 2.6.1 (2021-03-09)
 
 ##### Chores
