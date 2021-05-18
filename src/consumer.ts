@@ -92,8 +92,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                     log.error({ component: 'Consumer', msg: 'Failed to restart consumer', error });
                     emitter.emit('error', error);
                 }
-            }
-            if (!consumer.isClosing) {
+            } else if (!consumer.isClosing) {
                 await close();
             }
         });
