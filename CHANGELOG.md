@@ -1,3 +1,18 @@
+#### 2.6.3 (2021-05-18)
+
+##### Chores
+
+* **deps-dev:**
+  *  bump @types/chai from 4.2.17 to 4.2.18 ([7d58ba95](https://github.com/KristjanTammekivi/haredo/commit/7d58ba9520d5a699a7bacefb7e6fd2fe3ab74fa3))
+  *  bump mocha from 8.3.2 to 8.4.0 ([059f2e99](https://github.com/KristjanTammekivi/haredo/commit/059f2e99c002a087e48f4d5ce3188ff9493377e7))
+  *  bump @types/chai-as-promised from 7.1.3 to 7.1.4 ([f3ee235e](https://github.com/KristjanTammekivi/haredo/commit/f3ee235e1e38871356fe70eb68a430f3686360ff))
+  *  bump @types/chai from 4.2.16 to 4.2.17 ([2223f293](https://github.com/KristjanTammekivi/haredo/commit/2223f2936161732b48877c716d791c85aa0999a4))
+  *  bump typedoc from 0.20.35 to 0.20.36 ([d55664c8](https://github.com/KristjanTammekivi/haredo/commit/d55664c8c4a98b37482fa1e5ea2fd2bc702be282))
+
+##### Other Changes
+
+*  upgrade test rabbitmq to 3.8.16 ([694d83d8](https://github.com/KristjanTammekivi/haredo/commit/694d83d8777d76679dad5a2e764445ec8621c32f))
+
 #### 2.6.2 (2021-04-22)
 
 ##### Chores
