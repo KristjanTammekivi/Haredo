@@ -32,6 +32,7 @@ export interface ConsumerOpts {
 
 export interface ConsumerEvents {
     close: never;
+    reestablished: never;
     error: Error;
     'message-error': Error;
 }
@@ -86,14 +87,14 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
                     if (!consumer.isClosing) {
                         messageManager = makeMessageManager(log);
                         await start();
+                        emitter.emit('reestablished');
                     }
                 } catch (error) {
                     // TODO: attempt again
                     log.error({ component: 'Consumer', msg: 'Failed to restart consumer', error });
                     emitter.emit('error', error);
                 }
-            }
-            if (!consumer.isClosing) {
+            } else if (!consumer.isClosing) {
                 await close();
             }
         });

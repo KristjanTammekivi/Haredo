@@ -5,9 +5,7 @@ cache: yarn
 services:
 - docker
 before_install:
-- cd test/docker
-- docker-compose up -d
-- cd ../..
+- ./test/start-rabbit.sh
 script:
 - pwd
 - yarn
