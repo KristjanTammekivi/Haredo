@@ -1,4 +1,4 @@
-FROM ent.coolbet.com:5000/rabbitmq-base:3.8.16-management-b1
+FROM rabbitmq:3.8.16-management
 
 RUN apt-get update && \
     apt-get install wget -y && \
