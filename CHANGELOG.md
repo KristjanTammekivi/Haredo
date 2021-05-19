@@ -1,3 +1,9 @@
+### 2.7.0 (2021-05-19)
+
+##### Other Changes
+
+*  amqplib to 0.8.0 ([df860a8c](https://github.com/KristjanTammekivi/haredo/commit/df860a8cfdaa125feb495affbf95cb30bbae27e6))
+
 #### 2.6.3 (2021-05-18)
 
 ##### Chores
