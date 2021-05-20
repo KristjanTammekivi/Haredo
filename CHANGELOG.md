@@ -1,3 +1,9 @@
+#### 2.7.1 (2021-05-20)
+
+##### Other Changes
+
+*  allow reconnectDelay option ([672ca227](https://github.com/KristjanTammekivi/haredo/commit/672ca2270910966591dd79b9a3dda433a0278c4f))
+
 ### 2.7.0 (2021-05-19)
 
 ##### Other Changes
