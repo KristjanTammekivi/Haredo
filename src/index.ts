@@ -1,6 +1,5 @@
 import { makeQueueConfig } from './queue';
 import { makeExchangeConfig } from './exchange';
-import { Options } from 'amqplib';
 
 export {
     ExchangeChain,

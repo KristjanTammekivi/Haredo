@@ -74,11 +74,11 @@ export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOpti
     };
 };
 
-const validateConnectionOptions = (connectionOpts: string | Options.Connect) => {
+const validateConnectionOptions = (connectionOpts: string | ConnectionOptions) => {
     if (typeof connectionOpts === 'string') {
         return;
     }
-    const allowedKeys: (keyof Options.Connect)[] = ['frameMax', 'heartbeat', 'hostname', 'locale', 'password', 'port', 'protocol', 'username', 'vhost'];
+    const allowedKeys: (keyof ConnectionOptions)[] = ['frameMax', 'heartbeat', 'hostname', 'locale', 'password', 'port', 'protocol', 'username', 'vhost', 'reconnectDelays'];
     for (const key of Object.keys(connectionOpts)) {
         if (!allowedKeys.includes(key as keyof Options.Connect)) {
             throw new InvalidOptionsError(key);
