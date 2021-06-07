@@ -197,10 +197,10 @@
   resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.1.tgz#8da5c6530915653f3a1f38fd5f101d8c3f8079c5"
   integrity sha512-+iTbntw2IZPb/anVDbypzfQa+ay64MW0Zo8aJ8gZPWMMK6/OubMVb6lUPMagqjOPnmtauXnFCACVl3O7ogjeqQ==
 
-"@types/amqplib@^0.5.8":
-  version "0.5.17"
-  resolved "https://registry.yarnpkg.com/@types/amqplib/-/amqplib-0.5.17.tgz#1211f5e01b62006e8a380af258d147de0b3b22e0"
-  integrity sha512-RImqiLP1swDqWBW8UX9iBXVEOw6MYzNmxdXqfemDfdwtUvdTM/W0s2RlSuMVIGkRhaWvpkC9O/N81VzzQwfAbw==
+"@types/amqplib@^0.8.0":
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/@types/amqplib/-/amqplib-0.8.0.tgz#e6801e32ff09cec060df1464dbe9dc5f329ed423"
+  integrity sha512-RDojJ8WACs43HIfWSQGnAVwgNzjMGx4YMNeW7jptgAFgkG1EpNQqts+cND5HYWdYgTM58b+RHe675b0i4A9WpQ==
   dependencies:
     "@types/bluebird" "*"
     "@types/node" "*"
