@@ -198,9 +198,9 @@
   integrity sha512-+iTbntw2IZPb/anVDbypzfQa+ay64MW0Zo8aJ8gZPWMMK6/OubMVb6lUPMagqjOPnmtauXnFCACVl3O7ogjeqQ==
 
 "@types/amqplib@^0.8.0":
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/@types/amqplib/-/amqplib-0.8.0.tgz#e6801e32ff09cec060df1464dbe9dc5f329ed423"
-  integrity sha512-RDojJ8WACs43HIfWSQGnAVwgNzjMGx4YMNeW7jptgAFgkG1EpNQqts+cND5HYWdYgTM58b+RHe675b0i4A9WpQ==
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/@types/amqplib/-/amqplib-0.8.1.tgz#895d9362335b0b88f51e45b60bcfeb76fb50492b"
+  integrity sha512-8dCjF+dHZ8Y6JOoHD1BMnxP0quAncvZq4wA/lS072NjX9vIzVRSMcmfKy2Os8ZQ8VWWp74MD09GMbVbKS6/Fxw==
   dependencies:
     "@types/bluebird" "*"
     "@types/node" "*"
