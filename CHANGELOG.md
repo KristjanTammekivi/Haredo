@@ -1,3 +1,49 @@
+#### 2.7.2 (2021-10-20)
+
+##### Chores
+
+* **deps-dev:**
+  *  bump mocha from 9.1.2 to 9.1.3 ([55f1474c](https://github.com/KristjanTammekivi/haredo/commit/55f1474c2833e001b2b9a6fa70846fe890d97a7d))
+  *  bump mocha from 9.1.1 to 9.1.2 ([78158fd9](https://github.com/KristjanTammekivi/haredo/commit/78158fd979b2f646c9e1e30bfbe0d01f6aa94928))
+  *  bump @types/sinon from 10.0.3 to 10.0.4 ([28258732](https://github.com/KristjanTammekivi/haredo/commit/282587328995d844ec3e956b463931e8ccb1f511))
+  *  bump @types/sinon from 10.0.2 to 10.0.3 ([a0a14be8](https://github.com/KristjanTammekivi/haredo/commit/a0a14be841cf19578cc04083eaeee330f1b75fe9))
+  *  bump @types/chai from 4.2.21 to 4.2.22 ([436b4e58](https://github.com/KristjanTammekivi/haredo/commit/436b4e583664871d6498765880a8330ab93f25d8))
+  *  bump source-map-support from 0.5.19 to 0.5.20 ([a11b8e7a](https://github.com/KristjanTammekivi/haredo/commit/a11b8e7ad19630453587639d21073458ca60d072))
+  *  bump mocha from 9.1.0 to 9.1.1 ([cf077f53](https://github.com/KristjanTammekivi/haredo/commit/cf077f53ef9405303fc60074db6fbcb58727116a))
+  *  bump @types/amqplib from 0.8.1 to 0.8.2 ([1aa0d7f7](https://github.com/KristjanTammekivi/haredo/commit/1aa0d7f7a1a1b320f0cd4ac9853c094c01e26e24))
+  *  bump mocha from 9.0.3 to 9.1.0 ([e6948f34](https://github.com/KristjanTammekivi/haredo/commit/e6948f349a1c76e712d28bd48a5c30582f8b07d7))
+  *  bump sinon from 11.1.1 to 11.1.2 ([c8c2ca7a](https://github.com/KristjanTammekivi/haredo/commit/c8c2ca7aec663c6dbe999c5c9a8c27054e6f6dd8))
+  *  bump @types/debug from 4.1.6 to 4.1.7 ([ad178fcb](https://github.com/KristjanTammekivi/haredo/commit/ad178fcb4f410f693eea683cd5976c8a26b04385))
+  *  bump mocha from 9.0.2 to 9.0.3 ([192f96bd](https://github.com/KristjanTammekivi/haredo/commit/192f96bd9145a03fd47e57196dce2212acdac40a))
+  *  bump @types/mocha from 8.2.3 to 9.0.0 ([eda5782e](https://github.com/KristjanTammekivi/haredo/commit/eda5782e3fb80d1d9c9bfa302ffc7c2784e719bc))
+  *  bump @types/chai from 4.2.20 to 4.2.21 ([dd4ab511](https://github.com/KristjanTammekivi/haredo/commit/dd4ab511c21ca1535adbfde53cb495571a14fb15))
+  *  bump @types/mocha from 8.2.2 to 8.2.3 ([abcbe662](https://github.com/KristjanTammekivi/haredo/commit/abcbe662d8984ba697a9f7f803a4b6fc9dbf5b61))
+  *  bump @types/chai from 4.2.19 to 4.2.20 ([5656806f](https://github.com/KristjanTammekivi/haredo/commit/5656806fe8db9cd80ac59b198eaab8c54ec3a241))
+  *  bump @types/amqplib from 0.8.0 to 0.8.1 ([307a682f](https://github.com/KristjanTammekivi/haredo/commit/307a682f19baf0b778332aa4a4439252d465ccf6))
+  *  bump mocha from 9.0.1 to 9.0.2 ([03acce44](https://github.com/KristjanTammekivi/haredo/commit/03acce44a0bb70379dada983956f9bb8cfe9d93c))
+  *  bump @types/debug from 4.1.5 to 4.1.6 ([b6c18066](https://github.com/KristjanTammekivi/haredo/commit/b6c18066e76c91bab09bed9af19cb08f9cfebd60))
+  *  bump coveralls from 3.1.0 to 3.1.1 ([c2f8c6c8](https://github.com/KristjanTammekivi/haredo/commit/c2f8c6c8fe7ff3392c1bbdca3dde4f1e256b0495))
+  *  bump @types/chai from 4.2.18 to 4.2.19 ([b4ee35fa](https://github.com/KristjanTammekivi/haredo/commit/b4ee35fad09fc35781a9644a15927306fdbcef22))
+  *  bump mocha from 9.0.0 to 9.0.1 ([2d154bf9](https://github.com/KristjanTammekivi/haredo/commit/2d154bf92c81301f2efc07bb84eca18fd6105e7a))
+  *  bump typedoc from 0.20.36 to 0.20.37 ([7e45e2f4](https://github.com/KristjanTammekivi/haredo/commit/7e45e2f47675dd925a416dc0e83fc4e0331795ad))
+  *  bump typescript from 3.9.9 to 3.9.10 ([732fc497](https://github.com/KristjanTammekivi/haredo/commit/732fc497923d6973b727f3fab8a3f8e355f2938a))
+  *  bump mocha from 8.4.0 to 9.0.0 ([d3bccd5a](https://github.com/KristjanTammekivi/haredo/commit/d3bccd5a8ac96a56f54ac5bca568fe7dfc16e3c6))
+  *  bump @types/amqplib from 0.5.17 to 0.8.0 ([b377ffb7](https://github.com/KristjanTammekivi/haredo/commit/b377ffb71acf5e14b3fb0fbfe10018b17a4e5620))
+  *  bump @types/sinon from 10.0.1 to 10.0.2 ([61f33661](https://github.com/KristjanTammekivi/haredo/commit/61f336616cdb0ebea38080841dea37c5cdcf1ef7))
+  *  bump sinon from 10.0.0 to 11.1.1 ([cd07b853](https://github.com/KristjanTammekivi/haredo/commit/cd07b8533ba85968a66443917b12a654b3169a86))
+  *  bump @types/sinon from 10.0.0 to 10.0.1 ([20792895](https://github.com/KristjanTammekivi/haredo/commit/2079289595be47a5092d94aa6382096e4460a2c6))
+  *  bump sinon-chai from 3.6.0 to 3.7.0 ([ea4fc5dd](https://github.com/KristjanTammekivi/haredo/commit/ea4fc5dd622d01402c85458bc6e525738d69bb99))
+* **deps:**
+  *  bump ansi-regex from 5.0.0 to 5.0.1 ([183ea526](https://github.com/KristjanTammekivi/haredo/commit/183ea526afab2d659b775632ed306d89be867788))
+  *  bump url-parse from 1.5.1 to 1.5.3 ([3740b16c](https://github.com/KristjanTammekivi/haredo/commit/3740b16c19deb84b528fcab0907d53d9b84a575f))
+  *  bump path-parse from 1.0.6 to 1.0.7 ([41257d79](https://github.com/KristjanTammekivi/haredo/commit/41257d793eb6f76cad1d6a160e22294b29b31301))
+  *  bump glob-parent from 5.1.0 to 5.1.2 ([3c785979](https://github.com/KristjanTammekivi/haredo/commit/3c785979c3fbfd6bb69311e5852db88f8abc0ec6))
+
+##### Other Changes
+
+*  sometimes headers is undefined ([9092cbf7](https://github.com/KristjanTammekivi/haredo/commit/9092cbf75e6c77bfae0007e0904982d3eacf5732))
+*  upgrade travis node_js version ([1cd8a3bb](https://github.com/KristjanTammekivi/haredo/commit/1cd8a3bb76be648b102e5252315c2ab8fb460719))
+
 #### 2.7.1 (2021-05-20)
 
 ##### Other Changes
