@@ -216,7 +216,7 @@ export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
         type: raw.properties.type,
         userId: raw.properties.userId,
         metaType: 'message',
-        deliveryCount: raw.properties.headers['x-delivery-count']
+        deliveryCount: raw.properties.headers?.['x-delivery-count']
     };
 };
 
