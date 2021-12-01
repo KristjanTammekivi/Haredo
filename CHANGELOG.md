@@ -1,3 +1,19 @@
+#### 2.7.3 (2021-12-01)
+
+##### Chores
+
+* **deps-dev:**
+  *  bump @types/sinon-chai from 3.2.5 to 3.2.6 ([d3cc4fc5](https://github.com/KristjanTammekivi/haredo/commit/d3cc4fc502b6a2102c09e305c43e9aa632bd1a38))
+  *  bump source-map-support from 0.5.20 to 0.5.21 ([f83525c7](https://github.com/KristjanTammekivi/haredo/commit/f83525c7caba1a1d0a42b92812bbe6b39ebe4cc7))
+  *  bump sinon from 12.0.0 to 12.0.1 ([0cb7babe](https://github.com/KristjanTammekivi/haredo/commit/0cb7babe7559e068af5a053b8163c43334555a2d))
+  *  bump sinon from 11.1.2 to 12.0.0 ([11a1a452](https://github.com/KristjanTammekivi/haredo/commit/11a1a4527742b282456c5201cb0c52d37247d51d))
+  *  bump @types/sinon from 10.0.5 to 10.0.6 ([f74c99e9](https://github.com/KristjanTammekivi/haredo/commit/f74c99e9a1791331d56e0bf7775f204a84d8aedd))
+  *  bump @types/sinon from 10.0.4 to 10.0.5 ([1ace034b](https://github.com/KristjanTammekivi/haredo/commit/1ace034bf12603ecb89b843f000002562509750c))
+
+##### Documentation Changes
+
+*  typo in README ([46bef336](https://github.com/KristjanTammekivi/haredo/commit/46bef3367dd87a1a9e2c1fceacda8caed14d0f29))
+
 #### 2.7.2 (2021-10-20)
 
 ##### Chores
