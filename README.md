@@ -47,7 +47,7 @@ const rabbit = haredo({
 ### Publishing to an exchange
 
 ```typescript
-rabbit.excange('my-exchange').publish({ id: 5, status: 'active' }, 'item.created');
+rabbit.exchange('my-exchange').publish({ id: 5, status: 'active' }, 'item.created');
 ```
 
 ### Publishing to a queue
