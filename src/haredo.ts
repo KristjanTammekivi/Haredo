@@ -211,6 +211,9 @@ export const queueChain = <TMessage, TReply>(state: Partial<HaredoChainState<TMe
         prefetch: (prefetch = 0) => {
             return queueChain(merge(state, { prefetch }));
         },
+        concurrency: (prefetch = 0) => {
+            return queueChain(merge(state, { prefetch }));
+        },
         reestablish: (reestablish = true) => {
             return queueChain(merge(state, { reestablish }));
         },
@@ -632,11 +635,22 @@ export interface QueueChain<TMessage, TReply> extends
     autoAck(autoAck?: boolean): QueueChain<TMessage, TReply>;
     /**
      * Set prefetch count for consuming (ie. amount of messages that will be received in parallel)
-     * 0 Means there is no limit
+     * 0 Means there is no limit.
+     *
+     * Aliased to .concurrency
      *
      * @param prefetch number of messages to prefetch
      */
     prefetch(prefetch: number): QueueChain<TMessage, TReply>;
+    /**
+     * Set prefetch count for consuming (ie. amount of messages that will be received in parallel)
+     * 0 Means there is no limit.
+     *
+     * Aliased to .prefetch
+     *
+     * @param concurrency number of concurrent messages passed to .subscribe callbacks
+     */
+    concurrency(concurrency: number): QueueChain<TMessage, TReply>;
     /**
      * Reestablish a subscriber when channel / connection closes (enabled by default)
      *

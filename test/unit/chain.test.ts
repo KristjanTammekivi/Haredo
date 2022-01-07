@@ -53,6 +53,9 @@ describe('unit/chain', () => {
     it('should set prefetch', () => {
         expect(chain.queue('test').prefetch(5).getState()).to.have.property('prefetch' as keyof HaredoChainState, 5);
     });
+    it('should set prefetch with concurrency', () => {
+        expect(chain.queue('test').concurrency(5).getState()).to.have.property('prefetch' as keyof HaredoChainState, 5);
+    });
     it('should set reestablish', () => {
         expect(chain.queue('test').reestablish().getState()).to.have.property('reestablish' as keyof HaredoChainState, true);
         expect(chain.queue('test').reestablish(false).getState()).to.have.property('reestablish' as keyof HaredoChainState, false);
