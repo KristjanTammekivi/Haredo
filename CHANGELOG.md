@@ -1,3 +1,18 @@
+#### 2.7.4 (2022-01-07)
+
+##### Chores
+
+* **deps-dev:**
+  *  bump @types/sinon-chai from 3.2.7 to 3.2.8 ([5170c410](https://github.com/KristjanTammekivi/haredo/commit/5170c41019413a3e17ec4e5cc85e64c6c0b31f3a))
+  *  bump @types/sinon-chai from 3.2.6 to 3.2.7 ([61477c8f](https://github.com/KristjanTammekivi/haredo/commit/61477c8fc0492e654a039507f8368e5e6f0e2da6))
+  *  bump @types/chai from 4.2.22 to 4.3.0 ([9e8bae94](https://github.com/KristjanTammekivi/haredo/commit/9e8bae94b046b1e5a4d778399bb0280ab75033cb))
+
+##### Other Changes
+
+*  add more documentation to README + direct links to examples ([1937ee83](https://github.com/KristjanTammekivi/haredo/commit/1937ee83331545a0c64dffc6f77d75b345252541))
+*  add .concurrency alias for .prefetch ([d4df62d0](https://github.com/KristjanTammekivi/haredo/commit/d4df62d0d32a41dd29d5d7b6fc525b7976ab60cc))
+*  upgrade test docker image to Rabbit 3.9 ([8c89ef3f](https://github.com/KristjanTammekivi/haredo/commit/8c89ef3f72cac94483d6201528e8c26c09f665f7))
+
 #### 2.7.3 (2021-12-01)
 
 ##### Chores
