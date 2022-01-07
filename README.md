@@ -44,7 +44,21 @@ const rabbit = haredo({
 });
 ```
 
+### Listening for messages
+
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/routing.ts)_
+
+```typescript
+rabbit.queue('my-queue')
+    .bindExchange('testExchange', '#', 'topic', { durable: false }) // Can be omitted if you don't want to bind the queue to an exchange right now
+    .consume(async (message) => {
+        console.log(message);
+    });
+```
+
 ### Publishing to an exchange
+
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/routing.ts#L26)_
 
 ```typescript
 rabbit.exchange('my-exchange').publish({ id: 5, status: 'active' }, 'item.created');
@@ -52,12 +66,25 @@ rabbit.exchange('my-exchange').publish({ id: 5, status: 'active' }, 'item.create
 
 ### Publishing to a queue
 
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/simple.ts#L16)_
+
 ```typescript
 rabbit.queue('my-queue').publish({ id: 5, status: 'inactive' });
 ```
 
+### Limit concurrency
+
+```typescript
+rabbit.queue('my-queue')
+    .prefetch(5) // same as .concurrency(5)
+    .consume(async (message) => {
+        console.log(message);
+    });
+```
+
 ### RPC
 
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/rpc.ts)_
 ```typescript
 rabbit.queue('sum')
     // With autoReply on, returned value from callback is automatically replied
@@ -70,7 +97,9 @@ const response = await rabbit.queue('sum').rpc([30, 12])
 
 ### Delayed messages
 
-Note: this requires [RabbitMQ Delayed Message Plugin](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange) to be installed on the server.
+Note: this requires [RabbitMQ Delayed Message Plugin](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange) to be installed and enabled on the server.
+
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/delayed-exchange.ts)_
 
 ```typescript
 interface Message {
@@ -97,6 +126,8 @@ while (true) {
 
 ### Message throttling
 
+_[exapmle on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/backoff.ts)_
+
 ```typescript
 await rabbit.queue('my-queue')
     .backoff(standardBackoff({
@@ -104,6 +135,30 @@ await rabbit.queue('my-queue')
         failSpan: 5000,
         failTimeout: 5000
     }))
+    .subscribe(() => {
+        throw new Error('Nack this message for me')
+    });
+```
+
+### Dead letter
+
+[View on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/dlx.ts)
+
+### Middleware
+
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/middleware.ts)_
+
+```typescript
+import { Middleware } from 'haredo';
+
+const timeMessage: Middleware = ({ queue }, next) => {
+    const start = Date.now();
+    await next();
+    console.log(`Message took ${ Date.now() - start }ms`);
+}
+
+await rabbit.queue('my-queue')
+    .use(timeMessage)
     .subscribe(() => {
         throw new Error('Nack this message for me')
     });
