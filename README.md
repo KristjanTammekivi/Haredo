@@ -6,7 +6,7 @@
 [![npm](https://img.shields.io/npm/dw/haredo.svg)](https://www.npmjs.com/package/haredo)
 [![Build Status](https://travis-ci.com/KristjanTammekivi/Haredo.svg?token=5sH57fp4gyjYbXpM9ZY9&branch=master)](https://travis-ci.com/KristjanTammekivi/Haredo)
 [![Coverage Status](https://coveralls.io/repos/github/KristjanTammekivi/Haredo/badge.svg?branch=master)](https://coveralls.io/github/KristjanTammekivi/Haredo?branch=master)
-[![David](https://img.shields.io/david/KristjanTammekivi/Haredo.svg)](https://david-dm.org/KristjanTammekivi/Haredo)
+![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/npm/haredo)
 
 ![haredo](haredo.png)
 
@@ -126,7 +126,7 @@ while (true) {
 
 ### Message throttling
 
-_[exapmle on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/backoff.ts)_
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/backoff.ts)_
 
 ```typescript
 await rabbit.queue('my-queue')
