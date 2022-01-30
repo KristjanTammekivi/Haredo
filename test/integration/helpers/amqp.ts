@@ -1,10 +1,10 @@
 import { connect, Connection, Options } from 'amqplib';
 import { ExchangeType } from '../../../src/exchange';
+import { RabbitAdmin } from 'rabbitmq-admin';
 
 let connection: Connection;
 
-const rabbitStats = require('rabbitmq-stats');
-const statsInstance = rabbitStats('http://localhost:15672', 'guest', 'guest');
+const rabbitAdmin = RabbitAdmin();
 
 export const setup = async () => {
     await createVhost();
@@ -12,30 +12,15 @@ export const setup = async () => {
 };
 
 export const createVhost = async () => {
-    await statsInstance.putVhost('test');
-    await statsInstance.setUserPermissions('guest', 'test', {
-        vhost: 'test',
-        username: 'guest',
+    await rabbitAdmin.createVhost('test');
+    await rabbitAdmin.setUserPermissions('test', 'guest', {
         configure: '.*',
         write: '.*',
         read: '.*'
     });
 };
 
-interface GetConsumers {
-    arguments: {};
-    ack_required: boolean;
-    channel_details: [];
-    consumer_tag: string;
-    exclusive: boolean;
-    prefetch_count: number;
-    queue: {
-        name: string;
-        test: string;
-    };
-}
-
-export const getConsumers = async () => statsInstance.getVhostConsumers('test') as GetConsumers[];
+export const getConsumers = async () => rabbitAdmin.getConsumers('test');
 
 export const checkExchange = async (name: string, type: ExchangeType, opts?: Options.AssertExchange) => {
     const channel = await getChannel();
@@ -46,28 +31,8 @@ export const checkExchange = async (name: string, type: ExchangeType, opts?: Opt
     return channel.close();
 };
 
-interface GetVhostQueue {
-    garbage_collection: {
-        max_heap_size: number,
-        min_bin_vheap_size: number,
-        min_heap_size: number,
-        fullsweep_after: number,
-        minor_gcs: number
-    };
-    consumer_details: any[];
-    incoming: any[];
-    deliveries: any[];
-    node: string;
-    arguments: any;
-    exclusive: boolean;
-    auto_delete: boolean;
-    durable: boolean;
-    vhost: string;
-    name: string;
-}
-
-export const getVhostQueue = async (name: string): Promise<GetVhostQueue> => {
-    return statsInstance.getVhostQueue('test', name);
+export const getVhostQueue = async (name: string) => {
+    return rabbitAdmin.getVhostQueue('test', name);
 };
 
 export const checkQueue = async (name: string) => {
@@ -87,7 +52,7 @@ export const verifyQueue = async (name: string, opts?: Options.AssertQueue) => {
 };
 
 export const listVhostQueues = async () => {
-    return statsInstance.getVhostQueues('test');
+    return rabbitAdmin.getVhostQueues('test');
 };
 
 export const getChannel = async () => {
@@ -97,7 +62,7 @@ export const getChannel = async () => {
 };
 
 export const deleteVhost = async () => {
-    await statsInstance.deleteVhost('test');
+    await rabbitAdmin.deleteVhost('test');
 };
 
 export const publishMessage = async (name: string, content: any, opts: Options.Publish) => {
@@ -118,7 +83,7 @@ export const getSingleMessage = async (name: string) => {
     const message = await channel.get(name, { noAck: true });
     await channel.close();
     if (message === false) {
-        throw new Error(`No message in queue ${name}`);
+        throw new Error(`No message in queue ${ name }`);
     }
     return {
         content: message.content.toString(),
