@@ -124,6 +124,12 @@ while (true) {
 }
 ```
 
+### Quorum queues with delivery limits
+
+Node: requires RabbitMQ 3.8.0 or higher, see [Quorum Queues Overview](https://www.rabbitmq.com/quorum-queues.html) for more information.
+
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/queues.ts)_
+
 ### Message throttling
 
 _[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/backoff.ts)_
