@@ -128,7 +128,7 @@ while (true) {
 
 Node: requires RabbitMQ 3.8.0 or higher, see [Quorum Queues Overview](https://www.rabbitmq.com/quorum-queues.html) for more information.
 
-_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/queues.ts)_
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/quorum.ts)_
 
 ### Message throttling
 
