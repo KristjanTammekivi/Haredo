@@ -2102,10 +2102,10 @@ querystringify@^2.1.1:
   resolved "https://registry.yarnpkg.com/querystringify/-/querystringify-2.2.0.tgz#3345941b4153cb9d082d8eee4cda2016a9aef7f6"
   integrity sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==
 
-rabbitmq-admin@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/rabbitmq-admin/-/rabbitmq-admin-1.0.0.tgz#30cf88275e36fb50f67a3a81aa60fec081dff866"
-  integrity sha512-zlzmZ1sqRH9pGkOPtmluVij8RD4Cx0aVLtcPcnfjWdKNIKCmUIv5fxakh/rvKYBOxMm/ev2Cvd37DzEVfztF9Q==
+rabbitmq-admin@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/rabbitmq-admin/-/rabbitmq-admin-1.0.2.tgz#bf40599af8ec66961cc532a2ceadeb0006a3b7a0"
+  integrity sha512-LyZDH7GUNOjFmUiH2zU63XGHKh4rnG9WteI99BU4GGYkj92bEUDv7GleCysgFASZFTSd5a2K1/+8ejnMFYUvog==
   dependencies:
     axios "^0.25.0"
     commander "^9.0.0"
