@@ -17,6 +17,11 @@ jobs:
         ports:
           - 5672:5672
           - 15672:15672
+        options: >-
+          --health-cmd 'rabbitmqctl -q status'
+          --health-interval 5s
+          --health-retries 3
+          --health-timeout 10s
 
     strategy:
       matrix:
