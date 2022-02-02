@@ -5,7 +5,7 @@
         "target": "es2017",
         "noImplicitAny": true,
         "inlineSourceMap": true,
-        "incremental": true,
+        "incremental": false,
         "experimentalDecorators": true,
         "declaration": true,
         "outDir": "./dist",
