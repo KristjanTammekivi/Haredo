@@ -20,8 +20,8 @@ jobs:
         options: >-
           --health-cmd 'rabbitmqctl status'
           --health-interval 5s
-          --health-retries 3
-          --health-timeout 10s
+          --health-retries 6
+          --health-timeout 30s
 
     strategy:
       matrix:
