@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      rabbitmq:
+      rabbit:
         image: rabbitmq:3.9-management
         ports:
           - 5672:5672
@@ -39,8 +39,8 @@ jobs:
         run: yarn run build
       - name: Test
         env:
-          RABBIT_HOST: rabbitmq
-          RABBIT_PORT: ${{ job.services.rabbitmq.ports[5672] }}
+          RABBIT_HOST: localhost
+          RABBIT_PORT: ${{ job.services.rabbit.ports[5672] }}
         run: yarn run test
       - name: Lint
         run: yarn run lint
