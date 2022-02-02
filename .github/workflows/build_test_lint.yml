@@ -1,0 +1,40 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    services:
+      rabbitmq:
+        image: heidiks/rabbitmq-delayed-message-exchange:latest
+        ports:
+          - 5672:5672
+          - 15672:15672
+
+    strategy:
+      matrix:
+        node-version: [12.x, 14.x, 16.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        run: yarn
+      - name: Build
+        run: yarn run build
+      - name: Test
+        env:
+          RABBIT_HOST: rabbitmq
+        run: ya
+      - name: Lint
+        run: yarn run lint
