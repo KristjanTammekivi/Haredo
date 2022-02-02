@@ -40,6 +40,7 @@ jobs:
       - name: Test
         env:
           RABBIT_HOST: rabbitmq
+          RABBIT_PORT: ${{ job.services.rabbitmq.ports[5672] }}
         run: yarn run test
       - name: Lint
         run: yarn run lint
