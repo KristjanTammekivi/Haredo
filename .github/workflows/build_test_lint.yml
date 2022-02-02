@@ -18,14 +18,14 @@ jobs:
           - 5672:5672
           - 15672:15672
         options: >-
-          --health-cmd rabbitmqctl
+          --health-cmd "nc -z localhost 5672"
           --health-interval 5s
           --health-retries 6
           --health-timeout 30s
 
     strategy:
       matrix:
-        node-version: [12.x, 14.x, 16.x]
+        node-version: [16.x]
 
     steps:
       - uses: actions/checkout@v2
