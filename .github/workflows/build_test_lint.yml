@@ -35,6 +35,6 @@ jobs:
       - name: Test
         env:
           RABBIT_HOST: rabbitmq
-        run: ya
+        run: yarn run test
       - name: Lint
         run: yarn run lint
