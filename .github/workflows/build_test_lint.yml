@@ -13,15 +13,15 @@ jobs:
 
     services:
       rabbitmq:
-        image: heidiks/rabbitmq-delayed-message-exchange:latest
+        image: rabbitmq:3.9-management
         ports:
           - 5672:5672
           - 15672:15672
         options: >-
-          --health-cmd "nc -z localhost 5672"
-          --health-interval 5s
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
           --health-retries 6
-          --health-timeout 30s
+          --health-timeout 5s
 
     strategy:
       matrix:
