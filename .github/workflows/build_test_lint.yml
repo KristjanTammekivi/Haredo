@@ -18,7 +18,7 @@ jobs:
           - 5672:5672
           - 15672:15672
         options: >-
-          --health-cmd 'rabbitmqctl status'
+          --health-cmd rabbitmqctl
           --health-interval 5s
           --health-retries 6
           --health-timeout 30s
