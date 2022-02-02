@@ -2,14 +2,14 @@ import { expect } from 'chai';
 import { makeExchangeConfig } from '../../src/exchange';
 import { Haredo, haredo } from '../../src/haredo';
 import { makeQueueConfig } from '../../src/queue';
-import { checkExchange, checkQueue, setup, teardown } from './helpers/amqp';
+import { checkExchange, checkQueue, rabbitUrl, setup, teardown } from './helpers/amqp';
 
 describe('integration/setup', () => {
     let rabbit: Haredo;
     beforeEach(async () => {
         await setup();
         rabbit = haredo({
-            connection: 'amqp://guest:guest@localhost:5672/test'
+            connection: rabbitUrl
         });
         await rabbit.connect();
     });

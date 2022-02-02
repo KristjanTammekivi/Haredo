@@ -1,5 +1,5 @@
 import { Haredo, haredo } from '../../src/haredo';
-import { setup, teardown, checkQueue, getSingleMessage } from './helpers/amqp';
+import { setup, teardown, checkQueue, getSingleMessage, rabbitUrl } from './helpers/amqp';
 import { delay } from '../../src/utils';
 import { spy, SinonSpy, stub } from 'sinon';
 
@@ -17,7 +17,7 @@ describe('integration/consumer', () => {
     beforeEach(async () => {
         await setup();
         rabbit = haredo({
-            connection: 'amqp://localhost:5672/test'
+            connection: rabbitUrl
         });
     });
     afterEach(async () => {

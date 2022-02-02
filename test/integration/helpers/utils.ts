@@ -4,7 +4,7 @@ import { getChannel } from './amqp';
 export const eventToPromise = (emitter: EventEmitter, event: string) => {
     return new Promise((resolve) => {
         emitter.once(event, () => {
-            resolve();
+            resolve(null);
         });
     });
 };

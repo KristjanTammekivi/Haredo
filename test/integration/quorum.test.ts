@@ -2,7 +2,7 @@ import { makeExchangeConfig } from '../../src/exchange';
 import { Haredo, haredo } from '../../src/haredo';
 import { makeQueueConfig } from '../../src/queue';
 import { delay } from '../../src/utils';
-import { getSingleMessage, setup } from './helpers/amqp';
+import { getSingleMessage, rabbitUrl, setup } from './helpers/amqp';
 import { expect } from 'chai';
 
 describe('integration/quorum', () => {
@@ -10,7 +10,7 @@ describe('integration/quorum', () => {
     beforeEach(async () => {
         await setup();
         rabbit = haredo({
-            connection: 'amqp://guest:guest@localhost:5672/test'
+            connection: rabbitUrl
         });
         await rabbit.connect();
     });

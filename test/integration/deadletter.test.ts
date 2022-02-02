@@ -1,5 +1,5 @@
 import { Haredo, haredo } from '../../src/haredo';
-import { setup, teardown, getSingleMessage } from './helpers/amqp';
+import { setup, teardown, getSingleMessage, rabbitUrl } from './helpers/amqp';
 import { makeQueueConfig } from '../../src/queue';
 import { delay } from '../../src/utils';
 
@@ -8,7 +8,7 @@ describe('integration/rpc', () => {
     beforeEach(async () => {
         await setup();
         rabbit = haredo({
-            connection: 'amqp://guest:guest@localhost:5672/test'
+            connection: rabbitUrl
         });
     });
     afterEach(async () => {

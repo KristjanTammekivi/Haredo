@@ -1,6 +1,16 @@
 import { connect, Connection, Options } from 'amqplib';
 import { ExchangeType } from '../../../src/exchange';
 import { RabbitAdmin } from 'rabbitmq-admin';
+import { config } from 'dotenv';
+
+config();
+
+const rabbitHost = process.env.RABBIT_HOST || 'localhost';
+const rabbitPort = process.env.RABBIT_PORT || '5672';
+const rabbitUser = process.env.RABBIT_USER || 'guest';
+const rabbitPass = process.env.RABBIT_PASS || 'guest';
+
+export const rabbitUrl = `amqp://${ rabbitUser }:${ rabbitPass }@${ rabbitHost }:${ rabbitPort }/test`;
 
 let connection: Connection;
 
@@ -8,7 +18,7 @@ const rabbitAdmin = RabbitAdmin();
 
 export const setup = async () => {
     await createVhost();
-    connection = await connect('amqp://guest:guest@localhost:5672/test');
+    connection = await connect(rabbitUrl);
 };
 
 export const createVhost = async () => {

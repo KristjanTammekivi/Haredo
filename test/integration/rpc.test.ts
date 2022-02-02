@@ -1,6 +1,6 @@
 import 'source-map-support/register';
 import { Haredo, haredo } from '../../src/haredo';
-import { setup, teardown, getSingleMessage, publishMessage } from './helpers/amqp';
+import { setup, teardown, getSingleMessage, publishMessage, rabbitUrl } from './helpers/amqp';
 import { expect } from 'chai';
 import { delay } from '../../src/utils';
 import { preparedMessage } from '../../src/prepared-message';
@@ -10,7 +10,7 @@ describe('integration/rpc', () => {
     beforeEach(async () => {
         await setup();
         rabbit = haredo({
-            connection: 'amqp://guest:guest@localhost:5672/test'
+            connection: rabbitUrl
         });
     });
     afterEach(async () => {

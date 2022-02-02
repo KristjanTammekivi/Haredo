@@ -1,5 +1,5 @@
 import { Haredo, haredo } from '../../src/haredo';
-import { setup, teardown } from './helpers/amqp';
+import { rabbitUrl, setup, teardown } from './helpers/amqp';
 
 import * as sinonChai from 'sinon-chai';
 import * as chaiAsPromised from 'chai-as-promised';
@@ -14,7 +14,7 @@ describe('integration/consuming', () => {
     beforeEach(async () => {
         await setup();
         rabbit = haredo({
-            connection: 'amqp://localhost:5672/test'
+            connection: rabbitUrl
         });
     });
     afterEach(async () => {
