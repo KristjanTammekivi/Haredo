@@ -1510,7 +1510,7 @@ js-tokens@^4.0.0:
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
 
-js-yaml@4.1.0:
+js-yaml@4.1.0, js-yaml@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.1.0.tgz#c1fb65f8f5017901cdd2c951864ba18458a10602"
   integrity sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==
@@ -2115,12 +2115,13 @@ querystringify@^2.1.1:
   integrity sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==
 
 rabbitmq-admin@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/rabbitmq-admin/-/rabbitmq-admin-1.0.2.tgz#bf40599af8ec66961cc532a2ceadeb0006a3b7a0"
-  integrity sha512-LyZDH7GUNOjFmUiH2zU63XGHKh4rnG9WteI99BU4GGYkj92bEUDv7GleCysgFASZFTSd5a2K1/+8ejnMFYUvog==
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/rabbitmq-admin/-/rabbitmq-admin-1.1.0.tgz#368cae2193d93473fe0ede197384ec700baf6eed"
+  integrity sha512-GtoYWUb39BsU2297WpqHk7kVI9YZXilUl3DtLK7BTJJixAc+ew9JZ8OGiwJwzRn3cV6dnY2njkdelTINEXt6AQ==
   dependencies:
     axios "^0.25.0"
     commander "^9.0.0"
+    js-yaml "^4.1.0"
 
 randombytes@^2.0.0, randombytes@^2.0.1, randombytes@^2.0.5, randombytes@^2.1.0:
   version "2.1.0"
