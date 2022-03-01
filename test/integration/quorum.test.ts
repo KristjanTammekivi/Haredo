@@ -1,9 +1,10 @@
+import { expect } from 'chai';
 import { makeExchangeConfig } from '../../src/exchange';
 import { Haredo, haredo } from '../../src/haredo';
 import { makeQueueConfig } from '../../src/queue';
 import { delay } from '../../src/utils';
 import { getSingleMessage, rabbitUrl, setup } from './helpers/amqp';
-import { expect } from 'chai';
+import { makeDeferred } from './helpers/utils';
 
 describe('integration/quorum', () => {
     let rabbit: Haredo;
@@ -38,13 +39,3 @@ describe('integration/quorum', () => {
         expect(messageDeliveryCount).to.equal(1);
     });
 });
-
-const makeDeferred = <T = any>() => {
-    let resolve: (arg?: T) => void;
-    let reject: (e: Error) => void;
-    const promise = new Promise<T>((res, rej) => {
-        resolve = res;
-        reject = rej;
-    });
-    return { resolve, reject, promise };
-}

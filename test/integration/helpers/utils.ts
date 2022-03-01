@@ -22,3 +22,13 @@ export const isConsumerClosed = async (queue: string) => {
     }
     return true;
 };
+
+export const makeDeferred = <T = any>() => {
+    let resolve: (arg?: T) => void;
+    let reject: (e: Error) => void;
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return { resolve, reject, promise };
+}
