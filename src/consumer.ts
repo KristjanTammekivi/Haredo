@@ -103,61 +103,69 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
             if (message === null) {
                 return;
             }
-            await opts.backoff?.take();
             let messageInstance: HaredoMessage<TMessage, TReply>;
-            const methods: Methods<TReply> = {
-                ack: () => {
-                    /* istanbul ignore if */
-                    if (!channel) {
-                        throw new ChannelBrokenError();
+            try {
+                await opts.backoff?.take();
+                const methods: Methods<TReply> = {
+                    ack: () => {
+                        /* istanbul ignore if */
+                        if (!channel) {
+                            throw new ChannelBrokenError('ack');
+                        }
+                        if (!noAck) {
+                            channel.ack(message);
+                        }
+                        opts.backoff?.ack?.();
+                    },
+                    nack: (requeue = true) => {
+                        /* istanbul ignore if */
+                        if (!channel) {
+                            throw new ChannelBrokenError('nack');
+                        }
+                        if (!noAck) {
+                            channel.nack(message, false, requeue);
+                        }
+                        opts.backoff?.nack?.(requeue);
+                    },
+                    reply: async (reply) => {
+                        if (!(message.properties.replyTo && message.properties.correlationId)) {
+                            return;
+                        }
+                        await initialChain({ connectionManager })
+                            .queue(message.properties.replyTo)
+                            .skipSetup()
+                            .confirm()
+                            .publish(opts.json ? JSON.stringify(reply) : reply, {
+                                correlationId: message.properties.correlationId
+                            });
                     }
-                    if (!noAck) {
-                        channel.ack(message);
-                    }
-                    opts.backoff?.ack?.();
-                },
-                nack: (requeue = true) => {
-                    /* istanbul ignore if */
-                    if (!channel) {
-                        throw new ChannelBrokenError();
-                    }
-                    if (!noAck) {
-                        channel.nack(message, false, requeue);
-                    }
-                    opts.backoff?.nack?.(requeue);
-                },
-                reply: async (reply) => {
-                    if (!(message.properties.replyTo && message.properties.correlationId)) {
+                };
+                try {
+                    if (consumer.isClosing) {
                         return;
                     }
-                    await initialChain({ connectionManager })
-                        .queue(message.properties.replyTo)
-                        .skipSetup()
-                        .confirm()
-                        .publish(opts.json ? JSON.stringify(reply) : reply, {
-                            correlationId: message.properties.correlationId
-                        });
-                }
-            };
-            try {
-                if (consumer.isClosing) {
-                    return;
-                }
-                messageInstance = makeHaredoMessage<TMessage, TReply>(message, opts.json, opts.queue.getName(), methods);
-                messageManager.add(messageInstance);
-                await applyMiddleware(opts.middleware || [], cb, messageInstance, opts.autoAck, opts.autoReply, log);
-                opts.backoff?.pass?.();
-            } catch (error) {
-                opts.backoff?.fail?.(error);
-                if (!messageInstance) {
-                    log.error({ component: 'Consumer', error, msg: 'failed initializing a message instance', rawMessage: message });
-                    methods.nack(false);
-                } else {
-                    log.error({ component: 'Consumer', error, msg: 'error while handling message', message: messageInstance, rawMessage: message });
-                    if (!noAck) {
-                        messageInstance.nack(true);
+                    messageInstance = makeHaredoMessage<TMessage, TReply>(message, opts.json, opts.queue.getName(), methods);
+                    messageManager.add(messageInstance);
+                    await applyMiddleware(opts.middleware || [], cb, messageInstance, opts.autoAck, opts.autoReply, log);
+                    opts.backoff?.pass?.();
+                } catch (error) {
+                    opts.backoff?.fail?.(error);
+                    if (!messageInstance) {
+                        log.error({ component: 'Consumer', error, msg: 'failed initializing a message instance', rawMessage: message });
+                        methods.nack(false);
+                    } else {
+                        log.error({ component: 'Consumer', error, msg: 'error while handling message', message: messageInstance, rawMessage: message });
+                        if (!noAck) {
+                            messageInstance.nack(true);
+                        }
                     }
                 }
+            } catch (e) {
+                if (e instanceof ChannelBrokenError) {
+                    log.error({ component: 'Consumer', error: e, msg: e.message, message: messageInstance, rawMessage: message });
+                    return;
+                }
+                log.error({ component: 'Consumer', error: e, msg: 'error while handling message', message: messageInstance, rawMessage: message });
             }
         }, { noAck, priority, exclusive }));
     };

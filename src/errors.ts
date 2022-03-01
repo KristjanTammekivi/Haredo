@@ -11,8 +11,8 @@ export class InvalidOptionsError extends HaredoError {
 
 export class ChannelBrokenError extends HaredoError {
     /* istanbul ignore next */
-    constructor() {
-        super('Cannot ack/nack message, channel is already closed');
+    constructor(operation: 'ack' | 'nack') {
+        super(`Cannot ${ operation } message, channel is already closed`);
     }
 }
 
