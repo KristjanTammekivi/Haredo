@@ -1,3 +1,54 @@
+### 2.8.0 (2022-03-01)
+
+##### Chores
+
+* **deps:**
+  *  bump url-parse from 1.5.7 to 1.5.10 ([258f5a76](https://github.com/KristjanTammekivi/haredo/commit/258f5a76957760dda5a4670e2748c08d56b7ca57))
+  *  bump url-parse from 1.5.3 to 1.5.7 ([f25dc1b2](https://github.com/KristjanTammekivi/haredo/commit/f25dc1b2bdd48b3a8b0027bfea61b49f357b1437))
+  *  bump follow-redirects from 1.14.7 to 1.14.8 ([90a62ec5](https://github.com/KristjanTammekivi/haredo/commit/90a62ec560365b27d86d1cd94fa2fa7c4559f808))
+  *  bump ajv from 6.10.0 to 6.12.6 ([23407bfc](https://github.com/KristjanTammekivi/haredo/commit/23407bfc56ae94171b06337f81f2877247a01b9c))
+  *  bump shelljs from 0.8.4 to 0.8.5 ([5921f465](https://github.com/KristjanTammekivi/haredo/commit/5921f4652607db39e7e6d73c0946db3905ad3563))
+* **deps-dev:**
+  *  bump typedoc from 0.22.11 to 0.22.12 ([3c78ad35](https://github.com/KristjanTammekivi/haredo/commit/3c78ad3556ae955ec8ae23fb45800d765cf34347))
+  *  bump mocha from 9.2.0 to 9.2.1 ([69dfbe87](https://github.com/KristjanTammekivi/haredo/commit/69dfbe87a307fe1cd32bdebd5eb0d02907634fdf))
+  *  bump @types/chai-as-promised from 7.1.4 to 7.1.5 ([2da34939](https://github.com/KristjanTammekivi/haredo/commit/2da3493958306223350964ed91e0513ba10ec223))
+  *  bump @types/sinon from 10.0.10 to 10.0.11 ([598213a6](https://github.com/KristjanTammekivi/haredo/commit/598213a63c18fc152c02465355aeb5045335e83e))
+  *  bump rabbitmq-admin from 1.0.2 to 1.1.0 ([df5cebfc](https://github.com/KristjanTammekivi/haredo/commit/df5cebfc9f7659c2283900e25d199b0a03438e62))
+  *  bump @types/sinon from 10.0.9 to 10.0.10 ([94d5cb82](https://github.com/KristjanTammekivi/haredo/commit/94d5cb82175dd6c9f631a9001acbadfe5fb774f0))
+  *  bump dotenv from 15.0.0 to 16.0.0 ([df4dfe08](https://github.com/KristjanTammekivi/haredo/commit/df4dfe08dbb44d1a35f015a8566cca29ef60fefc))
+  *  bump sinon from 13.0.0 to 13.0.1 ([eaba486d](https://github.com/KristjanTammekivi/haredo/commit/eaba486d1b3b73f32405cf22d8e912f0197dc7f7))
+  *  bump sinon from 12.0.1 to 13.0.0 ([34a41c4f](https://github.com/KristjanTammekivi/haredo/commit/34a41c4fba6eebcce88ea1fa1e0012cb8b307cb1))
+  *  bump @types/sinon from 10.0.8 to 10.0.9 ([29a89a3c](https://github.com/KristjanTammekivi/haredo/commit/29a89a3c0124860434594ba5ff14cc43c6ee6e53))
+  *  bump chai from 4.3.5 to 4.3.6 ([74beedc9](https://github.com/KristjanTammekivi/haredo/commit/74beedc938380cfcf031ac26a6853efc317c7e80))
+  *  bump chai from 4.3.4 to 4.3.5 ([53dab0ac](https://github.com/KristjanTammekivi/haredo/commit/53dab0acd7e1a3c25f1da44ce8d1d5f112ec87cf))
+  *  bump mocha from 9.1.4 to 9.2.0 ([c1b151c9](https://github.com/KristjanTammekivi/haredo/commit/c1b151c96c204287019b12259bc36ccfdacfce42))
+  *  bump @types/sinon from 10.0.6 to 10.0.8 ([c6d72fa6](https://github.com/KristjanTammekivi/haredo/commit/c6d72fa6b56529ffe8f011edbbd4ba893925fd57))
+  *  bump @types/mocha from 9.0.0 to 9.1.0 ([1a712d39](https://github.com/KristjanTammekivi/haredo/commit/1a712d398b2954f5f05d0584fe95fef2ea290cd6))
+  *  bump mocha from 9.1.3 to 9.1.4 ([61e6d1ea](https://github.com/KristjanTammekivi/haredo/commit/61e6d1ea5575c1134ea63e4298d9f43fd029d36f))
+
+##### Other Changes
+
+*  try/catch inside consumer in case of ChannelBrokenErrors, log them out ([f3bcce0a](https://github.com/KristjanTammekivi/haredo/commit/f3bcce0a861a606954f8ce0ee1d199ecae2d88ac))
+*  move makeDeferred into utils ([9f27e969](https://github.com/KristjanTammekivi/haredo/commit/9f27e969d79d78ce9b2842868010bf3d82ff3de2))
+*  use localhost for rabbit in actions ([202d66c0](https://github.com/KristjanTammekivi/haredo/commit/202d66c0a2d7c35f338ab8cb01f55a0dab650411))
+*  specify rabbit port ([26021e0d](https://github.com/KristjanTammekivi/haredo/commit/26021e0d2ebd34c7f89c0fc731e1ba1f5beae53b))
+*  use official rabbit image for tests ([54deab9d](https://github.com/KristjanTammekivi/haredo/commit/54deab9df20d488e068ba533447fe9a67f4eef1e))
+*  use netcat for health check ([6bb65ef9](https://github.com/KristjanTammekivi/haredo/commit/6bb65ef926931d3a4316b03f93201ee028db0f5c))
+*  adjust the health cmd ([feceb0b5](https://github.com/KristjanTammekivi/haredo/commit/feceb0b565315c3eccb81ad27a5c7b0176f61c28))
+*  increase health-timeout for rabbitmq in github actions ([24d418ca](https://github.com/KristjanTammekivi/haredo/commit/24d418ca43a6d48d8eb0a68ebd100d7f30756c8c))
+*  remove q flag from rabbit health cmd ([15014fc8](https://github.com/KristjanTammekivi/haredo/commit/15014fc8483cd0115706beab25eb28dd255b61d7))
+*  add health check for rabbitmq ([6f45f3ef](https://github.com/KristjanTammekivi/haredo/commit/6f45f3ef5745215015b6b23ad5beb62bc0c4407e))
+*  fix ya is not a command in workflow ([25725ae3](https://github.com/KristjanTammekivi/haredo/commit/25725ae3fb37f87b34a5381d719f59340373fdf1))
+*  add github workflows ([710d8790](https://github.com/KristjanTammekivi/haredo/commit/710d87909629dc13634ee9fed655d60e6f831a13))
+*  use rabbit url from env variables ([aed0e68d](https://github.com/KristjanTammekivi/haredo/commit/aed0e68d542b578df59e6a865887b4fced4dee85))
+*  upgrade typescript to version 4 ([8521ea4c](https://github.com/KristjanTammekivi/haredo/commit/8521ea4c076e0735cca1cb38c819605a4e702b8a))
+*  bump rabbitmq-admin ([1eeaf287](https://github.com/KristjanTammekivi/haredo/commit/1eeaf2870295637ab08c39b51ced765913f308f7))
+*  fix link to quorum queue example ([d2a939db](https://github.com/KristjanTammekivi/haredo/commit/d2a939db78d27642fefe3a09c38fda9257094587))
+*  use rabbitma-admin instead of rabbitmq-stats ([880bcc89](https://github.com/KristjanTammekivi/haredo/commit/880bcc895c6f28b62419ce4244c9ad48f4382663))
+*  add example for quorum queues ([81260307](https://github.com/KristjanTammekivi/haredo/commit/812603073e5abe63b2cec50c200ef468afce29be))
+*  upgrade typedoc to get rid of a vulnerability notification that doesn't affect users ([c987096e](https://github.com/KristjanTammekivi/haredo/commit/c987096ef45c35447fd18d17789276539453e6dc))
+*  fix typo, change david-dm badge to libraries.io ([13bbba5f](https://github.com/KristjanTammekivi/haredo/commit/13bbba5f634974a88e2c3fea29ad680d19f7370b))
+
 #### 2.7.4 (2022-01-07)
 
 ##### Chores
