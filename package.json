@@ -57,7 +57,7 @@
     "url": "https://github.com/KristjanTammekivi/haredo.git"
   },
   "dependencies": {
-    "amqplib": "^0.8.0"
+    "amqplib": "^0.9.0"
   },
   "devDependencies": {
     "@types/amqplib": "^0.8.0",
