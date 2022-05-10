@@ -1,3 +1,27 @@
+### 2.10.0 (2022-05-10)
+
+##### Chores
+
+* **deps:**
+  *  bump amqplib from 0.8.0 to 0.9.0 ([452c1795](https://github.com/KristjanTammekivi/haredo/commit/452c1795cc6de893eb102e41776d0ea9286ef592))
+  *  bump minimist from 1.2.5 to 1.2.6 ([dd50f53b](https://github.com/KristjanTammekivi/haredo/commit/dd50f53b76a88128e28827646876ef2ccd64649e))
+* **deps-dev:**
+  *  bump mocha from 9.2.2 to 10.0.0 ([685b4020](https://github.com/KristjanTammekivi/haredo/commit/685b40202451974e252d947a007f9b5b8d2e28e6))
+  *  bump typescript from 4.6.3 to 4.6.4 ([0ce467bd](https://github.com/KristjanTammekivi/haredo/commit/0ce467bd238b99f52ae9ad73c4e4441bd8898bb0))
+  *  bump @types/mocha from 9.1.0 to 9.1.1 ([6884f1a8](https://github.com/KristjanTammekivi/haredo/commit/6884f1a88cecbeb8962b9fc949d5b51255f51a10))
+  *  bump sinon from 13.0.1 to 13.0.2 ([9fe17c92](https://github.com/KristjanTammekivi/haredo/commit/9fe17c922400e4ff40f244cb68cb55e955d239af))
+  *  bump @types/chai from 4.3.0 to 4.3.1 ([807b7aa9](https://github.com/KristjanTammekivi/haredo/commit/807b7aa9285b430c1b5e897a6499672269499a39))
+  *  bump typedoc from 0.22.14 to 0.22.15 ([0a48848d](https://github.com/KristjanTammekivi/haredo/commit/0a48848d8c741a1ef4bf4a0617b6f6377486e409))
+  *  bump typedoc from 0.22.13 to 0.22.14 ([71094e30](https://github.com/KristjanTammekivi/haredo/commit/71094e30b091767e712feeefe0c2ab565be9e49f))
+  *  bump typescript from 4.6.2 to 4.6.3 ([290f509d](https://github.com/KristjanTammekivi/haredo/commit/290f509d279777a01e8709d0a34e5399eab0c92c))
+  *  bump mocha from 9.2.1 to 9.2.2 ([d232e09f](https://github.com/KristjanTammekivi/haredo/commit/d232e09f2057c067ae229b3a0ab33865ee536091))
+  *  bump typescript from 4.5.5 to 4.6.2 ([35b07669](https://github.com/KristjanTammekivi/haredo/commit/35b076690fa71ba50fb86d72eb3c75e12fe0d7a3))
+  *  bump typedoc from 0.22.12 to 0.22.13 ([c09640f1](https://github.com/KristjanTammekivi/haredo/commit/c09640f1c48d2a459e895f2fdaca6fcf3ce2e17b))
+
+##### Other Changes
+
+*  add node 14 and 18 to workflow matrix ([222ef94f](https://github.com/KristjanTammekivi/haredo/commit/222ef94f593f2dab076f3bc9b940a4770037822a))
+
 ### 2.9.0 (2022-03-01)
 
 ### 2.8.0 (2022-03-01)
