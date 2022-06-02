@@ -75,7 +75,7 @@
     "generate-changelog": "^1.7.1",
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
-    "rabbitmq-admin": "^1.0.2",
+    "rabbitmq-admin": "^1.2.0",
     "rewiremock": "^3.13.7",
     "rimraf": "^3.0.2",
     "sinon": "^14.0.0",

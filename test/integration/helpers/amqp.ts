@@ -42,7 +42,7 @@ export const checkExchange = async (name: string, type: ExchangeType, opts?: Opt
 };
 
 export const getVhostQueue = async (name: string) => {
-    return rabbitAdmin.getVhostQueue('test', name);
+    return rabbitAdmin.getQueue('test', name);
 };
 
 export const checkQueue = async (name: string) => {
@@ -62,7 +62,7 @@ export const verifyQueue = async (name: string, opts?: Options.AssertQueue) => {
 };
 
 export const listVhostQueues = async () => {
-    return rabbitAdmin.getVhostQueues('test');
+    return rabbitAdmin.getQueues('test');
 };
 
 export const getChannel = async () => {
