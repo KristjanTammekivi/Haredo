@@ -37,10 +37,14 @@ jobs:
         run: yarn
       - name: Build
         run: yarn run build
+      - name: Lint
+        run: yarn run lint
       - name: Test & Coverage
         env:
           RABBIT_HOST: localhost
           RABBIT_PORT: ${{ job.services.rabbit.ports[5672] }}
-        run: yarn run coveralls
-      - name: Lint
-        run: yarn run lint
+        run: yarn run coverage
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.COVERALLS_TOKEN }}
