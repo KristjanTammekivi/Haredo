@@ -355,9 +355,9 @@ ajv@^6.5.5:
     uri-js "^4.2.2"
 
 amqplib@^0.10.0:
-  version "0.10.1"
-  resolved "https://registry.yarnpkg.com/amqplib/-/amqplib-0.10.1.tgz#5c6d3803e5f25cca72d1df5bddafcee73289cf12"
-  integrity sha512-Hs33MdtFmJ2WKQT9SBtrlet3aUNzMzZA/FF6p3NGGo7Fp/BVD4X3Po7bQxAA7uE0MmXPZ8EschLMbN+CjGx4dg==
+  version "0.10.2"
+  resolved "https://registry.yarnpkg.com/amqplib/-/amqplib-0.10.2.tgz#04ec8cbdcdf526dc36a4e46fb0591d449dca3372"
+  integrity sha512-l8U1thHT5QRNJF6Fv6ZveMeHV/bl+3UROQBn/cLOwRfeV3F0syZxkjnumJCG4NMvqfy9wT7mCgwpPSq2fApRpA==
   dependencies:
     bitsyntax "~0.1.0"
     buffer-more-ints "~1.0.0"
