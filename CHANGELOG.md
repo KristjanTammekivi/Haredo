@@ -1,3 +1,51 @@
+### 2.11.0 (2022-11-14)
+
+##### Chores
+
+* **deps-dev:**
+  *  bump typedoc from 0.23.15 to 0.23.17 ([494367ef](https://github.com/KristjanTammekivi/haredo/commit/494367ef0331922a068ed286999e519f6513694e))
+  *  bump dotenv from 16.0.2 to 16.0.3 ([7bb08d44](https://github.com/KristjanTammekivi/haredo/commit/7bb08d44c9717c9c39371829fc97dab2e8b51d6a))
+  *  bump @types/mocha from 9.1.1 to 10.0.0 ([48cb8dc4](https://github.com/KristjanTammekivi/haredo/commit/48cb8dc4c67176d48a88594b66654755593d539b))
+  *  bump typescript from 4.8.3 to 4.8.4 ([56628cc0](https://github.com/KristjanTammekivi/haredo/commit/56628cc05875a860109202046f2334e046bb43cf))
+  *  bump typedoc from 0.23.13 to 0.23.15 ([9bf2c764](https://github.com/KristjanTammekivi/haredo/commit/9bf2c764f038cb4122f41cb4921e016d5148eae2))
+  *  bump typescript from 4.8.2 to 4.8.3 ([6d04e097](https://github.com/KristjanTammekivi/haredo/commit/6d04e0972ab4b5d09787b456c7359dad0019ac0c))
+  *  bump typedoc from 0.23.12 to 0.23.13 ([92b7d097](https://github.com/KristjanTammekivi/haredo/commit/92b7d09724324ba2c7556386c85c1c166522a18b))
+  *  bump typedoc from 0.23.11 to 0.23.12 ([302a0757](https://github.com/KristjanTammekivi/haredo/commit/302a0757844ebb5933fb83491122fc3e34ca37f4))
+  *  bump dotenv from 16.0.1 to 16.0.2 ([62da5179](https://github.com/KristjanTammekivi/haredo/commit/62da5179cb5a1b753af3670b239619205f399d0b))
+  *  bump typescript from 4.7.4 to 4.8.2 ([5b78b830](https://github.com/KristjanTammekivi/haredo/commit/5b78b830b46857e878cd64dc58a96dc68eb2228e))
+  *  bump typedoc from 0.23.10 to 0.23.11 ([65b1d60f](https://github.com/KristjanTammekivi/haredo/commit/65b1d60f9c2ec7ba8f7b2b864786f3b850c6e667))
+  *  bump @types/chai from 4.3.1 to 4.3.3 ([ea3f0d08](https://github.com/KristjanTammekivi/haredo/commit/ea3f0d082dd790aa575bbdb168b37c26bf15b603))
+  *  bump typedoc from 0.23.9 to 0.23.10 ([246917c4](https://github.com/KristjanTammekivi/haredo/commit/246917c47b501d16d24ae58753978ec4512bee93))
+  *  bump typedoc from 0.23.8 to 0.23.9 ([455c6fb8](https://github.com/KristjanTammekivi/haredo/commit/455c6fb8b15b1c5ae1998c56989ecf9e4ab9ac22))
+  *  bump @types/sinon from 10.0.12 to 10.0.13 ([24e228e0](https://github.com/KristjanTammekivi/haredo/commit/24e228e095d9c8dd42502fcba77b513a434c0f32))
+  *  bump typedoc from 0.23.7 to 0.23.8 ([920b5cf8](https://github.com/KristjanTammekivi/haredo/commit/920b5cf87b9e17189825f314c9e6f46c98c4d4ec))
+  *  bump ts-node from 10.8.2 to 10.9.1 ([ee2a3bb5](https://github.com/KristjanTammekivi/haredo/commit/ee2a3bb58986646c776bf3e550f354189c3ce97e))
+  *  bump typedoc from 0.23.6 to 0.23.7 ([2e8cb907](https://github.com/KristjanTammekivi/haredo/commit/2e8cb9077e77f793ef25d8615aed199659526fee))
+  *  bump typedoc from 0.23.5 to 0.23.6 ([9df4b935](https://github.com/KristjanTammekivi/haredo/commit/9df4b93556ca858288cfb198cd875a9df57887ef))
+  *  bump ts-node from 10.8.1 to 10.8.2 ([3c7ce093](https://github.com/KristjanTammekivi/haredo/commit/3c7ce093d52c853da1fedf9b1394a28ea3be5fa6))
+  *  bump typedoc from 0.23.3 to 0.23.5 ([d8c5c85a](https://github.com/KristjanTammekivi/haredo/commit/d8c5c85a7ff796e452dfad53df8f3437ad55e18d))
+  *  bump typedoc from 0.23.2 to 0.23.3 ([40f6c411](https://github.com/KristjanTammekivi/haredo/commit/40f6c41130de452201a8537ff5a2e17a5cb36b67))
+  *  bump typedoc from 0.22.17 to 0.23.2 ([29f2516a](https://github.com/KristjanTammekivi/haredo/commit/29f2516a92568926753e38cc547f3064329fc553))
+  *  bump @types/sinon from 10.0.11 to 10.0.12 ([691af15d](https://github.com/KristjanTammekivi/haredo/commit/691af15d4f08ee03964d8d27ffda47facbada613))
+  *  bump typescript from 4.7.3 to 4.7.4 ([dc4282bc](https://github.com/KristjanTammekivi/haredo/commit/dc4282bccb7252a6c206a886717da3be2a7a002a))
+  *  bump typescript from 4.7.2 to 4.7.3 ([c8d5034b](https://github.com/KristjanTammekivi/haredo/commit/c8d5034b9e5ea9894304ac2dd8632e0f595efacc))
+  *  bump ts-node from 10.8.0 to 10.8.1 ([8afbf914](https://github.com/KristjanTammekivi/haredo/commit/8afbf914fb8fcd269c219b2b3a9665132a07835c))
+  *  bump typedoc from 0.22.16 to 0.22.17 ([9af9634b](https://github.com/KristjanTammekivi/haredo/commit/9af9634b3d4ed4cb4395651d307d97d28d2a0a0c))
+  *  bump typedoc from 0.22.15 to 0.22.16 ([83189b53](https://github.com/KristjanTammekivi/haredo/commit/83189b5311c7cd578af57446a02ac94e415fb2e6))
+  *  bump dotenv from 16.0.0 to 16.0.1 ([b9f9c164](https://github.com/KristjanTammekivi/haredo/commit/b9f9c164fe3ebddda17d5cf0f36de62afc3c719b))
+  *  bump sinon from 13.0.2 to 14.0.0 ([97f5d9a7](https://github.com/KristjanTammekivi/haredo/commit/97f5d9a775108c6ae7190aa40c83b9b295618d28))
+* **deps:**
+  *  bump amqplib from 0.10.2 to 0.10.3 ([844297df](https://github.com/KristjanTammekivi/haredo/commit/844297df41b4f9b0b429afd103563ee6b9fa18e5))
+  *  bump amqplib from 0.10.1 to 0.10.2 ([8da9352b](https://github.com/KristjanTammekivi/haredo/commit/8da9352b4edf69dfd8c4b2b13ff68872b6f192a7))
+  *  bump amqplib from 0.10.0 to 0.10.1 ([d7876359](https://github.com/KristjanTammekivi/haredo/commit/d7876359c807b47cd6cafdd3c3cd5ad584dd1123))
+  *  bump amqplib from 0.9.0 to 0.10.0 ([44b3f9a1](https://github.com/KristjanTammekivi/haredo/commit/44b3f9a15bef57ef56795b60065b0f9ce1f1be2c))
+
+##### Other Changes
+
+*  set qos to non-global when dealing with a quorum queue ([2d6d516e](https://github.com/KristjanTammekivi/haredo/commit/2d6d516ef18a87201af916fea2086a725080ad2b))
+*  upgrade ts-node and typescript ([b988495d](https://github.com/KristjanTammekivi/haredo/commit/b988495dfb8ae0e2d26cf1b624939aea2473a484))
+*  upgrade rabbitmq-admin to 1.2.0 ([5ab840e1](https://github.com/KristjanTammekivi/haredo/commit/5ab840e1780f2c44a1d836229ad31bd56ac57dc1))
+
 ### 2.10.0 (2022-05-10)
 
 ##### Chores
