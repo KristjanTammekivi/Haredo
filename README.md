@@ -51,7 +51,7 @@ _[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src
 ```typescript
 rabbit.queue('my-queue')
     .bindExchange('testExchange', '#', 'topic', { durable: false }) // Can be omitted if you don't want to bind the queue to an exchange right now
-    .consume(async (message) => {
+    .subscribe(async (message) => {
         console.log(message);
     });
 ```
@@ -77,7 +77,7 @@ rabbit.queue('my-queue').publish({ id: 5, status: 'inactive' });
 ```typescript
 rabbit.queue('my-queue')
     .prefetch(5) // same as .concurrency(5)
-    .consume(async (message) => {
+    .subscribe(async (message) => {
         console.log(message);
     });
 ```
