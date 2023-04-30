@@ -1,6 +1,6 @@
 import { haredo } from '../haredo';
 import { q } from '../index';
-import { delay } from 'bluebird';
+import { delay } from '../utils';
 
 const main = async () => {
     const chain = haredo({

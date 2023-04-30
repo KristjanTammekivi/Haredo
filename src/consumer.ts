@@ -3,11 +3,10 @@ import { Queue } from './queue';
 import { Middleware, Loggers } from './state';
 import { Channel, Replies } from 'amqplib';
 import { ConnectionManager } from './connection-manager';
-import { delay } from 'bluebird';
 import { makeEmitter, TypedEventEmitter } from './events';
 import { ChannelBrokenError } from './errors';
 import { initialChain } from './haredo';
-import { head, tail } from './utils';
+import { delay, head, tail } from './utils';
 import { makeMessageManager } from './message-manager';
 import { FailureBackoff } from './backoffs';
 
