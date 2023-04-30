@@ -1,3 +1,10 @@
+#### 2.11.1 (2023-04-30)
+
+##### Other Changes
+
+*  remove reference to incorrect function "consume" ([11f92eaa](https://github.com/KristjanTammekivi/haredo/commit/11f92eaa4a7e81c5ed7acab00b438809437ead2a))
+*  remove references to bluebird ([e8750673](https://github.com/KristjanTammekivi/haredo/commit/e87506739f3ae7d94b368aea905bf64261c0680b))
+
 ### 2.11.0 (2022-11-14)
 
 ##### Chores
