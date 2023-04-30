@@ -15,7 +15,7 @@ const main = async () => {
         .bindExchange(deadExchange, '#')
         .subscribe(async ({ nack, deliveryCount }) => {
             console.log('Delivery count', deliveryCount);
-            await delay(1000)
+            await delay(1000);
             nack(false);
         });
     await rabbit.queue(queue).publish({ test: true, time: Date.now() });

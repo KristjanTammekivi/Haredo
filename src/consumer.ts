@@ -72,7 +72,7 @@ export const makeConsumer = async <TMessage = unknown, TReply = unknown>(
         consumer.isClosed = true;
     };
     const setPrefetch = (prefetch: number) => {
-        const isGlobal = opts.queue.getOpts()?.arguments?.['x-queue-type'] === 'quorum' ? false : true;
+        const isGlobal = opts.queue.getOpts()?.arguments?.['x-queue-type'] !== 'quorum';
         return channel.prefetch(prefetch, isGlobal);
     };
     const start = async () => {
