@@ -2264,9 +2264,9 @@ querystringify@^2.1.1:
   integrity sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==
 
 rabbitmq-admin@^1.2.0:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/rabbitmq-admin/-/rabbitmq-admin-1.2.1.tgz#8df399a88cf6682d42c2abc50b3b14fb45f40582"
-  integrity sha512-6luDMjiclnvY+mYdJNsoqTQzqPvcuv39OWaRQVCHYAWnvHOZq2on/QPpqzTCRI3F3HwvmFU6lDD/41GKtGirrg==
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/rabbitmq-admin/-/rabbitmq-admin-1.2.2.tgz#c5f89db38cfcdb77054495fbd2324a66747bdf90"
+  integrity sha512-rxVbb8j8+9TO5uM/Pq9jK93qKB9DXtLXs5D3DCO2QxfeLymyKxYvPItugvkBCR0oLNF0z11tfkGsOCT/ZkUzpQ==
   dependencies:
     axios "^0.27.2"
     commander "^9.0.0"
