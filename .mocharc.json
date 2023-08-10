@@ -1,0 +1,12 @@
+{
+    "require": [
+        "ts-node/register/transpile-only"
+    ],
+    "timeout": 30000,
+    "extension": [
+        "ts"
+    ],
+    "file": [
+        "./src/utils/test/hein-helper.ts"
+    ]
+}

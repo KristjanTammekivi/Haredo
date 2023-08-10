@@ -1,4 +1,4 @@
-import { delay } from './utils';
+import { delay } from './utils/delay';
 
 export interface FailureBackoff {
     /**
@@ -25,10 +25,10 @@ export interface FailureBackoff {
 
 export interface StandardBackoffOptions {
     /**
-    * Set the amount of fails the system will allow in {failSpan} milliseconds
-    * before the subscriber waits for {failTimeout} milliseconds until passing
-    * the next message to subscriber callback.
-    */
+     * Set the amount of fails the system will allow in {failSpan} milliseconds
+     * before the subscriber waits for {failTimeout} milliseconds until passing
+     * the next message to subscriber callback.
+     */
     failThreshold: number;
     /**
      * Set the failSpan, the amount of time in milliseconds during which {failThreshold}
@@ -37,10 +37,10 @@ export interface StandardBackoffOptions {
      */
     failSpan: number;
     /**
-    * Set the failTimeout, the amount of time in milliseconds to wait until
-    * passing the next message to subscriber callback after {failThreshold}
-    * amount of nacked messages happen within {failSpan}
-    */
+     * Set the failTimeout, the amount of time in milliseconds to wait until
+     * passing the next message to subscriber callback after {failThreshold}
+     * amount of nacked messages happen within {failSpan}
+     */
     failTimeout: number;
 }
 
@@ -50,28 +50,28 @@ const standardBackoffDefaults: StandardBackoffOptions = {
     failTimeout: 5000
 };
 
-export const standardBackoff = (
-    {
-        failThreshold = standardBackoffDefaults.failThreshold,
-        failSpan = standardBackoffDefaults.failSpan,
-        failTimeout = standardBackoffDefaults.failTimeout
-    }: Partial<StandardBackoffOptions> = {}
-): FailureBackoff => {
-    let errors = [] as Date[];
+export const standardBackoff = ({
+    failThreshold = standardBackoffDefaults.failThreshold,
+    failSpan = standardBackoffDefaults.failSpan,
+    failTimeout = standardBackoffDefaults.failTimeout
+}: Partial<StandardBackoffOptions> = {}) => {
+    let errors: Date[] = [];
     let timeout: Promise<void>;
     return {
         nack: (requeue) => {
             if (requeue) {
                 const error = new Date();
-                errors = errors.concat(error);
+                errors = [...errors, error];
                 if (errors.length >= failThreshold) {
                     timeout = delay(failTimeout);
                 }
-                setTimeout(() => { errors = errors.filter(x => x !== error); }, failSpan);
+                setTimeout(() => {
+                    errors = errors.filter((x) => x !== error);
+                }, failSpan);
             }
         },
         take: async () => {
             await timeout;
         }
-    };
+    } satisfies FailureBackoff;
 };

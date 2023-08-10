@@ -1,4 +1,5 @@
 {
-    "jira-plugin.workingProject": "",
-    "typescript.tsdk": "node_modules/typescript/lib"
+    "explorer.fileNesting.patterns": {
+        "*.ts": "${capture}.integration.test.ts, ${capture}.test.ts"
+    }
 }

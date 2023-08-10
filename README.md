@@ -1,6 +1,6 @@
 # Haredo
 
-<Warning>Haredo version 2 introduces breaking changes. See [2.0 Changes](Changes-2.0.md)</Warning>
+<Warning>Haredo version 3 introduces breaking changes. See [3.0 Changes](Changes-3.0.md)</Warning>
 
 [![npm](https://img.shields.io/npm/v/haredo.svg)](https://www.npmjs.com/package/haredo)
 [![npm](https://img.shields.io/npm/dw/haredo.svg)](https://www.npmjs.com/package/haredo)
@@ -8,28 +8,17 @@
 [![Coverage Status](https://coveralls.io/repos/github/KristjanTammekivi/Haredo/badge.svg?branch=master)](https://coveralls.io/github/KristjanTammekivi/Haredo?branch=master)
 ![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/npm/haredo)
 
-![haredo](haredo.png)
-
 Yet another RabbitMQ library
 
 - [Motivation](#motivation)
 - [Features](#features)
 - [Usage](#usage)
 
-## Motivation
-
-![xkcd 927: standards](https://imgs.xkcd.com/comics/standards.png)
-
-*[xkcd 927: standards](https://xkcd.com/927/)*
-
-For a long time I've been using [tortoise](https://www.npmjs.com/package/tortoise) as my go-to RabbitMQ client. I quite like the chaining API it has but tortoise does have it's downsides (it's not being maintained, accessing message metadata needs you to not use arrow functions, missing typings, etc.)
-
 ## Features
 
  - TypeScript
  - Chaining based API
  - Graceful closing
- - RPC
 
 ## Usage
 
@@ -52,7 +41,7 @@ _[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src
 rabbit.queue('my-queue')
     .bindExchange('testExchange', '#', 'topic', { durable: false }) // Can be omitted if you don't want to bind the queue to an exchange right now
     .subscribe(async (message) => {
-        console.log(message);
+        console.log(message.data);
     });
 ```
 
@@ -102,16 +91,15 @@ Note: this requires [RabbitMQ Delayed Message Plugin](https://github.com/rabbitm
 _[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/delayed-exchange.ts)_
 
 ```typescript
-interface Message {
+interface Message {.exchange
     id: number;
 }
-const delayedExchange = e<Message>('my-delayed-exchange', 'x-delayed-message').delayed('topic');
+const delayedExchange = Exchange<Message>('my-delayed-exchange', 'x-delayed-message').delayed('topic');
 await rabbit.queue('my-queue')
     .bindExchange(delayedExchange, '#')
     .subscribe(({ data, timestamp }) => {
         console.log(`Received message in ${ Date.now() - timestamp }ms id:${ data.id } `);
     });
-const delayedMessage = preparedMessage().routingKey('item').delay(2000);
 let id = 0;
 while (true) {
     id += 1;
@@ -119,6 +107,7 @@ while (true) {
     const msg = delayedMessage.json({ id }).timestamp(Date.now());
     await rabbit
         .exchange(delayedExchange)
+        .delay(1000)
         .publish(msg);
     await delay(2000);
 }

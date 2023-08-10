@@ -1,22 +1,19 @@
-import { haredo } from '../haredo';
-import { q } from '../index';
-import { delay } from '../utils';
+import { Haredo } from '../haredo';
+import { delay } from '../utils/delay';
 
-const main = async () => {
-    const chain = haredo({
-        connection: 'amqp://guest:guest@localhost:5672/'
+const start = async () => {
+    const haredo = Haredo({ url: process.env.RABBIT_URL || 'amqp://localhost' });
+    await haredo.connect();
+
+    await haredo.queue<{ id: number }>('testQueue').subscribe(async ({ data }) => {
+        console.log(new Date(), 'Message received:', data.id);
     });
-    const queue = q<{ test: number, time: number }>('test').expires(2000);
-    await chain.queue(queue)
-        .subscribe(({ data }) => {
-            console.log(data);
-        });
-    let i = 1;
+
+    let iteration = 1;
     while (true) {
-        await chain.queue(queue).publish({ test: i, time: Date.now() });
-        await delay(500);
-        i += 1;
+        await haredo.queue<{ id: number }>('testQueue').publish({ id: iteration++ });
+        await delay(1000);
     }
 };
 
-process.nextTick(main);
+process.nextTick(start);

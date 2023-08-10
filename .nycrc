@@ -1,0 +1,16 @@
+{
+    "extension": [
+        ".ts"
+    ],
+    "require": [
+        "ts-node/register/transpile-only"
+    ],
+    "reporter": [
+        "lcov",
+        "text",
+        "text-summary",
+        "html"
+    ],
+    "sourceMap": true,
+    "instrument": true
+}

@@ -1,8 +1,0 @@
-src
-.nyc_output
-.vscode
-coverage
-test
-yarn.lock
-docs
-.travis.yml

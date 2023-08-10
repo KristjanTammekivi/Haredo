@@ -1,26 +1,30 @@
-import { Message, MessagePropertyHeaders } from 'amqplib';
-import { makeEmitter, TypedEventEmitter } from './events';
-import { parseJSON } from './utils';
+import { AMQPMessage, AMQPProperties, Field } from '@cloudamqp/amqp-client';
+import { parseJSON } from './utils/parse-json';
+import { TypedEventEmitter } from './utils/typed-event-target';
 
-export interface HaredoMessageEvents {
-    handled: void;
+const messageSymbol = Symbol('message');
+
+interface HaredoMessageEvents {
+    ack: null;
+    nack: boolean;
 }
 
-export interface HaredoMessage<TMessage = unknown, TReply = unknown> extends Methods<TReply> {
-    metaType: 'message';
+export interface HaredoMessage<T = unknown> extends Methods {
+    [messageSymbol]: true;
     emitter: TypedEventEmitter<HaredoMessageEvents>;
+
     /**
      * Raw message from amqplib
      */
-    raw: Message;
+    raw: AMQPMessage;
     /**
      * Message contents
      */
-    data: TMessage;
+    data: T;
     /**
      * Unparsed message data
      */
-    dataString: string;
+    dataString: string | null;
     /**
      * Returns true if message has been acked/nacked
      */
@@ -34,22 +38,14 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown> extends Met
      */
     isAcked(): boolean;
     /**
-     * Returns true if the message has been replied to (RPC)
-     */
-    isReplied(): boolean;
-    /**
-     * Returns the reply that was sent ack (RPC)
-     */
-    getReply(): TReply;
-    /**
      * Headers of the message
      */
-    headers: MessagePropertyHeaders;
+    headers: AMQPProperties['headers'];
     /**
      * Return the specified header
      * @param header header to return
      */
-    getHeader(header: string): string | string[];
+    getHeader<TFIELD = Field>(header: string): TFIELD;
 
     contentType?: string;
     contentEncoding?: string;
@@ -70,7 +66,7 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown> extends Met
      */
     replyTo?: string;
     /**
-     * If supplied, the message will be discarded from a queue once it’s been there longer than the given number of milliseconds
+     * If supplied, the message will be discarded from a queue once it's been there longer than the given number of milliseconds
      */
     expiration?: number;
     /**
@@ -80,7 +76,7 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown> extends Met
     /**
      * A timestamp for the message
      */
-    timestamp?: number;
+    timestamp?: Date;
     /**
      * An arbitrary application-specific type for the message
      */
@@ -124,106 +120,93 @@ export interface HaredoMessage<TMessage = unknown, TReply = unknown> extends Met
     deliveryCount?: number;
 }
 
-export interface Methods<TReply = unknown> {
+export interface Methods {
     /**
      * Mark the message as done, removes it from the queue
      */
-    ack(): void;
+    ack(): Promise<void>;
     /**
      * Nack the message. If requeue is false (defaults to true)
      * then the message will be discarded. Otherwise it will be returned to
      * the front of the queue
      */
-    nack(requeue?: boolean): void;
-    /**
-     * Reply to the message. Only works if the message has a
-     * replyTo and correlationId have been set on the message.
-     * If autoReply has been set on the chain, then You can just return a
-     * non-undefined value from the subscribe callback
-     */
-    reply(message: TReply): Promise<void>;
+    nack(requeue?: boolean): Promise<void>;
 }
 
-export const makeHaredoMessage = <TMessage = unknown, TReply = unknown>(
-    raw: Message,
+export const makeHaredoMessage = <T = unknown>(
+    raw: AMQPMessage,
     parseJson: boolean,
-    queue: string,
-    methods: Methods<TReply>
-): HaredoMessage<TMessage, TReply> => {
+    queue: string
+): HaredoMessage<T> => {
     const state = {
         isHandled: false,
         isAcked: false,
-        isNacked: false,
-        isReplied: false,
-        reply: undefined as TReply,
+        isNacked: false
     };
 
-    const dataString = raw.content.toString();
-    const data = parseJson ? parseJSON(dataString) : dataString;
+    const dataString = raw.bodyString();
+    const data = parseJson ? (parseJSON<T>(dataString) as T) : (dataString as T);
 
-    const emitter = makeEmitter<HaredoMessageEvents>();
+    const deliveryCount = raw.properties.headers?.['x-delivery-count'];
+
+    const emitter = new TypedEventEmitter<HaredoMessageEvents>();
+
     return {
-        emitter,
         raw,
         dataString,
         data,
         queue,
+        emitter,
         isHandled: () => state.isHandled,
         isAcked: () => state.isAcked,
         isNacked: () => state.isNacked,
-        isReplied: () => state.isReplied,
-        getReply: () => state.reply,
-        ack: () => {
+        ack: async () => {
             if (state.isHandled) {
                 return;
             }
             state.isAcked = true;
             state.isHandled = true;
-            methods.ack();
-            emitter.emit('handled');
+            await raw.ack();
+            emitter.emit('ack', null);
         },
-        nack: (requeue = true) => {
+        nack: async (requeue = true) => {
             if (state.isHandled) {
                 return;
             }
             state.isNacked = true;
             state.isHandled = true;
-            methods.nack(requeue);
-            emitter.emit('handled');
+            await raw.nack(requeue);
+            emitter.emit('nack', requeue);
         },
-        reply: (message: TReply) => {
-            state.isReplied = true;
-            state.reply = message;
-            return methods.reply(message);
-        },
-        getHeader: (header: string) => raw.properties.headers[header],
+        getHeader: <TFIELD = Field>(header: string) => raw.properties.headers?.[header] as TFIELD,
         headers: raw.properties.headers,
         appId: raw.properties.appId,
-        consumerTag: raw.fields.consumerTag,
+        consumerTag: raw.consumerTag,
         contentEncoding: raw.properties.contentEncoding,
         contentType: raw.properties.contentType,
         correlationId: raw.properties.correlationId,
-        deliveryMode: raw.properties.deliveryMode,
-        deliveryTag: raw.fields.deliveryTag,
-        exchange: raw.fields.exchange,
-        expiration: raw.properties.expiration,
+        deliveryMode: raw.properties.deliveryMode as 1 | 2,
+        deliveryTag: raw.deliveryTag,
+        exchange: raw.exchange,
+        expiration: raw.properties.expiration ? Number(raw.properties.expiration) : undefined,
         messageId: raw.properties.messageId,
         priority: raw.properties.priority,
-        redelivered: raw.fields.redelivered,
+        redelivered: raw.redelivered,
         replyTo: raw.properties.replyTo,
-        routingKey: raw.fields.routingKey,
+        routingKey: raw.routingKey,
         timestamp: raw.properties.timestamp,
         type: raw.properties.type,
         userId: raw.properties.userId,
-        metaType: 'message',
-        deliveryCount: raw.properties.headers?.['x-delivery-count']
+        deliveryCount: deliveryCount && !Number.isNaN(Number(deliveryCount)) ? Number(deliveryCount) : undefined,
+        [messageSymbol]: true
     };
 };
 
 /**
- * Returns true if passed in object is an message. Acts as a type guard for Message.
- * @param obj Object to check
+ * Returns true if passed in object is a haredo message
+ * @param {any} object Object to check
+ * @returns {boolean} isMessage
  */
-export const isHaredoMessage = (obj: any): obj is Message => {
-    return obj?.metaType === 'message';
+export const isHaredoMessage = (object: any): object is HaredoMessage => {
+    return object?.[messageSymbol] || false;
 };

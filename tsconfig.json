@@ -2,24 +2,18 @@
     "compilerOptions": {
         "noErrorTruncation": true,
         "module": "commonjs",
-        "target": "es2017",
+        "target": "es2018",
         "noImplicitAny": true,
         "inlineSourceMap": true,
+        "strictNullChecks": true,
         "incremental": false,
-        "experimentalDecorators": true,
+        "experimentalDecorators": false,
         "declaration": true,
         "outDir": "./dist",
-        "plugins": [
-            {
-                "name": "typescript-tslint-plugin",
-                "alwaysShowRuleFailuresAsWarnings": false,
-                "ignoreDefinitionFiles": true,
-                "configFile": "./tslint.json",
-                "suppressWhileTypeErrorsPresent": false,
-                "mockTypeScriptVersion": false
-            }
-        ],
-        "lib": ["es2017"]
+        "skipLibCheck": true,
+        "lib": [
+            "es2022"
+        ]
     },
     "include": [
         "src/**/*"
