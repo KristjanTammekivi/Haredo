@@ -10,7 +10,7 @@ export type Stubify<T> = {
     [P in keyof T]: SinonStub & Stubify<T[P]> & T[P];
 };
 
-describe.only('adapter', () => {
+describe('adapter', () => {
     let mockAmqp: Stubify<AMQPClient>;
     let mockClient: Stubify<AMQPClient>;
     let mockChannel: Stubify<AMQPChannel>;

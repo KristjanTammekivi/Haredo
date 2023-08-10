@@ -25,7 +25,7 @@ const makeTestMessage = (content: string, { parse = false, queue = 'test' } = {}
         queue
     );
 
-describe.only('haredo', () => {
+describe('haredo', () => {
     let haredo: ReturnType<typeof Haredo>;
     let adapter: SinonStubbedInstance<Adapter>;
     let consumerStub: Consumer;
