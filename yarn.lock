@@ -215,9 +215,9 @@
     to-fast-properties "^2.0.0"
 
 "@cloudamqp/amqp-client@^3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@cloudamqp/amqp-client/-/amqp-client-3.0.0.tgz#ddb3b64264b11a834fe736971ab7e004626df3dc"
-  integrity sha512-zjoEguTMGAkwYHuaEJttFUe6gQSLdt5eUI9LQIlW7iSVZL7GfBa6LnARWBcnWOJxudPEZNK3Pg+xMfenD4vUmA==
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/@cloudamqp/amqp-client/-/amqp-client-3.1.1.tgz#1962dd4e907cbed6b3f9b52ff5a8f1ec096135a5"
+  integrity sha512-bYPOH7jJ9eE9bHNyZqlgTyT4uh5L1KSndskK38b1PIePTKxNUTU1FibLQgcJm1+yGahTZwwQl3thgcRoiqIV5Q==
 
 "@cspotcode/source-map-support@^0.8.0":
   version "0.8.1"
