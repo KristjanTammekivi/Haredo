@@ -2198,9 +2198,9 @@ hein-plugin-sinon@^1.1.1:
     hein-assertion-utils "^1.0.4"
 
 hein@^1.3.5:
-  version "1.3.5"
-  resolved "https://registry.yarnpkg.com/hein/-/hein-1.3.5.tgz#acbe6ae8fb5c49f60f2150300fb6d0497aa11e18"
-  integrity sha512-M2MlRuJuxXj81dRg7S2JFw2fISaNgjSlqXqaVgcuumVKzbgRmohdtpPRq9QLR4fJCc2tzMexajMxYtzhY8SGUw==
+  version "1.3.6"
+  resolved "https://registry.yarnpkg.com/hein/-/hein-1.3.6.tgz#b971f9b248a4553232cdff2b51c7bcc236fd4590"
+  integrity sha512-r2zJjOid5xuMIavI8c0x4Vru4tfj1Z/55WFydWJRduw/HanJY8V1mapw4InVrOLc/hF0pSCTYfAzYzvKqYbRCw==
   dependencies:
     hein-assertion-utils "^1.0.4"
     lodash "^4.17.21"
