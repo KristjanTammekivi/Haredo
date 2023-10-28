@@ -19,6 +19,7 @@
     "test": "mocha 'src/**/*.test.ts'",
     "test:watch": "mocha 'src/**/*.test.ts' --watch",
     "coverage": "nyc npm run test",
+    "rabbitmq:start": "docker-compose -f docker/docker-compose.yml up",
     "release:major": "changelog -M && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --major && git push && git push --tags",
     "release:minor": "changelog -m && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --minor && git push && git push --tags",
     "release:patch": "changelog -p && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --patch && git push && git push --tags",
