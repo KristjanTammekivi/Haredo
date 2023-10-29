@@ -8,14 +8,14 @@ const start = async () => {
     await haredo
         .queue<{ id: number }>('testQueue')
         .bindExchange('testExchange', ['message.new', 'message.updated'], 'topic')
-        .subscribe(async ({ data, routingKey }) => {
+        .subscribe(async (data, { routingKey }) => {
             console.log(new Date(), 'Message created or updated:', data.id, routingKey);
         });
 
     await haredo
         .queue<{ id: number }>('deleteQueue')
         .bindExchange('testExchange', 'message.deleted', 'topic')
-        .subscribe(async ({ data, routingKey }) => {
+        .subscribe(async (data, { routingKey }) => {
             console.log(new Date(), 'Message deleted:', data.id, routingKey);
         });
 

@@ -187,6 +187,16 @@ describe('haredo', () => {
                 expect(adapter.bindQueue).to.have.been.calledOnce();
                 expect(adapter.bindQueue).to.have.been.calledWith('test', 'testexchange', '#');
             });
+            it('should setup exchange when it is passed as an object', async () => {
+                await haredo
+                    .queue('test')
+                    .bindExchange(Exchange('testexchange', 'direct'), 'message.created')
+                    .subscribe(async () => {});
+                expect(adapter.createExchange).to.have.been.calledOnce();
+                expect(adapter.createExchange).to.have.been.calledWith('testexchange', 'direct');
+                expect(adapter.bindQueue).to.have.been.calledOnce();
+                expect(adapter.bindQueue).to.have.been.calledWith('test', 'testexchange', 'message.created');
+            });
             it('should throw when subscribing with an anonymous queue and skipSetup is not called', async () => {
                 await expect(
                     haredo
@@ -201,7 +211,7 @@ describe('haredo', () => {
                 const message = makeTestMessage('test');
                 await adapter.subscribe.firstCall.lastArg(message);
                 expect(callback).to.have.been.calledOnce();
-                expect(callback).to.have.been.calledWith(message);
+                expect(callback).to.have.been.calledWith(message.data, message);
             });
             it('should resubscribe on connection error', async () => {
                 await haredo.queue('test').subscribe(() => {});
@@ -324,8 +334,8 @@ describe('haredo', () => {
                 await haredo
                     .queue('test')
                     .backoff(backoff)
-                    .subscribe(async (message) => {
-                        await message.ack();
+                    .subscribe(async (message, info) => {
+                        await info.ack();
                     });
                 await adapter.subscribe.secondCall.lastArg(makeTestMessage('test'));
                 expect(backoff.ack).to.have.been.calledOnce();
@@ -334,8 +344,8 @@ describe('haredo', () => {
                 await haredo
                     .queue('test')
                     .backoff(backoff)
-                    .subscribe(async (message) => {
-                        await message.nack(false);
+                    .subscribe(async (message, info) => {
+                        await info.nack(false);
                     });
                 await adapter.subscribe.secondCall.lastArg(makeTestMessage('test'));
                 expect(backoff.nack).to.have.been.calledOnce();

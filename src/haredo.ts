@@ -7,10 +7,10 @@ import { Queue, QueueInterface } from './queue';
 import { castArray } from './utils/cast-array';
 import { Middleware, applyMiddleware } from './utils/apply-middleware';
 import { FailureBackoff } from './backoffs';
+import type { RabbitUrl } from './types';
 
 interface HaredoOptions {
-    // TODO: allow an object instead of string for url
-    url: string;
+    url: string | RabbitUrl;
     tlsOptions?: AMQPTlsOptions;
     adapter?: Adapter;
 }
@@ -72,6 +72,7 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState): ExchangeChain<T>
             return;
         }
         await state.adapter.createExchange(state.exchange.name, state.exchange.type);
+        // TODO: E2E bindings?
     };
     return {
         setup,
@@ -135,7 +136,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
         if (state.skipSetup) {
             return;
         }
-        const queueName = await state.adapter.createQueue(state.queue.name, { durable: true });
+        const queueName = await state.adapter.createQueue(state.queue.name, state.queue.params, state.queue.args);
         if (!state.bindings) {
             return;
         }
@@ -197,9 +198,9 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
                 }
             );
         },
-        bindExchange: (name: string, patterns: string | string[], type: ExchangeType) => {
+        bindExchange: (exchange: string | ExchangeInterface, patterns: string | string[], type?: ExchangeType) => {
             const exchanges = castArray(patterns).map((pattern) => ({
-                exchange: Exchange(name, type),
+                exchange: typeof exchange === 'string' ? Exchange(exchange, type!) : exchange,
                 pattern: pattern
             }));
             return queueChain({
@@ -259,7 +260,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
     };
 };
 
-export type SubscribeCallback<T> = (message: HaredoMessage<T>) => any;
+export type SubscribeCallback<T> = (data: T, message: HaredoMessage<T>) => any;
 
 interface QueueChain<T = unknown> extends SharedChain, QueueSubscribeChain<T>, QueuePublishChain<T> {
     skipSetup: () => QueueChain<T>;
@@ -279,5 +280,6 @@ export interface QueueSubscribeChain<T> {
     concurrency(count: number): QueueSubscribeChain<T>;
     prefetch(count: number): QueueSubscribeChain<T>;
     backoff(backoff: FailureBackoff): QueueSubscribeChain<T>;
-    bindExchange: (name: string, routingKey: string | string[], type: ExchangeType) => QueueSubscribeChain<T>;
+    bindExchange(name: string, routingKey: string | string[], type: ExchangeType): QueueSubscribeChain<T>;
+    bindExchange(exchange: ExchangeInterface, routingKey: string | string[]): QueueSubscribeChain<T>;
 }

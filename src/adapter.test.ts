@@ -171,6 +171,12 @@ describe('adapter', () => {
             await adapter.createQueue('test');
             expect(mockChannel.queue).to.have.been.calledOnce().and.to.have.been.calledWith('test');
         });
+        it('should set up queue with arguments', async () => {
+            await adapter.createQueue('test', { durable: true }, { 'x-queue-type': 'quorum' });
+            expect(mockChannel.queue)
+                .to.have.been.calledOnce()
+                .and.to.have.been.calledWith('test', { durable: true }, { 'x-queue-type': 'quorum' });
+        });
     });
     describe('setupExchange', () => {
         beforeEach(async () => {

@@ -18,7 +18,7 @@ describe('applyMiddleware', () => {
         const callback = spy();
         await applyMiddleware([], callback, message);
         expect(callback).to.have.been.calledOnce();
-        expect(callback).to.have.been.calledWith(message);
+        expect(callback).to.have.been.calledWith(message.data, message);
     });
     it('should call the middleware', async () => {
         const middleware = spy();
@@ -40,15 +40,15 @@ describe('applyMiddleware', () => {
         await applyMiddleware([middleware1, middleware2], callback, message);
         expect(middleware1).to.have.been.calledBefore(middleware2);
     });
-    it('should not call second middleware before first oneif first one is awaiting on promise', async () => {
+    it('should not call second middleware before first one if first one is awaiting on promise', async () => {
         let firstMiddlewareFinishedAt: Date;
         let secondMiddlewareCalledAt: Date;
         const middleware1 = spy(async () => {
-            await delay(3);
+            await delay(4);
             firstMiddlewareFinishedAt = new Date();
         });
         const middleware2 = spy(async () => {
-            await delay(1);
+            await delay(2);
             secondMiddlewareCalledAt = new Date();
         });
         const callback = spy();

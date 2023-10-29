@@ -31,7 +31,7 @@ const start = async () => {
         .queue<Message>('testQueue')
         .use(dropEven)
         .use(metrics)
-        .subscribe(async ({ data }) => {
+        .subscribe(async (data) => {
             log('Message received:', data.id);
             await delay(10);
         });

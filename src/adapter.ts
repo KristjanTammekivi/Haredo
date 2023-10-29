@@ -2,13 +2,15 @@ import {
     AMQPChannel,
     AMQPClient,
     AMQPConsumer,
-    AMQPMessage,
     AMQPProperties,
     AMQPQueue,
     ExchangeParams,
     QueueParams
 } from '@cloudamqp/amqp-client';
 import { HaredoMessage, makeHaredoMessage } from './haredo-message';
+import { RabbitUrl } from './types';
+import { normalizeUrl } from './utils/normalize-url';
+import { QueueArguments } from './queue';
 
 interface SubscribeOptions {
     onClose: (reason: Error | null) => void;
@@ -29,7 +31,7 @@ interface PublishOptions extends AMQPProperties {
 export interface Adapter {
     connect(): Promise<AMQPClient>;
     close(): Promise<void>;
-    createQueue(name: string | undefined, options?: QueueParams): Promise<string>;
+    createQueue(name: string | undefined, options?: QueueParams, args?: QueueArguments): Promise<string>;
     createExchange(name: string, type: string, options?: ExchangeParams): Promise<void>;
     bindQueue(queueName: string, exchangeName: string, routingKey?: string): Promise<void>;
     sendToQueue(name: string, message: string, options: PublishOptions): Promise<void>;
@@ -41,7 +43,7 @@ export interface Adapter {
     ): Promise<Consumer>;
 }
 
-export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue, url: string): Adapter => {
+export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue, url: string | RabbitUrl): Adapter => {
     let client: AMQPClient | undefined;
     let clientPromise: Promise<any> | undefined;
     let consumers: AMQPConsumer[] = [];
@@ -50,14 +52,13 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
     const loopGetConnection = async () => {
         while (true) {
             try {
-                const c = new Client(url);
+                const c = new Client(normalizeUrl(url));
                 await c.connect();
                 return c;
             } catch {}
         }
     };
     const connect = async () => {
-        // TODO: loopgetconnection
         if (client) {
             return client;
         }
@@ -70,8 +71,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         clientPromise = undefined;
         client!.onerror = () => {
             client = undefined;
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            connect();
+            void connect();
         };
         return client!;
     };
@@ -92,12 +92,12 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
             }
             await client.close();
         },
-        createQueue: async (name, options) => {
+        createQueue: async (name, options, args) => {
             if (!client) {
                 throw new Error('no client');
             }
             const channel = await client.channel();
-            const queue = await channel.queue(name, options);
+            const queue = await channel.queue(name, options, args);
             return queue.name;
         },
         createExchange: async (name, type, options) => {

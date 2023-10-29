@@ -28,6 +28,6 @@ export const applyMiddleware = async <T>(
             await applyMiddleware(tail, callback, message);
         }
     } else {
-        await callback(message);
+        await callback(message.data, message);
     }
 };
