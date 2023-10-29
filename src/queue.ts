@@ -1,5 +1,6 @@
 import { QueueParams } from '@cloudamqp/amqp-client';
 import { ExchangeInterface } from './exchange';
+import { set } from './utils/set';
 
 type XOverflow = 'drop-head' | 'reject-publish' | 'reject-publish-dlx';
 
@@ -24,7 +25,7 @@ interface KnownQueueArguments {
     'x-queue-type'?: 'classic' | 'quorum' | 'stream';
     'x-max-length'?: number;
     'x-max-length-bytes'?: number;
-    'x-overflow': XOverflow;
+    'x-overflow'?: XOverflow;
     'x-expires'?: number;
     'x-max-priority'?: number;
     'x-delivery-limit'?: number;
@@ -63,14 +64,6 @@ export const Queue = <T = unknown>(
         maxPriority: (priority) => setArgument('x-max-priority', priority),
         deliveryLimit: (limit) => setArgument('x-delivery-limit', limit)
     };
-};
-
-const set = <T extends Record<string, any>>(object: T, key: keyof T, value: T[keyof T] | undefined): T => {
-    return omitKeysByValue({ ...object, [key]: value });
-};
-
-const omitKeysByValue = <T extends Record<string, any>>(object: T, value?: T[keyof T] | undefined): T => {
-    return Object.fromEntries(Object.entries(object).filter(([k, v]) => v !== value)) as T;
 };
 
 export interface QueueInterface<TMESSAGE = unknown> {

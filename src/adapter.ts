@@ -11,6 +11,7 @@ import { HaredoMessage, makeHaredoMessage } from './haredo-message';
 import { RabbitUrl } from './types';
 import { normalizeUrl } from './utils/normalize-url';
 import { QueueArguments } from './queue';
+import { ExchangeArguments } from './exchange';
 
 interface SubscribeOptions {
     onClose: (reason: Error | null) => void;
@@ -32,7 +33,7 @@ export interface Adapter {
     connect(): Promise<AMQPClient>;
     close(): Promise<void>;
     createQueue(name: string | undefined, options?: QueueParams, args?: QueueArguments): Promise<string>;
-    createExchange(name: string, type: string, options?: ExchangeParams): Promise<void>;
+    createExchange(name: string, type: string, options?: ExchangeParams, args?: ExchangeArguments): Promise<void>;
     bindQueue(queueName: string, exchangeName: string, routingKey?: string): Promise<void>;
     sendToQueue(name: string, message: string, options: PublishOptions): Promise<void>;
     publish(exchange: string, routingKey: string, message: string, options: PublishOptions): Promise<void>;
@@ -91,25 +92,26 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                 await publishChannel.close();
             }
             await client.close();
+            client = undefined;
         },
         createQueue: async (name, options, args) => {
             if (!client) {
-                throw new Error('no client');
+                throw new Error('No client');
             }
             const channel = await client.channel();
             const queue = await channel.queue(name, options, args);
             return queue.name;
         },
-        createExchange: async (name, type, options) => {
+        createExchange: async (name, type, options, args) => {
             if (!client) {
-                throw new Error('no client');
+                throw new Error('No client');
             }
             const channel = await client.channel();
-            await channel.exchangeDeclare(name, type, options);
+            await channel.exchangeDeclare(name, type, options, args);
         },
         bindQueue: async (queueName, exchangeName, routingKey) => {
             if (!client) {
-                throw new Error('no client');
+                throw new Error('No client');
             }
             const channel = await client.channel();
             await channel.queueBind(queueName, exchangeName, routingKey || '#');
@@ -155,7 +157,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         subscribe: async (name, { onClose, prefetch, noAck = false, exclusive = false }, callback) => {
             if (!client) {
-                throw new Error('no client');
+                throw new Error('No client');
             }
             const channel = await client.channel();
             if (prefetch) {

@@ -116,6 +116,21 @@ describe('haredo', () => {
                 }
             });
         });
+        it('should be possible to set parameters when creating exchange via string', async () => {
+            await haredo.exchange('someExchange', 'topic', { passive: true }).publish('some message', 'rk');
+            expect(adapter.createExchange).to.have.been.calledWith('someExchange', 'topic', { passive: true });
+        });
+        it('should be possible to set arguments when creating exchange via string', async () => {
+            await haredo
+                .exchange('someExchange', 'x-delayed-message', {}, { 'x-delayed-type': 'topic' })
+                .publish('some message', 'rk');
+            expect(adapter.createExchange).to.have.been.calledWith(
+                'someExchange',
+                'x-delayed-message',
+                {},
+                { 'x-delayed-type': 'topic' }
+            );
+        });
     });
     describe('queue', () => {
         describe('publish', () => {

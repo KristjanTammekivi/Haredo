@@ -1,7 +1,7 @@
-import { AMQPClient, AMQPQueue, AMQPTlsOptions } from '@cloudamqp/amqp-client';
+import { AMQPClient, AMQPQueue, AMQPTlsOptions, ExchangeParams } from '@cloudamqp/amqp-client';
 import { Adapter, Consumer, createAdapter } from './adapter';
 import { MissingQueueNameError } from './errors';
-import { Exchange, ExchangeInterface, ExchangeType } from './exchange';
+import { ExchangeArguments, ExchangeInterface, ExchangeType, InternalExchange } from './exchange';
 import { HaredoMessage } from './haredo-message';
 import { Queue, QueueInterface } from './queue';
 import { castArray } from './utils/cast-array';
@@ -18,7 +18,13 @@ interface HaredoOptions {
 export interface HaredoInstance {
     connect(): Promise<void>;
     exchange<T = unknown>(exchange: ExchangeInterface<T>): ExchangeChain<T>;
-    exchange<T = unknown>(exchange: string, type: ExchangeType): ExchangeChain<T>;
+
+    exchange<T = unknown>(
+        exchange: string,
+        type: ExchangeType,
+        parameters?: ExchangeParams,
+        args?: ExchangeArguments
+    ): ExchangeChain<T>;
     queue<T = unknown>(queue: string | QueueInterface<T>): QueueChain<T>;
     close(): Promise<void>;
 }
@@ -31,9 +37,15 @@ export const Haredo = ({ url, adapter = createAdapter(AMQPClient, AMQPQueue, url
         close: async () => {
             await adapter.close();
         },
-        exchange: <T = unknown>(exchange: string | ExchangeInterface<T>, type?: ExchangeType) => {
+        exchange: <T = unknown>(
+            exchange: string | ExchangeInterface<T>,
+            type?: ExchangeType,
+            // eslint-disable-next-line unicorn/prevent-abbreviations
+            params = {} as ExchangeParams,
+            args = {} as ExchangeArguments
+        ) => {
             if (typeof exchange === 'string') {
-                exchange = Exchange(exchange, type as ExchangeType);
+                exchange = InternalExchange(exchange, type!, params, args);
             }
             return exchangeChain<T>({ adapter, exchange });
         },
@@ -71,7 +83,12 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState): ExchangeChain<T>
         if (state.skipSetup) {
             return;
         }
-        await state.adapter.createExchange(state.exchange.name, state.exchange.type);
+        await state.adapter.createExchange(
+            state.exchange.name,
+            state.exchange.type,
+            state.exchange.params,
+            state.exchange.args
+        );
         // TODO: E2E bindings?
     };
     return {
@@ -200,7 +217,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
         },
         bindExchange: (exchange: string | ExchangeInterface, patterns: string | string[], type?: ExchangeType) => {
             const exchanges = castArray(patterns).map((pattern) => ({
-                exchange: typeof exchange === 'string' ? Exchange(exchange, type!) : exchange,
+                exchange: typeof exchange === 'string' ? InternalExchange(exchange, type!) : exchange,
                 pattern: pattern
             }));
             return queueChain({

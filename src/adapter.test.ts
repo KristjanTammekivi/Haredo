@@ -78,6 +78,20 @@ describe('adapter', () => {
             await Promise.all([adapter.connect(), adapter.connect()]);
             expect(mockClient.connect).to.have.been.calledOnce();
         });
+        it('should create an url when passed an object', async () => {
+            const objectAdapter = createAdapter(mockAmqp as any, stub().returns(mockQueue) as any, {
+                hostname: 'localhost',
+                password: 'guest',
+                port: 5672,
+                protocol: 'amqp',
+                username: 'guest',
+                vhost: '/'
+            });
+            await objectAdapter.connect();
+            expect(mockAmqp)
+                .to.have.been.calledOnce()
+                .and.to.have.been.calledWith('amqp://guest:guest@localhost:5672/');
+        });
     });
     describe('close', () => {
         it('should disconnect', async () => {
@@ -134,6 +148,10 @@ describe('adapter', () => {
             await adapter.sendToQueue('test', 'some message', { confirm: true });
             expect(mockClient.channel).to.have.been.calledOnce();
         });
+        it('should throw if called when disconnected', async () => {
+            await adapter.close();
+            await expect(adapter.sendToQueue('test', 'some message', {})).to.reject(/No client/);
+        });
     });
     describe('publish', () => {
         beforeEach(async () => {
@@ -162,40 +180,60 @@ describe('adapter', () => {
             expect(mockChannel.confirmSelect).to.have.been.calledOnce();
             expect(mockClient.channel).to.have.been.calledOnce();
         });
+        it('should throw if called before connect', async () => {
+            await adapter.close();
+            await expect(adapter.publish('test', '#', 'test', { confirm: true })).to.reject(/No client/);
+        });
     });
     describe('setupQueue', () => {
-        beforeEach(async () => {
-            await adapter.connect();
-        });
         it('should create queue', async () => {
+            await adapter.connect();
             await adapter.createQueue('test');
             expect(mockChannel.queue).to.have.been.calledOnce().and.to.have.been.calledWith('test');
         });
         it('should set up queue with arguments', async () => {
+            await adapter.connect();
             await adapter.createQueue('test', { durable: true }, { 'x-queue-type': 'quorum' });
             expect(mockChannel.queue)
                 .to.have.been.calledOnce()
                 .and.to.have.been.calledWith('test', { durable: true }, { 'x-queue-type': 'quorum' });
         });
+        it('should throw if called before connect', async () => {
+            await expect(adapter.createQueue('test')).to.reject(/No client/);
+        });
     });
     describe('setupExchange', () => {
-        beforeEach(async () => {
-            await adapter.connect();
-        });
         it('should create exchange', async () => {
+            await adapter.connect();
             await adapter.createExchange('test', 'topic', { autoDelete: true });
             expect(mockChannel.exchangeDeclare)
                 .to.have.been.calledOnce()
                 .and.to.have.been.calledWith('test', 'topic', { autoDelete: true });
         });
+        it('should set up exchange with arguments', async () => {
+            await adapter.connect();
+            await adapter.createExchange('test', 'topic', { autoDelete: true }, { 'alternate-exchange': 'alternate' });
+            expect(mockChannel.exchangeDeclare)
+                .to.have.been.calledOnce()
+                .and.to.have.been.calledWith(
+                    'test',
+                    'topic',
+                    { autoDelete: true },
+                    { 'alternate-exchange': 'alternate' }
+                );
+        });
+        it('should throw if called before connect', async () => {
+            await expect(adapter.createExchange('test', 'topic')).to.reject(/No client/);
+        });
     });
     describe('bindQueue', () => {
-        beforeEach(async () => {
-            await adapter.connect();
-        });
         it('should bind exchange', async () => {
+            await adapter.connect();
             await adapter.bindQueue('testQueue', 'testExchange', '#');
             expect(mockChannel.queueBind).to.have.been.calledOnce();
+        });
+        it('should throw if called before connect', async () => {
+            await expect(adapter.bindQueue('testQueue', 'testExchange', '#')).to.reject(/No client/);
         });
     });
     describe('subscribe', () => {
@@ -269,6 +307,10 @@ describe('adapter', () => {
             await internalCallback({ bodyString: () => '"Hello, world"', properties: {} });
             expect(callback).to.have.been.calledOnce();
             expect(callbackEnd!).to.not.be.undefined();
+        });
+        it('should throw if called while disconnected', async () => {
+            await adapter.close();
+            await expect(adapter.subscribe('test', { onClose: stub() }, () => {})).to.reject(/No client/);
         });
     });
 });

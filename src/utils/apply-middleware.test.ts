@@ -8,7 +8,12 @@ describe('applyMiddleware', () => {
     let message: HaredoMessage<any>;
     beforeEach(() => {
         message = makeHaredoMessage(
-            { bodyString: () => '{"hello": "world"}', properties: {} } as any,
+            {
+                bodyString: () => '{"hello": "world"}',
+                properties: {},
+                nack: async () => {},
+                ack: async () => {}
+            } as any,
             true,
             'testQueue'
         );
@@ -67,5 +72,15 @@ describe('applyMiddleware', () => {
         const callback = spy();
         await expect(applyMiddleware([middleware1 as any, middleware2], callback, message)).to.reject(/test/);
         await expect(middleware1.firstCall.returnValue).to.reject(/test/);
+    });
+    it('should not call callback if middleware nacks and calls next', async () => {
+        const middleware = spy(async (message_, next) => {
+            console.log(message_);
+            await message_.nack();
+            await next();
+        });
+        const callback = spy();
+        await applyMiddleware([middleware], callback, message);
+        expect(callback).to.not.have.been.called();
     });
 });
