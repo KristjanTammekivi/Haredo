@@ -8,6 +8,7 @@ import { castArray } from './utils/cast-array';
 import { Middleware, applyMiddleware } from './utils/apply-middleware';
 import { FailureBackoff } from './backoffs';
 import type { RabbitUrl } from './types';
+import { mergeState } from './utils/merge-state';
 
 interface HaredoOptions {
     url: string | RabbitUrl;
@@ -67,14 +68,14 @@ interface ChainState {
     headers?: Record<string, string | number>;
 }
 
-interface QueueChainState<T> extends ChainState {
+export interface QueueChainState<T> extends ChainState {
     queue: QueueInterface;
     middleware: Middleware<T>[];
     prefetch?: number;
     backoff?: FailureBackoff;
 }
 
-interface ExchangeChainState extends ChainState {
+export interface ExchangeChainState extends ChainState {
     exchange: ExchangeInterface;
 }
 
@@ -132,21 +133,6 @@ interface ExchangeChain<T = unknown> extends SharedChain {
     publish: (message: T, routingKey: string) => Promise<void>;
     delay: (milliseconds: number) => ExchangeChain<T>;
 }
-
-const mergeState = <T extends ExchangeChainState | QueueChainState<unknown>>(base: T, top: Partial<T>): T => {
-    const arrayProperties = Object.entries(top).filter(([key, value]) => Array.isArray(value));
-    return {
-        ...base,
-        ...top,
-        ...Object.fromEntries(
-            arrayProperties.map(([key, value]) => {
-                const baseValue = (base as any)[key] || [];
-                const updatedValue = [...baseValue, ...value];
-                return [key, updatedValue];
-            })
-        )
-    };
-};
 
 const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
     const setup = async () => {

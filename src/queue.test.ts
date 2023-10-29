@@ -3,6 +3,7 @@ import { SinonStubbedInstance, stub } from 'sinon';
 import { Adapter, Consumer } from './adapter';
 import { Haredo } from './haredo';
 import { expect } from 'hein';
+import { Exchange } from './exchange';
 
 const rabbitURL = process.env.RABBIT_URL || 'amqp://localhost:5672';
 
@@ -48,6 +49,11 @@ describe('queue', () => {
     });
     it('should set dead letter exchange', async () => {
         const queue = Queue('test').dead('dlx');
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-dead-letter-exchange': 'dlx' });
+    });
+    it('should set dead letter exchange from an object', async () => {
+        const queue = Queue('test').dead(Exchange('dlx', 'topic'));
         await haredo.queue(queue).setup();
         expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-dead-letter-exchange': 'dlx' });
     });

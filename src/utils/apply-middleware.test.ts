@@ -75,7 +75,6 @@ describe('applyMiddleware', () => {
     });
     it('should not call callback if middleware nacks and calls next', async () => {
         const middleware = spy(async (message_, next) => {
-            console.log(message_);
             await message_.nack();
             await next();
         });

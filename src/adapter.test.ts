@@ -235,6 +235,13 @@ describe('adapter', () => {
         it('should throw if called before connect', async () => {
             await expect(adapter.bindQueue('testQueue', 'testExchange', '#')).to.reject(/No client/);
         });
+        it('should default the routing key to #', async () => {
+            await adapter.connect();
+            await adapter.bindQueue('testQueue', 'testExchange');
+            expect(mockChannel.queueBind)
+                .to.have.been.calledOnce()
+                .and.to.have.been.calledWith('testQueue', 'testExchange', '#');
+        });
     });
     describe('subscribe', () => {
         beforeEach(async () => {
