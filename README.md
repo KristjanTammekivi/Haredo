@@ -71,19 +71,6 @@ rabbit.queue('my-queue')
     });
 ```
 
-### RPC
-
-_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/rpc.ts)_
-```typescript
-rabbit.queue('sum')
-    // With autoReply on, returned value from callback is automatically replied
-    // Alternative is to use the reply/1 method on the message
-    .autoReply()
-    .subscribe(({ data }) => data[0] + data[1]);
-
-const response = await rabbit.queue('sum').rpc([30, 12])
-```
-
 ### Delayed messages
 
 Note: this requires [RabbitMQ Delayed Message Plugin](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange) to be installed and enabled on the server.
@@ -97,7 +84,7 @@ interface Message {.exchange
 const delayedExchange = Exchange<Message>('my-delayed-exchange', 'x-delayed-message').delayed('topic');
 await rabbit.queue('my-queue')
     .bindExchange(delayedExchange, '#')
-    .subscribe(({ data, timestamp }) => {
+    .subscribe((data, { timestamp }) => {
         console.log(`Received message in ${ Date.now() - timestamp }ms id:${ data.id } `);
     });
 let id = 0;
