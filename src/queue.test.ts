@@ -63,4 +63,82 @@ describe('queue', () => {
             }
         );
     });
+    it('should set exclusive', async () => {
+        const queue = Queue('test').exclusive();
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', { exclusive: true });
+    });
+    it('should set exclusive to false', async () => {
+        const queue = Queue('test').exclusive(false);
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', { exclusive: false });
+    });
+    it('should set durable', async () => {
+        const queue = Queue('test').durable();
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', { durable: true });
+    });
+    it('should set durable to false', async () => {
+        const queue = Queue('test').durable(false);
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', { durable: false });
+    });
+    it('should set passive', async () => {
+        const queue = Queue('test').passive();
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', { passive: true });
+    });
+    it('should set passive to false', async () => {
+        const queue = Queue('test').passive(false);
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', { passive: false });
+    });
+    it('should set messageTtl', async () => {
+        const queue = Queue('test').messageTtl(1000);
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'message-ttl': 1000 });
+    });
+    it('should set maxLength', async () => {
+        const queue = Queue('test').maxLength(1000);
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-max-length': 1000 });
+    });
+    it('should set maxLengthBytes', async () => {
+        const queue = Queue('test').maxLengthBytes(1000);
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-max-length-bytes': 1000 });
+    });
+    it('should set overflow for max-length', async () => {
+        const queue = Queue('test').maxLength(1000, 'reject-publish');
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith(
+            'test',
+            {},
+            { 'x-max-length': 1000, 'x-overflow': 'reject-publish' }
+        );
+    });
+    it('should set overflow for max-length-bytes', async () => {
+        const queue = Queue('test').maxLengthBytes(1000, 'drop-head');
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith(
+            'test',
+            {},
+            { 'x-max-length-bytes': 1000, 'x-overflow': 'drop-head' }
+        );
+    });
+    it('should set expire', async () => {
+        const queue = Queue('test').expires(1000);
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-expires': 1000 });
+    });
+    it('should set maxPriority', async () => {
+        const queue = Queue('test').maxPriority(1000);
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-max-priority': 1000 });
+    });
+    it('should set deliveryLimit', async () => {
+        const queue = Queue('test').deliveryLimit(1000);
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-delivery-limit': 1000 });
+    });
 });
