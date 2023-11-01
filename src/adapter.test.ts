@@ -261,23 +261,6 @@ describe('adapter', () => {
             internalCallback({ bodyString: () => '"Hello, world"', properties: {} });
             expect(isHaredoMessage(callback.lastCall.firstArg)).to.be.true();
         });
-        it.skip(`should call ack when callback doesn't throw`, async () => {
-            const callback = stub();
-            await adapter.subscribe('test', { onClose: stub() }, callback);
-            const internalCallback = mockChannel.basicConsume.firstCall.lastArg;
-            const message = { bodyString: () => '"Hello, world"', properties: {}, ack: stub() };
-            await internalCallback(message);
-            expect(message.ack).to.have.been.calledOnce();
-        });
-        it.skip(`should call nack when callback throws`, async () => {
-            const callback = stub().throws();
-            await adapter.subscribe('test', { onClose: stub() }, callback);
-            const internalCallback = mockChannel.basicConsume.firstCall.lastArg;
-            const message = { bodyString: () => '"Hello, world"', properties: {}, nack: stub() };
-            await internalCallback(message);
-            expect(message.nack).to.have.been.calledOnce();
-            expect(message.nack).to.have.been.calledWith(true);
-        });
         it('should cancel', async () => {
             const callback = stub();
             const consumer = await adapter.subscribe('test', { onClose: stub() }, callback);
