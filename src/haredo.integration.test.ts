@@ -1,7 +1,8 @@
 import { expect } from 'hein';
-import { Haredo, HaredoInstance } from './haredo';
+import { Haredo } from './haredo';
 import { rabbitAdmin } from './utils/test/rabbit-admin';
 import { Exchange } from './exchange';
+import { HaredoInstance } from './types';
 
 describe('haredo integration', () => {
     let haredo: HaredoInstance;

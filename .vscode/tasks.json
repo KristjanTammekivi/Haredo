@@ -19,6 +19,17 @@
 			"problemMatcher": [],
 			"label": "npm: test:watch",
 			"detail": "mocha 'src/**/*.test.ts' --watch"
+		},
+		{
+			"type": "npm",
+			"script": "build",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": [],
+			"label": "npm: build",
+			"detail": "rimraf dist && npm run build:ts"
 		}
 	]
 }

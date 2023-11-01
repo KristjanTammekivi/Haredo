@@ -1,34 +1,20 @@
-import { AMQPClient, AMQPQueue, AMQPTlsOptions, ExchangeParams } from '@cloudamqp/amqp-client';
-import { Adapter, Consumer, createAdapter } from './adapter';
+import { AMQPClient, AMQPQueue, ExchangeParams } from '@cloudamqp/amqp-client';
+import { Consumer, createAdapter } from './adapter';
 import { MissingQueueNameError } from './errors';
 import { ExchangeArguments, ExchangeInterface, ExchangeType, InternalExchange } from './exchange';
 import { HaredoMessage } from './haredo-message';
 import { Queue, QueueInterface } from './queue';
+import type {
+    ExchangeChain,
+    ExchangeChainState,
+    HaredoInstance,
+    HaredoOptions,
+    QueueChain,
+    QueueChainState
+} from './types';
+import { applyMiddleware } from './utils/apply-middleware';
 import { castArray } from './utils/cast-array';
-import { Middleware, applyMiddleware } from './utils/apply-middleware';
-import { FailureBackoff } from './backoffs';
-import type { RabbitUrl } from './types';
 import { mergeState } from './utils/merge-state';
-
-interface HaredoOptions {
-    url: string | RabbitUrl;
-    tlsOptions?: AMQPTlsOptions;
-    adapter?: Adapter;
-}
-
-export interface HaredoInstance {
-    connect(): Promise<void>;
-    exchange<T = unknown>(exchange: ExchangeInterface<T>): ExchangeChain<T>;
-
-    exchange<T = unknown>(
-        exchange: string,
-        type: ExchangeType,
-        parameters?: ExchangeParams,
-        args?: ExchangeArguments
-    ): ExchangeChain<T>;
-    queue<T = unknown>(queue: string | QueueInterface<T>): QueueChain<T>;
-    close(): Promise<void>;
-}
 
 export const Haredo = ({ url, adapter = createAdapter(AMQPClient, AMQPQueue, url) }: HaredoOptions): HaredoInstance => {
     return {
@@ -58,26 +44,6 @@ export const Haredo = ({ url, adapter = createAdapter(AMQPClient, AMQPQueue, url
         }
     };
 };
-
-interface ChainState {
-    adapter: Adapter;
-    skipSetup?: boolean;
-    confirm?: boolean;
-    json?: boolean;
-    bindings?: { exchange: ExchangeInterface; pattern: string }[];
-    headers?: Record<string, string | number>;
-}
-
-export interface QueueChainState<T> extends ChainState {
-    queue: QueueInterface;
-    middleware: Middleware<T>[];
-    prefetch?: number;
-    backoff?: FailureBackoff;
-}
-
-export interface ExchangeChainState extends ChainState {
-    exchange: ExchangeInterface;
-}
 
 const exchangeChain = <T = unknown>(state: ExchangeChainState): ExchangeChain<T> => {
     const setup = async () => {
@@ -121,18 +87,6 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState): ExchangeChain<T>
         }
     };
 };
-
-export interface SharedChain {
-    setup: () => Promise<void>;
-    confirm: () => this;
-    json: (stringify?: boolean) => this;
-}
-
-interface ExchangeChain<T = unknown> extends SharedChain {
-    skipSetup: (skip?: boolean) => ExchangeChain<T>;
-    publish: (message: T, routingKey: string) => Promise<void>;
-    delay: (milliseconds: number) => ExchangeChain<T>;
-}
 
 const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
     const setup = async () => {
@@ -262,27 +216,3 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
         }
     };
 };
-
-export type SubscribeCallback<T> = (data: T, message: HaredoMessage<T>) => any;
-
-interface QueueChain<T = unknown> extends SharedChain, QueueSubscribeChain<T>, QueuePublishChain<T> {
-    skipSetup: () => QueueChain<T>;
-}
-
-export interface QueuePublishChain<T> {
-    publish: (message: T) => Promise<void>;
-}
-
-export interface HaredoConsumer {
-    cancel: () => Promise<void>;
-}
-
-export interface QueueSubscribeChain<T> {
-    subscribe(callback: SubscribeCallback<T>): Promise<HaredoConsumer>;
-    use(...middleware: Middleware<T>[]): QueueSubscribeChain<T>;
-    concurrency(count: number): QueueSubscribeChain<T>;
-    prefetch(count: number): QueueSubscribeChain<T>;
-    backoff(backoff: FailureBackoff): QueueSubscribeChain<T>;
-    bindExchange(name: string, routingKey: string | string[], type: ExchangeType): QueueSubscribeChain<T>;
-    bindExchange(exchange: ExchangeInterface, routingKey: string | string[]): QueueSubscribeChain<T>;
-}

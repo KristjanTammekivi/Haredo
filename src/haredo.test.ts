@@ -5,9 +5,10 @@ import { Adapter, Consumer } from './adapter';
 import { FailureBackoff } from './backoffs';
 import { MissingQueueNameError } from './errors';
 import { Exchange } from './exchange';
-import { Haredo, HaredoConsumer } from './haredo';
+import { Haredo } from './haredo';
 import { makeHaredoMessage } from './haredo-message';
 import { Queue } from './queue';
+import { HaredoConsumer } from './types';
 
 config();
 

@@ -1,4 +1,4 @@
-import { ExchangeChainState, QueueChainState } from '../haredo';
+import { ExchangeChainState, QueueChainState } from '../types';
 
 export const mergeState = <T extends ExchangeChainState | QueueChainState<unknown>>(base: T, top: Partial<T>): T => {
     const arrayProperties = Object.entries(top).filter(([key, value]) => Array.isArray(value));
