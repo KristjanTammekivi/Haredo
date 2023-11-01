@@ -98,8 +98,15 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
         }
         await Promise.all(
             state.bindings.map(async (binding) => {
-                await state.adapter.createExchange(binding.exchange.name, binding.exchange.type);
-                await state.adapter.bindQueue(queueName, binding.exchange.name, binding.pattern);
+                await state.adapter.createExchange(
+                    binding.exchange.name,
+                    binding.exchange.type,
+                    binding.exchange.params,
+                    binding.exchange.args
+                );
+                for (const pattern of binding.patterns) {
+                    await state.adapter.bindQueue(queueName, binding.exchange.name, pattern);
+                }
             })
         );
     };
@@ -155,13 +162,13 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
             );
         },
         bindExchange: (exchange: string | ExchangeInterface, patterns: string | string[], type?: ExchangeType) => {
-            const exchanges = castArray(patterns).map((pattern) => ({
+            const binding = {
                 exchange: typeof exchange === 'string' ? InternalExchange(exchange, type!) : exchange,
-                pattern: pattern
-            }));
+                patterns: castArray(patterns)
+            };
             return queueChain({
                 ...state,
-                bindings: [...(state.bindings || []), ...exchanges]
+                bindings: [...(state.bindings || []), binding]
             });
         },
         subscribe: async (callback) => {
@@ -196,6 +203,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
                         try {
                             await applyMiddleware(state.middleware, callback, message);
                         } catch (error) {
+                            // TODO: log / emit error
                             await message.nack(false);
                             state.backoff?.fail?.(error);
                             return;

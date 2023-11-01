@@ -48,7 +48,7 @@ export interface ExchangeChain<T = unknown> extends SharedChain {
 export type SubscribeCallback<T> = (data: T, message: HaredoMessage<T>) => any;
 
 export interface QueueChain<T = unknown> extends SharedChain, QueueSubscribeChain<T>, QueuePublishChain<T> {
-    skipSetup: () => QueueChain<T>;
+    skipSetup(): QueueChain<T>;
 }
 
 export interface QueuePublishChain<T> {
@@ -74,7 +74,7 @@ export interface ChainState {
     skipSetup?: boolean;
     confirm?: boolean;
     json?: boolean;
-    bindings?: { exchange: ExchangeInterface; pattern: string }[];
+    bindings?: { exchange: ExchangeInterface; patterns: string[] }[];
     headers?: Record<string, string | number>;
 }
 

@@ -30,9 +30,9 @@ export const InternalExchange = <T = unknown>(
     type,
     params,
     args,
-    autoDelete: (autoDelete = true) => InternalExchange(name, type, { ...params, autoDelete }),
-    durable: (durable = true) => InternalExchange(name, type, { ...params, durable }),
-    passive: (passive = true) => InternalExchange(name, type, { ...params, passive }),
+    autoDelete: (autoDelete = true) => InternalExchange(name, type, { ...params, autoDelete }, args),
+    durable: (durable = true) => InternalExchange(name, type, { ...params, durable }, args),
+    passive: (passive = true) => InternalExchange(name, type, { ...params, passive }, args),
     alternateExchange: (alternate) =>
         InternalExchange(
             name,

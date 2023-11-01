@@ -41,6 +41,6 @@ jobs:
         env:
           RABBIT_HOST: localhost
           RABBIT_PORT: ${{ job.services.rabbit.ports[5672] }}
-        run: yarn run test
+        run: yarn run coverage
       - name: Lint
         run: yarn run lint

@@ -25,26 +25,6 @@
     "release:patch": "changelog -p && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && yarn version --patch && git push && git push --tags",
     "generate-docs": "typedoc --out docs src/index.ts"
   },
-  "nyc": {
-    "include": [
-      "src/**/*.ts",
-      "test/**/*.test.ts"
-    ],
-    "extension": [
-      ".ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ],
-    "reporter": [
-      "lcov",
-      "text",
-      "text-summary",
-      "html"
-    ],
-    "sourceMap": true,
-    "instrument": true
-  },
   "author": "Kristjan Tammekivi",
   "license": "MIT",
   "repository": {
@@ -52,7 +32,7 @@
     "url": "https://github.com/KristjanTammekivi/haredo.git"
   },
   "dependencies": {
-    "@cloudamqp/amqp-client": "^3.0.0"
+    "@cloudamqp/amqp-client": "^3.1.1"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.0.2",
@@ -66,7 +46,7 @@
     "dotenv": "^16.0.0",
     "eslint": "^8.46.0",
     "eslint-config-hein": "^1.0.4",
-    "hein": "^1.3.6",
+    "hein": "^1.4.1",
     "hein-plugin-sinon": "^1.1.1",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",

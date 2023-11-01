@@ -74,7 +74,7 @@ export interface HaredoMessage<T = unknown> extends Methods {
      */
     messageId?: string;
     /**
-     * A timestamp for the message
+     * A timestamp for the message. Rounded to the nearest second when provided
      */
     timestamp?: Date;
     /**

@@ -86,4 +86,14 @@ describe('exchange', () => {
             { 'x-delayed-type': 'topic' }
         );
     });
+    it('should not reset arguments after adding autoDelete', async () => {
+        const exchange = Exchange('test', 'topic').delayed().autoDelete();
+        await haredo.exchange(exchange).setup();
+        expect(adapter.createExchange).to.have.been.calledWith(
+            'test',
+            'x-delayed-message',
+            { autoDelete: true },
+            { 'x-delayed-type': 'topic' }
+        );
+    });
 });

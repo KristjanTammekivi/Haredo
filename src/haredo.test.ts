@@ -213,6 +213,29 @@ describe('haredo', () => {
                 expect(adapter.bindQueue).to.have.been.calledOnce();
                 expect(adapter.bindQueue).to.have.been.calledWith('test', 'testexchange', 'message.created');
             });
+
+            it('should pass exchange arguments when creating exchange', async () => {
+                await haredo
+                    .queue('test')
+                    .bindExchange(Exchange('testexchange', 'topic').delayed(), 'message.created')
+                    .subscribe(async () => {});
+                expect(adapter.createExchange).to.have.been.calledOnce();
+                expect(adapter.createExchange).to.have.been.calledWith(
+                    'testexchange',
+                    'x-delayed-message',
+                    {},
+                    {
+                        'x-delayed-type': 'topic'
+                    }
+                );
+            });
+            it('should not attempt to create an exchange twice when passing in an array of two patterns for binding', async () => {
+                await haredo
+                    .queue('test')
+                    .bindExchange(Exchange('testexchange', 'topic'), ['message.created', 'message.updated'])
+                    .subscribe(async () => {});
+                expect(adapter.createExchange).to.have.been.calledOnce();
+            });
             it('should throw when subscribing with an anonymous queue and skipSetup is not called', async () => {
                 await expect(
                     haredo

@@ -12,5 +12,10 @@
         "html"
     ],
     "sourceMap": true,
-    "instrument": true
+    "instrument": true,
+    "check-coverage": true,
+    "statements": 99,
+    "branches": 99,
+    "functions": 99,
+    "lines": 99
 }
