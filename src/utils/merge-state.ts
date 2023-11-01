@@ -1,7 +1,7 @@
 import { ExchangeChainState, QueueChainState } from '../types';
 
 export const mergeState = <T extends ExchangeChainState | QueueChainState<unknown>>(base: T, top: Partial<T>): T => {
-    const arrayProperties = Object.entries(top).filter(([key, value]) => Array.isArray(value));
+    const arrayProperties = Object.entries(top).filter(([, value]) => Array.isArray(value));
     return {
         ...base,
         ...top,

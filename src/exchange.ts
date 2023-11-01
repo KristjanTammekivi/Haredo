@@ -16,7 +16,6 @@ export type ExchangeArguments = Omit<Record<string, string | number>, keyof Know
 export const Exchange = <T = unknown>(
     name: string,
     type: StandardExchangeType,
-    // eslint-disable-next-line unicorn/prevent-abbreviations
     params = {} as ExchangeParams,
     args = {} as ExchangeArguments
 ): ExchangeInterface<T> => InternalExchange<T>(name, type, params, args);
@@ -24,7 +23,6 @@ export const Exchange = <T = unknown>(
 export const InternalExchange = <T = unknown>(
     name: string,
     type: ExchangeType,
-    // eslint-disable-next-line unicorn/prevent-abbreviations
     params = {} as ExchangeParams,
     args = {} as ExchangeArguments
 ): ExchangeInterface<T> => ({

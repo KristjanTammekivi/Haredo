@@ -35,7 +35,6 @@ export type QueueArguments = Omit<Record<string, string | number>, keyof KnownQu
 
 export const Queue = <T = unknown>(
     name?: string,
-    // eslint-disable-next-line unicorn/prevent-abbreviations
     params: QueueParams = {},
     args = {} as QueueArguments
 ): QueueInterface<T> => {

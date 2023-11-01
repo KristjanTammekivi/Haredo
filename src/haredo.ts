@@ -27,7 +27,6 @@ export const Haredo = ({ url, adapter = createAdapter(AMQPClient, AMQPQueue, url
         exchange: <T = unknown>(
             exchange: string | ExchangeInterface<T>,
             type?: ExchangeType,
-            // eslint-disable-next-line unicorn/prevent-abbreviations
             params = {} as ExchangeParams,
             args = {} as ExchangeArguments
         ) => {
