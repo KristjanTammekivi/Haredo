@@ -43,7 +43,7 @@ export const Queue = <T = unknown>(
         name,
         params,
         args,
-        setArgument: setArgument,
+        setArgument,
         quorum: () => setArgument('x-queue-type', 'quorum'),
         stream: () => setArgument('x-queue-type', 'stream'),
         autoDelete: (autoDelete = true) => Queue(name, set(params, 'autoDelete', autoDelete), args),

@@ -1,4 +1,4 @@
-import { AMQPClient, AMQPQueue, ExchangeParams } from '@cloudamqp/amqp-client';
+import { AMQPClient, AMQPProperties, AMQPQueue, ExchangeParams } from '@cloudamqp/amqp-client';
 import { Consumer, createAdapter } from './adapter';
 import { MissingQueueNameError } from './errors';
 import { ExchangeArguments, ExchangeInterface, ExchangeType, InternalExchange } from './exchange';
@@ -57,8 +57,12 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState): ExchangeChain<T>
         );
         // TODO: E2E bindings?
     };
+    const setArgument = (key: keyof AMQPProperties, value: AMQPProperties[keyof AMQPProperties]) => {
+        return exchangeChain(mergeState(state, { publishOptions: { ...state.publishOptions, [key]: value } }));
+    };
     return {
         setup,
+        setArgument,
         delay: (milliseconds: number) => {
             return exchangeChain(mergeState(state, { headers: { 'x-delay': milliseconds } }));
         },
@@ -80,6 +84,7 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState): ExchangeChain<T>
                 {
                     contentType: 'application/json',
                     confirm: !!state.confirm,
+                    ...state.publishOptions,
                     ...(state.headers ? { headers: state.headers } : {})
                 }
             );
@@ -110,8 +115,12 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
             })
         );
     };
+    const setArgument = (key: keyof AMQPProperties, value: AMQPProperties[keyof AMQPProperties]) => {
+        return queueChain(mergeState(state, { publishOptions: { ...state.publishOptions, [key]: value } }));
+    };
     return {
         setup,
+        setArgument,
         backoff: (backoff) => {
             return queueChain(mergeState(state, { backoff }));
         },
@@ -157,6 +166,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
                 state.json === false ? (message as unknown as string) : JSON.stringify(message),
                 {
                     ...(state.json === false ? {} : { contentType: 'application/json' }),
+                    ...state.publishOptions,
                     confirm: !!state.confirm
                 }
             );

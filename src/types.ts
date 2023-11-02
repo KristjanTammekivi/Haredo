@@ -1,5 +1,5 @@
-import { AMQPTlsOptions, ExchangeParams } from '@cloudamqp/amqp-client';
-import { Adapter } from './adapter';
+import { AMQPTlsOptions, ExchangeParams, AMQPProperties } from '@cloudamqp/amqp-client';
+import { Adapter, PublishOptions } from './adapter';
 import { ExchangeArguments, ExchangeInterface, ExchangeType } from './exchange';
 import { QueueInterface } from './queue';
 import { Middleware } from './utils/apply-middleware';
@@ -64,6 +64,7 @@ export interface ExchangeChain<T = unknown> extends SharedChain {
     confirm(): this;
     publish(message: T, routingKey: string): Promise<void>;
     delay(milliseconds: number): ExchangeChain<T>;
+    setArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): ExchangeChain<T>;
 }
 
 export type SubscribeCallback<T> = (data: T, message: HaredoMessage<T>) => any;
@@ -78,6 +79,7 @@ export interface QueuePublishChain<T> {
      */
     confirm(): this;
     publish(message: T): Promise<void>;
+    setArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): QueuePublishChain<T>;
 }
 
 export interface HaredoConsumer {
@@ -150,6 +152,7 @@ export interface ChainState {
     json?: boolean;
     bindings?: { exchange: ExchangeInterface; patterns: string[] }[];
     headers?: Record<string, string | number>;
+    publishOptions?: PublishOptions;
 }
 
 export interface QueueChainState<T> extends ChainState {
@@ -163,7 +166,4 @@ export interface ExchangeChainState extends ChainState {
     exchange: ExchangeInterface;
 }
 
-// Merge two types together, if one is unknown then return the other.
-// if both are unknown then return unknown.
-// if neither are unknown then return the union of the two.
 type Merge<T, U> = unknown extends T ? U : unknown extends U ? T : T | U;

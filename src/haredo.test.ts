@@ -132,6 +132,32 @@ describe('haredo', () => {
                 { 'x-delayed-type': 'topic' }
             );
         });
+        it('should be possible to set an argument', async () => {
+            await haredo
+                .exchange('someExchange', 'topic')
+                .setArgument('messageId', 'someMessage')
+                .publish('some message', 'rk');
+            expect(adapter.publish).to.have.been.calledOnce();
+            expect(adapter.publish).to.have.been.calledWith('someExchange', 'rk', '"some message"', {
+                messageId: 'someMessage',
+                confirm: false,
+                contentType: 'application/json'
+            });
+        });
+        it('should be possible to set multiple arguments', async () => {
+            await haredo
+                .exchange('someExchange', 'topic')
+                .setArgument('deliveryMode', 1)
+                .setArgument('messageId', 'someMessage')
+                .publish('some message', 'rk');
+            expect(adapter.publish).to.have.been.calledOnce();
+            expect(adapter.publish).to.have.been.calledWith('someExchange', 'rk', '"some message"', {
+                messageId: 'someMessage',
+                deliveryMode: 1,
+                confirm: false,
+                contentType: 'application/json'
+            });
+        });
     });
     describe('queue', () => {
         describe('publish', () => {
@@ -172,6 +198,18 @@ describe('haredo', () => {
                 // @ts-expect-error - should not accept wrong type
                 await haredo.queue(queue).publish({ id: 123 });
             });
+            it('should accept typed exchanges', async () => {
+                const exchange = Exchange<{ id: string }>('test', 'direct');
+                await haredo
+                    .queue('test')
+                    .bindExchange(exchange, 'message.created')
+                    .subscribe(async ({ id }) => {});
+                await haredo
+                    .queue('test')
+                    .bindExchange(exchange, 'message.created')
+                    // @ts-expect-error - should not accept wrong type
+                    .subscribe(async ({ kd }) => {});
+            });
             it('should use confirm channels if .confirm is called', async () => {
                 await haredo.queue('test').confirm().publish('some message');
                 expect(adapter.sendToQueue.firstCall.args[2]).to.partially.eql({
@@ -182,6 +220,29 @@ describe('haredo', () => {
                 await haredo.queue('test').json(false).publish('testmessage');
                 expect(adapter.sendToQueue).to.have.been.calledOnce();
                 expect(adapter.sendToQueue).to.have.been.calledWith('test', 'testmessage');
+            });
+            it('should be possible to set an argument', async () => {
+                await haredo.queue('test').setArgument('expiration', '1000').publish('testmessage');
+                expect(adapter.sendToQueue).to.have.been.calledOnce();
+                expect(adapter.sendToQueue).to.have.been.calledWith('test', '"testmessage"', {
+                    expiration: '1000',
+                    confirm: false,
+                    contentType: 'application/json'
+                });
+            });
+            it('should be possible to set multiple arguments', async () => {
+                await haredo
+                    .queue('test')
+                    .setArgument('expiration', '1000')
+                    .setArgument('appId', 'test')
+                    .publish('testmessage');
+                expect(adapter.sendToQueue).to.have.been.calledOnce();
+                expect(adapter.sendToQueue).to.have.been.calledWith('test', '"testmessage"', {
+                    expiration: '1000',
+                    appId: 'test',
+                    confirm: false,
+                    contentType: 'application/json'
+                });
             });
         });
         describe('subscribe', () => {

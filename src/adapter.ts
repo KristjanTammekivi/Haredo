@@ -23,7 +23,7 @@ export interface Consumer {
     cancel(): Promise<void>;
 }
 
-interface PublishOptions extends AMQPProperties {
+export interface PublishOptions extends AMQPProperties {
     mandatory?: boolean;
     immediate?: boolean;
     confirm?: boolean;

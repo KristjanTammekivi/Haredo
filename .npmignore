@@ -1,0 +1,16 @@
+.github
+.nyc_output
+.vscode
+coverage
+dist/**/*.test.ts
+docker
+docs
+node_modules
+src
+
+.eslintrc
+.gitignore
+.mocharc.json
+.nycrc
+tsconfig.json
+yarn.lock

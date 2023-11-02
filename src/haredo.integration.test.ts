@@ -71,7 +71,6 @@ describe('haredo integration', () => {
     it('should not resolve cancel promise before all in flight messages are handled', async () => {
         let messageHandledAt: Date | undefined;
         const consumer = await haredo.queue('testQueue').subscribe(async () => {
-            console.log('bing');
             await delay(1000);
             messageHandledAt = new Date();
         });
