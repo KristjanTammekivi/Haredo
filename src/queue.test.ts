@@ -147,4 +147,9 @@ describe('queue', () => {
         await haredo.queue(queue).setup();
         expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-delivery-limit': 1000 });
     });
+    it('should set singleActiveConsumer', async () => {
+        const queue = Queue('test').singleActiveConsumer();
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-single-active-consumer': true });
+    });
 });

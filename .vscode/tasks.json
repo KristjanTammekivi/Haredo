@@ -12,10 +12,7 @@
 		{
 			"type": "npm",
 			"script": "test:watch",
-			"group": {
-				"kind": "test",
-				"isDefault": true
-			},
+			"group": "test",
 			"problemMatcher": [],
 			"label": "npm: test:watch",
 			"detail": "mocha 'src/**/*.test.ts' --watch"
@@ -30,6 +27,17 @@
 			"problemMatcher": [],
 			"label": "npm: build",
 			"detail": "rimraf dist && npm run build:ts"
+		},
+		{
+			"type": "npm",
+			"script": "test:mocked:watch",
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"problemMatcher": [],
+			"label": "npm: test:mocked:watch",
+			"detail": "mocha --watch"
 		}
 	]
 }

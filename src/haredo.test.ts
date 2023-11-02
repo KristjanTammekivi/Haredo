@@ -192,6 +192,18 @@ describe('haredo', () => {
                 expect(adapter.createQueue).to.have.been.calledOnce();
                 expect(adapter.createQueue).to.have.been.calledWith('test');
             });
+            it('should setup queue params without an object', async () => {
+                await haredo.connect();
+                await haredo.queue('test', { autoDelete: true }).publish('some message');
+                expect(adapter.createQueue).to.have.been.calledOnce();
+                expect(adapter.createQueue).to.have.been.calledWith('test', { autoDelete: true });
+            });
+            it('should setup queue arguments without an object', async () => {
+                await haredo.connect();
+                await haredo.queue('test', {}, { 'x-dead-letter-exchange': 'dlx' }).publish('some message');
+                expect(adapter.createQueue).to.have.been.calledOnce();
+                expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-dead-letter-exchange': 'dlx' });
+            });
             it('should accept typed queues', async () => {
                 const queue = Queue<{ id: string }>('test');
                 await haredo.queue(queue).publish({ id: '123' });
@@ -222,7 +234,7 @@ describe('haredo', () => {
                 expect(adapter.sendToQueue).to.have.been.calledWith('test', 'testmessage');
             });
             it('should be possible to set an argument', async () => {
-                await haredo.queue('test').setArgument('expiration', '1000').publish('testmessage');
+                await haredo.queue('test').setPublishArgument('expiration', '1000').publish('testmessage');
                 expect(adapter.sendToQueue).to.have.been.calledOnce();
                 expect(adapter.sendToQueue).to.have.been.calledWith('test', '"testmessage"', {
                     expiration: '1000',
@@ -233,8 +245,8 @@ describe('haredo', () => {
             it('should be possible to set multiple arguments', async () => {
                 await haredo
                     .queue('test')
-                    .setArgument('expiration', '1000')
-                    .setArgument('appId', 'test')
+                    .setPublishArgument('expiration', '1000')
+                    .setPublishArgument('appId', 'test')
                     .publish('testmessage');
                 expect(adapter.sendToQueue).to.have.been.calledOnce();
                 expect(adapter.sendToQueue).to.have.been.calledWith('test', '"testmessage"', {
@@ -450,6 +462,33 @@ describe('haredo', () => {
                 await adapter.subscribe.secondCall.lastArg(makeTestMessage('test'));
                 expect(backoff.nack).to.have.been.calledOnce();
                 expect(backoff.nack).to.have.been.calledWith(false);
+            });
+        });
+        describe('stream', () => {
+            it('should set streamOffset', async () => {
+                await haredo
+                    .queue('test', undefined, { 'x-queue-type': 'stream' })
+                    .streamOffset('last')
+                    .subscribe(() => {});
+                expect(adapter.subscribe).to.have.been.calledOnce();
+                expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({
+                    args: {
+                        'x-stream-offset': 'last'
+                    }
+                });
+            });
+            it('should set streamOffset to timestamp when Date is passed', async () => {
+                const date = new Date();
+                await haredo
+                    .queue('test', undefined, { 'x-queue-type': 'stream' })
+                    .streamOffset(date)
+                    .subscribe(() => {});
+                expect(adapter.subscribe).to.have.been.calledOnce();
+                expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({
+                    args: {
+                        'x-stream-offset': date
+                    }
+                });
             });
         });
     });

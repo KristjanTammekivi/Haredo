@@ -23,15 +23,42 @@ interface KnownQueueArguments {
      * The type of the queue.
      */
     'x-queue-type'?: 'classic' | 'quorum' | 'stream';
+    /**
+     * Maximum length of the queue. Overflow behavior is set with x-overflow.
+     */
     'x-max-length'?: number;
+    /**
+     * Maximum length of the queue in bytes. Overflow behavior is set with x-overflow.
+     */
     'x-max-length-bytes'?: number;
+    /**
+     * Overflow behavior for x-max-length and x-max-length-bytes.
+     * @default 'drop-head'
+     */
     'x-overflow'?: XOverflow;
+    /**
+     * Delete the queue after the given time in milliseconds of disuse.
+     */
     'x-expires'?: number;
+    /**
+     * Maximum priority of the messages in the queue.
+     * Larger numbers indicate higher priority.
+     */
     'x-max-priority'?: number;
+    /**
+     * Maximum number of times a message in the queue will be delivered.
+     * Only applicable to quorum queues.
+     */
     'x-delivery-limit'?: number;
+    /**
+     * Set the queue to have a single active consumer.
+     * See https://www.rabbitmq.com/consumers.html#single-active-consumer
+     */
+    'x-single-active-consumer'?: boolean;
 }
 
-export type QueueArguments = Omit<Record<string, string | number>, keyof KnownQueueArguments> & KnownQueueArguments;
+export type QueueArguments = Omit<Record<string, string | number | boolean>, keyof KnownQueueArguments> &
+    KnownQueueArguments;
 
 export const Queue = <T = unknown>(
     name?: string,
@@ -61,7 +88,8 @@ export const Queue = <T = unknown>(
             ),
         expires: (ms) => setArgument('x-expires', ms),
         maxPriority: (priority) => setArgument('x-max-priority', priority),
-        deliveryLimit: (limit) => setArgument('x-delivery-limit', limit)
+        deliveryLimit: (limit) => setArgument('x-delivery-limit', limit),
+        singleActiveConsumer: () => setArgument('x-single-active-consumer', true)
     };
 };
 
@@ -133,4 +161,9 @@ export interface QueueInterface<TMESSAGE = unknown> {
      * Only applicable to quorum queues.
      */
     deliveryLimit(limit: number): QueueInterface<TMESSAGE>;
+    /**
+     * Set the queue to have a single active consumer.
+     * See https://www.rabbitmq.com/consumers.html#single-active-consumer
+     */
+    singleActiveConsumer(): QueueInterface<TMESSAGE>;
 }

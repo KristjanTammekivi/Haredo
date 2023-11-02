@@ -215,6 +215,11 @@ describe('adapter', () => {
         it('should throw if called before connect', async () => {
             await expect(adapter.createQueue('test')).to.reject(/No client/);
         });
+        it('should close channel after creating queue', async () => {
+            await adapter.connect();
+            await adapter.createQueue('test');
+            expect(mockChannel.close).to.have.been.calledOnce();
+        });
     });
     describe('setupExchange', () => {
         it('should create exchange', async () => {
@@ -238,6 +243,11 @@ describe('adapter', () => {
         });
         it('should throw if called before connect', async () => {
             await expect(adapter.createExchange('test', 'topic')).to.reject(/No client/);
+        });
+        it('should close channel after creating exchange', async () => {
+            await adapter.connect();
+            await adapter.createExchange('test', 'topic');
+            expect(mockChannel.close).to.have.been.calledOnce();
         });
     });
     describe('bindQueue', () => {
@@ -266,7 +276,7 @@ describe('adapter', () => {
             await adapter.subscribe('test', { onClose: stub() }, callback);
             expect(mockChannel.basicConsume)
                 .to.have.been.calledOnce()
-                .and.to.have.been.calledWith('test', { noAck: false, exclusive: false });
+                .and.to.have.been.calledWith('test', { noAck: false, exclusive: false, args: undefined });
         });
         it('should call callback with wrapped message', async () => {
             const callback = stub();
@@ -327,6 +337,11 @@ describe('adapter', () => {
         it('should throw if called while disconnected', async () => {
             await adapter.close();
             await expect(adapter.subscribe('test', { onClose: stub() }, () => {})).to.reject(/No client/);
+        });
+        it('should send subscribe arguments to subscribe', async () => {
+            await adapter.subscribe('test', { onClose: stub(), args: { 'x-stream-offset': 'last' } }, () => {});
+            expect(mockChannel.basicConsume).to.have.been.calledOnce();
+            expect(mockChannel.basicConsume.firstCall.args[1].args).to.partially.eql({ 'x-stream-offset': 'last' });
         });
     });
 });

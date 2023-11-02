@@ -1,7 +1,7 @@
-import { AMQPTlsOptions, ExchangeParams, AMQPProperties } from '@cloudamqp/amqp-client';
-import { Adapter, PublishOptions } from './adapter';
+import { AMQPTlsOptions, ExchangeParams, AMQPProperties, QueueParams } from '@cloudamqp/amqp-client';
+import { Adapter, PublishOptions, SubscribeArguments } from './adapter';
 import { ExchangeArguments, ExchangeInterface, ExchangeType } from './exchange';
-import { QueueInterface } from './queue';
+import { QueueArguments, QueueInterface } from './queue';
 import { Middleware } from './utils/apply-middleware';
 import { FailureBackoff } from './backoffs';
 import { HaredoMessage } from './haredo-message';
@@ -16,7 +16,8 @@ export interface HaredoInstance {
         parameters?: ExchangeParams,
         args?: ExchangeArguments
     ): ExchangeChain<T>;
-    queue<T = unknown>(queue: string | QueueInterface<T>): QueueChain<T>;
+    queue<T = unknown>(queue: QueueInterface<T>): QueueChain<T>;
+    queue<T = unknown>(queue: string, params?: QueueParams, args?: QueueArguments): QueueChain<T>;
     close(): Promise<void>;
 }
 
@@ -79,7 +80,7 @@ export interface QueuePublishChain<T> {
      */
     confirm(): this;
     publish(message: T): Promise<void>;
-    setArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): QueuePublishChain<T>;
+    setPublishArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): QueuePublishChain<T>;
 }
 
 export interface HaredoConsumer {
@@ -90,6 +91,11 @@ export interface HaredoConsumer {
      */
     cancel(): Promise<void>;
 }
+
+type RetentionUnit = 'Y' | 'M' | 'D' | 'h' | 'm' | 's';
+type Retention = `${ number }${ RetentionUnit }`;
+
+export type StreamOffset = 'first' | 'last' | 'next' | number | Retention | Date;
 
 export interface QueueSubscribeChain<T> {
     /**
@@ -143,6 +149,23 @@ export interface QueueSubscribeChain<T> {
         exchange: ExchangeInterface<TEXCHANGE>,
         routingKey: string | string[]
     ): QueueSubscribeChain<Merge<T, TEXCHANGE>>;
+    // TODO: max-age style interval
+    // TODO: offset
+    // TODO: timestamp
+    /**
+     * Set the offset to start reading from. This will only work with streams
+     * The possible values are:
+     * - 'first' - Start reading from the first message in the stream
+     * - 'last' - Start reading from the last message in the stream
+     * - 'next' - Start reading from the next message in the stream
+     * - number - Start reading from the message with the given sequence number
+     * - Interval - ie '7d' | '1h' | '30m' - Start reading from the message that was published the given interval ago
+     * - Date - Start reading from the message that was published at the given date
+     *
+     * When using timestamp based offsets You might still get messages that were
+     * published before the given timestamp.
+     */
+    streamOffset(offset: StreamOffset): QueueSubscribeChain<T>;
 }
 
 export interface ChainState {
@@ -160,6 +183,7 @@ export interface QueueChainState<T> extends ChainState {
     middleware: Middleware<T>[];
     prefetch?: number;
     backoff?: FailureBackoff;
+    subscribeArguments?: SubscribeArguments;
 }
 
 export interface ExchangeChainState extends ChainState {

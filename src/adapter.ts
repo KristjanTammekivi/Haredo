@@ -9,15 +9,36 @@ import {
 import { ExchangeArguments } from './exchange';
 import { HaredoMessage, makeHaredoMessage } from './haredo-message';
 import { QueueArguments } from './queue';
-import { RabbitUrl } from './types';
+import { RabbitUrl, StreamOffset } from './types';
 import { normalizeUrl } from './utils/normalize-url';
 import { createTracker } from './utils/tracker';
+
+// arguments passed to consumer
+export interface SubscribeArguments {
+    /**
+     * The priority of the consumer.
+     * Higher priority consumers get messages in preference to
+     * lower priority consumers.
+     */
+    'x-priority'?: number;
+    /**
+     * x-stream-offset is used to specify the offset from which
+     * the consumer should start reading from the stream.
+     * The value can be a positive integer or a negative integer.
+     * A positive integer specifies the offset from the beginning
+     * of the stream. A negative integer specifies the offset from
+     * the end of the stream.
+     * @see https://www.rabbitmq.com/streams.html#consuming
+     */
+    'x-stream-offset'?: StreamOffset;
+}
 
 interface SubscribeOptions {
     onClose: (reason: Error | null) => void;
     prefetch?: number;
     noAck?: boolean;
     exclusive?: boolean;
+    args?: SubscribeArguments;
 }
 export interface Consumer {
     cancel(): Promise<void>;
@@ -99,15 +120,23 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                 throw new Error('No client');
             }
             const channel = await client.channel();
-            const queue = await channel.queue(name, options, args);
-            return queue.name;
+            try {
+                const queue = await channel.queue(name, options, args);
+                return queue.name;
+            } finally {
+                await channel.close();
+            }
         },
         createExchange: async (name, type, options, args) => {
             if (!client) {
                 throw new Error('No client');
             }
             const channel = await client.channel();
-            await channel.exchangeDeclare(name, type, options, args);
+            try {
+                await channel.exchangeDeclare(name, type, options, args);
+            } finally {
+                await channel.close();
+            }
         },
         bindQueue: async (queueName, exchangeName, routingKey) => {
             if (!client) {
@@ -129,6 +158,8 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                 channel = confirmChannel;
             } else {
                 if (!publishChannel) {
+                    console.log('creating new channel for publishing');
+
                     publishChannel = await client.channel();
                 }
                 channel = publishChannel;
@@ -155,7 +186,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
             }
             await channel.basicPublish(exchange, routingKey, message, options, mandatory, immediate);
         },
-        subscribe: async (name, { onClose, prefetch, noAck = false, exclusive = false }, callback) => {
+        subscribe: async (name, { onClose, prefetch, args, noAck = false, exclusive = false }, callback) => {
             if (!client) {
                 throw new Error('No client');
             }
@@ -164,7 +195,8 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                 await channel.prefetch(prefetch);
             }
             const tracker = createTracker();
-            const consumer = await channel.basicConsume(name, { noAck, exclusive }, async (message) => {
+            console.log(args);
+            const consumer = await channel.basicConsume(name, { noAck, exclusive, args }, async (message) => {
                 tracker.inc();
                 const wrappedMessage = makeHaredoMessage<unknown>(message, true, name);
                 await callback(wrappedMessage);

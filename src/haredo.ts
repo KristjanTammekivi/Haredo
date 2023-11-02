@@ -1,9 +1,9 @@
-import { AMQPClient, AMQPProperties, AMQPQueue, ExchangeParams } from '@cloudamqp/amqp-client';
-import { Consumer, createAdapter } from './adapter';
+import { AMQPClient, AMQPProperties, AMQPQueue, ExchangeParams, QueueParams } from '@cloudamqp/amqp-client';
+import { Consumer, SubscribeArguments, createAdapter } from './adapter';
 import { MissingQueueNameError } from './errors';
 import { ExchangeArguments, ExchangeInterface, ExchangeType, InternalExchange } from './exchange';
 import { HaredoMessage } from './haredo-message';
-import { Queue, QueueInterface } from './queue';
+import { Queue, QueueArguments, QueueInterface } from './queue';
 import type {
     ExchangeChain,
     ExchangeChainState,
@@ -35,9 +35,13 @@ export const Haredo = ({ url, adapter = createAdapter(AMQPClient, AMQPQueue, url
             }
             return exchangeChain<T>({ adapter, exchange });
         },
-        queue: <T = unknown>(queue: string | QueueInterface<T>) => {
+        queue: <T = unknown>(
+            queue: string | QueueInterface<T>,
+            queueParams?: QueueParams,
+            queueArguments?: QueueArguments
+        ) => {
             if (typeof queue === 'string') {
-                queue = Queue(queue);
+                queue = Queue(queue, queueParams, queueArguments);
             }
             return queueChain<T>({ adapter, queue, middleware: [] });
         }
@@ -115,12 +119,18 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
             })
         );
     };
-    const setArgument = (key: keyof AMQPProperties, value: AMQPProperties[keyof AMQPProperties]) => {
+    const setPublishOption = (key: keyof AMQPProperties, value: AMQPProperties[keyof AMQPProperties]) => {
         return queueChain(mergeState(state, { publishOptions: { ...state.publishOptions, [key]: value } }));
+    };
+    const setSubscribeArgument = (
+        key: keyof SubscribeArguments,
+        value: SubscribeArguments[keyof SubscribeArguments]
+    ) => {
+        return queueChain(mergeState(state, { subscribeArguments: { ...state.subscribeArguments, [key]: value } }));
     };
     return {
         setup,
-        setArgument,
+        setPublishArgument: setPublishOption,
         backoff: (backoff) => {
             return queueChain(mergeState(state, { backoff }));
         },
@@ -199,6 +209,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
                             await subscribe();
                         },
                         prefetch: state.prefetch,
+                        args: state.subscribeArguments,
                         // TODO: make configurable
                         noAck: false,
                         exclusive: false
@@ -231,6 +242,9 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
                     await consumer.cancel();
                 }
             };
+        },
+        streamOffset: (offset) => {
+            return setSubscribeArgument('x-stream-offset', offset);
         }
     };
 };
