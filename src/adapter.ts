@@ -1,17 +1,17 @@
 import {
     AMQPChannel,
     AMQPClient,
-    AMQPConsumer,
     AMQPProperties,
     AMQPQueue,
     ExchangeParams,
     QueueParams
 } from '@cloudamqp/amqp-client';
+import { ExchangeArguments } from './exchange';
 import { HaredoMessage, makeHaredoMessage } from './haredo-message';
+import { QueueArguments } from './queue';
 import { RabbitUrl } from './types';
 import { normalizeUrl } from './utils/normalize-url';
-import { QueueArguments } from './queue';
-import { ExchangeArguments } from './exchange';
+import { createTracker } from './utils/tracker';
 
 interface SubscribeOptions {
     onClose: (reason: Error | null) => void;
@@ -47,7 +47,7 @@ export interface Adapter {
 export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue, url: string | RabbitUrl): Adapter => {
     let client: AMQPClient | undefined;
     let clientPromise: Promise<any> | undefined;
-    let consumers: AMQPConsumer[] = [];
+    let consumers: { channel: AMQPChannel; consumer: Consumer }[] = [];
     let publishChannel: AMQPChannel;
     let confirmChannel: AMQPChannel;
     const loopGetConnection = async () => {
@@ -84,7 +84,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
             }
             await Promise.all(
                 consumers.map(async (x) => {
-                    await x.cancel();
+                    await x.consumer.cancel();
                     await x.channel.close();
                 })
             );
@@ -163,11 +163,28 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
             if (prefetch) {
                 await channel.prefetch(prefetch);
             }
+            const tracker = createTracker();
             const consumer = await channel.basicConsume(name, { noAck, exclusive }, async (message) => {
+                tracker.inc();
                 const wrappedMessage = makeHaredoMessage<unknown>(message, true, name);
                 await callback(wrappedMessage);
+                tracker.dec();
             });
-            consumers = [...consumers, consumer];
+            let cancelPromise: Promise<void> | undefined;
+            const wrappedConsumer = {
+                channel,
+                cancel: async () => {
+                    if (cancelPromise) {
+                        return cancelPromise;
+                    }
+                    cancelPromise = consumer.cancel().then(async () => {
+                        await tracker.wait();
+                    });
+                    await cancelPromise;
+                    consumers = consumers.filter((x) => x.consumer !== wrappedConsumer);
+                }
+            };
+            consumers = [...consumers, { channel, consumer: wrappedConsumer }];
             consumer
                 .wait()
                 .then(() => {
@@ -176,11 +193,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                 .catch((error) => {
                     onClose(error);
                 });
-            return {
-                cancel: async () => {
-                    await consumer.cancel();
-                }
-            };
+            return wrappedConsumer;
         }
     };
 };

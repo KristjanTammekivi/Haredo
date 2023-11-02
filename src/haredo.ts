@@ -189,6 +189,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
                             await subscribe();
                         },
                         prefetch: state.prefetch,
+                        // TODO: make configurable
                         noAck: false,
                         exclusive: false
                     },

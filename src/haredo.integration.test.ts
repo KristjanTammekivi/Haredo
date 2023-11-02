@@ -3,6 +3,7 @@ import { Haredo } from './haredo';
 import { rabbitAdmin } from './utils/test/rabbit-admin';
 import { Exchange } from './exchange';
 import { HaredoInstance } from './types';
+import { delay } from './utils/delay';
 
 describe('haredo integration', () => {
     let haredo: HaredoInstance;
@@ -66,5 +67,17 @@ describe('haredo integration', () => {
                 payload: '"test message"'
             }
         ]);
+    });
+    it('should not resolve cancel promise before all in flight messages are handled', async () => {
+        let messageHandledAt: Date | undefined;
+        const consumer = await haredo.queue('testQueue').subscribe(async () => {
+            console.log('bing');
+            await delay(1000);
+            messageHandledAt = new Date();
+        });
+        await haredo.queue('testQueue').confirm().publish('test message');
+        await delay(100);
+        await consumer.cancel();
+        expect(messageHandledAt).to.not.be.undefined();
     });
 });

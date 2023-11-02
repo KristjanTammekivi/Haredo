@@ -81,20 +81,66 @@ export interface QueuePublishChain<T> {
 }
 
 export interface HaredoConsumer {
+    /**
+     * Cancel the consumer. This will stop the consumer from receiving any
+     * more messages. After last message has been processed the promise will
+     * resolve.
+     */
     cancel(): Promise<void>;
 }
 
 export interface QueueSubscribeChain<T> {
+    /**
+     * Subscribe to the queue. When .skipSetup has not been called this will
+     * also set up the queue and any bound exchanges that may be present.
+     */
     subscribe(callback: SubscribeCallback<T>): Promise<HaredoConsumer>;
+    /**
+     * Add middleware to the chain. Middleware will be called in the order
+     * they are added. Middleware can be used to modify the message before
+     * it is passed to the callback. Middleware can also be used to ack/nack
+     * the message.
+     *
+     * Middleware is invoked with the message and a function
+     * that returns a promise for the next item in the callback stack.
+     * If you don't call it and don't ack/nack the message then it will be
+     * called for you.
+     */
     use(...middleware: Middleware<T>[]): QueueSubscribeChain<T>;
+    /**
+     * Set the number of messages to prefetch. This will be the maximum number
+     * of concurrent messages that will be processed.
+     * @alias prefetch
+     * @param count The number of messages to prefetch
+     */
     concurrency(count: number): QueueSubscribeChain<T>;
+    /**
+     * Set the number of messages to prefetch. This will be the maximum number
+     * of concurrent messages that will be processed.
+     * @alias concurrency
+     * @param count The number of messages to prefetch
+     */
     prefetch(count: number): QueueSubscribeChain<T>;
+    /**
+     * Set the backoff strategy to use when a message fails to process.
+     * Currently the only bundled backoff strategy is standardBackoff
+     */
     backoff(backoff: FailureBackoff): QueueSubscribeChain<T>;
+    /**
+     * Bind an exchange to the queue. This will also setup the exchange
+     * (if skipSetup is called it will not be set up and bindings won't be made,
+     * calling bindExchange and skipSetup together does not make sense)
+     */
     bindExchange(name: string, routingKey: string | string[], type: ExchangeType): QueueSubscribeChain<T>;
-    bindExchange<TNEW = unknown>(
-        exchange: ExchangeInterface<TNEW>,
+    /**
+     * Bind an exchange to the queue. This will also setup the exchange
+     * (if skipSetup is called it will not be set up and bindings won't be made,
+     * calling bindExchange and skipSetup together does not make sense)
+     */
+    bindExchange<TEXCHANGE = unknown>(
+        exchange: ExchangeInterface<TEXCHANGE>,
         routingKey: string | string[]
-    ): QueueSubscribeChain<Merge<T, TNEW>>;
+    ): QueueSubscribeChain<Merge<T, TEXCHANGE>>;
 }
 
 export interface ChainState {

@@ -35,7 +35,7 @@ describe('adapter', () => {
             channel: () => Promise.resolve(mockChannel)
         }) as any;
         mockConsumer = stub({
-            cancel: () => Promise.resolve(),
+            cancel: async () => {},
             channel: mockChannel,
             wait: () => Promise.resolve()
         }) as any;
@@ -44,6 +44,7 @@ describe('adapter', () => {
         mockChannel.queue.returns(Promise.resolve('queueName'));
         mockAmqp = stub().returns(mockClient) as any;
         mockConsumer.wait.returns(Promise.resolve());
+        mockConsumer.cancel.returns(Promise.resolve());
         mockQueue = stub({
             publish: () => Promise<void>
         }) as any;
@@ -120,6 +121,19 @@ describe('adapter', () => {
             await adapter.subscribe('test', { onClose: stub() }, () => {});
             await adapter.close();
             expect(mockChannel.close).to.have.been.calledOnce();
+        });
+        it('should not close consumers that have already been cancelled', async () => {
+            await adapter.connect();
+            const consumer = await adapter.subscribe('test', { onClose: stub() }, () => {});
+            await consumer.cancel();
+            await adapter.close();
+            expect(mockConsumer.cancel).to.have.been.calledOnce();
+        });
+        it('should not call cancel twice on consumers', async () => {
+            await adapter.connect();
+            const consumer = await adapter.subscribe('test', { onClose: stub() }, () => {});
+            await Promise.all([consumer.cancel(), consumer.cancel()]);
+            expect(mockConsumer.cancel).to.have.been.calledOnce();
         });
     });
     describe('sendToQueue', () => {
@@ -266,6 +280,18 @@ describe('adapter', () => {
             const consumer = await adapter.subscribe('test', { onClose: stub() }, callback);
             await consumer.cancel();
             expect(mockConsumer.cancel).to.have.been.calledOnce();
+        });
+        it('should not resolve cancel promise until message is handled', async () => {
+            let messageHandledAt: Date | undefined;
+            const callback = async () => {
+                await delay(50);
+                messageHandledAt = new Date();
+            };
+            const consumer = await adapter.subscribe('test', { onClose: stub() }, callback);
+            const internalCallback = mockChannel.basicConsume.firstCall.lastArg;
+            internalCallback({ bodyString: () => '"Hello, world"', properties: {} });
+            await consumer.cancel();
+            expect(messageHandledAt).to.not.be.undefined();
         });
         it('should call onClose callback when consumer is closed with error', async () => {
             const onClose = stub();
