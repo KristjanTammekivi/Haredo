@@ -9,7 +9,7 @@ const start = async () => {
     const exchange = Exchange<{ id: number; timestamp: number }>('testExchange', 'topic').delayed().autoDelete();
 
     await haredo
-        .queue<{ id: number; timestamp: number }>('testQueue')
+        .queue('testQueue')
         .bindExchange(exchange, ['message.new', 'message.updated'])
         .prefetch(1)
         .subscribe(async ({ id, timestamp }) => {
