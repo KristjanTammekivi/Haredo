@@ -98,6 +98,19 @@ export interface ExchangeChain<T = unknown> extends SharedChain {
      * Set an arbitrary type for the message.
      */
     type(type: string): this;
+    /**
+     * Set the message priority.
+     * @see https://www.rabbitmq.com/priority.html
+     */
+    priority(priority: number): this;
+    /**
+     * Set a header on a message
+     */
+    setHeader(key: string, value: Field): this;
+    /**
+     * Set the message expiration time in milliseconds
+     */
+    expiration(milliseconds: number): this;
     publish(message: T, routingKey: string): Promise<void>;
     delay(milliseconds: number): ExchangeChain<T>;
     setArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): ExchangeChain<T>;
@@ -118,6 +131,19 @@ export interface QueuePublishChain<T> {
      * Set an arbitrary type for the message.
      */
     type(type: string): QueuePublishChain<T>;
+    /**
+     * Set the message priority.
+     * @see https://www.rabbitmq.com/priority.html
+     */
+    priority(priority: number): QueuePublishChain<T>;
+    /**
+     * Set a header on a message
+     */
+    setHeader(key: string, value: string | number): QueuePublishChain<T>;
+    /**
+     * Set the message expiration time in milliseconds
+     */
+    expiration(milliseconds: number): QueuePublishChain<T>;
     publish(message: T): Promise<void>;
     setPublishArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): QueuePublishChain<T>;
 }
@@ -213,7 +239,7 @@ export interface ChainState {
     confirm?: boolean;
     json?: boolean;
     bindings?: { exchange: ExchangeInterface; patterns: string[] }[];
-    headers?: Record<string, string | number>;
+    headers?: Record<string, Field>;
     publishOptions?: PublishOptions;
     appId?: string;
 }

@@ -234,11 +234,13 @@ describe('haredo', () => {
                 await haredo
                     .queue('test')
                     .bindExchange(exchange, 'message.created')
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     .subscribe(async ({ id }) => {});
                 await haredo
                     .queue('test')
                     .bindExchange(exchange, 'message.created')
                     // @ts-expect-error - should not accept wrong type
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     .subscribe(async ({ kd }) => {});
             });
             it('should use confirm channels if .confirm is called', async () => {
@@ -605,6 +607,70 @@ describe('haredo', () => {
             const message = makeTestMessage('some message');
             await adapter.subscribe.firstCall.lastArg(message);
             expect(middleware).to.have.been.calledOnce();
+        });
+    });
+    describe('priority', () => {
+        it('should set message priority on queue chain', async () => {
+            await haredo.queue('test').priority(1).publish('test');
+            expect(adapter.sendToQueue).to.have.been.calledOnce();
+            expect(adapter.sendToQueue).to.have.been.calledWith('test', '"test"', {
+                confirm: false,
+                contentType: 'application/json',
+                priority: 1
+            });
+        });
+        it('should set message priority on exchange chain', async () => {
+            await haredo.exchange('test', 'topic').priority(1).publish('test', 'rk');
+            expect(adapter.publish).to.have.been.calledOnce();
+            expect(adapter.publish).to.have.been.calledWith('test', 'rk', '"test"', {
+                confirm: false,
+                contentType: 'application/json',
+                priority: 1
+            });
+        });
+    });
+    describe('setHeader', () => {
+        it('should set header for queue chain', async () => {
+            await haredo.queue('test').setHeader('test', 'value').publish('test');
+            expect(adapter.sendToQueue).to.have.been.calledOnce();
+            expect(adapter.sendToQueue).to.have.been.calledWith('test', '"test"', {
+                confirm: false,
+                contentType: 'application/json',
+                headers: {
+                    test: 'value'
+                }
+            });
+        });
+        it('should set header for exchange chain', async () => {
+            await haredo.exchange('test', 'topic').setHeader('test', 'value').publish('test', 'rk');
+            expect(adapter.publish).to.have.been.calledOnce();
+            expect(adapter.publish).to.have.been.calledWith('test', 'rk', '"test"', {
+                confirm: false,
+                contentType: 'application/json',
+                headers: {
+                    test: 'value'
+                }
+            });
+        });
+    });
+    describe('expiration', () => {
+        it('should set message ttl on queue chain', async () => {
+            await haredo.queue('test').expiration(1000).publish('test');
+            expect(adapter.sendToQueue).to.have.been.calledOnce();
+            expect(adapter.sendToQueue).to.have.been.calledWith('test', '"test"', {
+                confirm: false,
+                contentType: 'application/json',
+                expiration: '1000'
+            });
+        });
+        it('should set message ttl on exchange chain', async () => {
+            await haredo.exchange('test', 'topic').expiration(1000).publish('test', 'rk');
+            expect(adapter.publish).to.have.been.calledOnce();
+            expect(adapter.publish).to.have.been.calledWith('test', 'rk', '"test"', {
+                confirm: false,
+                contentType: 'application/json',
+                expiration: '1000'
+            });
         });
     });
 });

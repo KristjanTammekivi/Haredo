@@ -75,6 +75,9 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Exten
             extensions
         );
     };
+    const setHeader = (key: string, value: any) => {
+        return exchangeChain(mergeState(state, { headers: { ...state.headers, [key]: value } }), extensions);
+    };
     return {
         setup,
         setArgument,
@@ -92,6 +95,13 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Exten
         },
         skipSetup: (skip = true) => {
             return exchangeChain({ ...state, skipSetup: skip }, extensions);
+        },
+        priority: (priority: number) => {
+            return setArgument('priority', priority);
+        },
+        setHeader,
+        expiration: (ms: number) => {
+            return setArgument('expiration', `${ ms }`);
         },
         publish: async (message: T, routingKey: string) => {
             await setup();
@@ -157,6 +167,9 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
             extensions
         );
     };
+    const setHeader = (key: string, value: any) => {
+        return queueChain(mergeState(state, { headers: { ...state.headers, [key]: value } }), extensions);
+    };
     return {
         setup,
         setPublishArgument: setPublishOption,
@@ -204,6 +217,13 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
                 },
                 extensions
             );
+        },
+        priority: (priority: number) => {
+            return setPublishOption('priority', priority);
+        },
+        setHeader,
+        expiration: (ms: number) => {
+            return setPublishOption('expiration', `${ ms }`);
         },
         publish: async (message: any) => {
             await setup();
