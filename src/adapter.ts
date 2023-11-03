@@ -52,7 +52,7 @@ export interface PublishOptions extends AMQPProperties {
 
 export interface Adapter {
     connect(): Promise<AMQPClient>;
-    close(): Promise<void>;
+    close(force?: boolean): Promise<void>;
     createQueue(name: string | undefined, options?: QueueParams, args?: QueueArguments): Promise<string>;
     createExchange(name: string, type: string, options?: ExchangeParams, args?: ExchangeArguments): Promise<void>;
     bindQueue(queueName: string, exchangeName: string, routingKey?: string): Promise<void>;
@@ -99,18 +99,20 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
     };
     return {
         connect,
-        close: async () => {
+        close: async (force = false) => {
             if (!client) {
                 return;
             }
-            await Promise.all(
-                consumers.map(async (x) => {
-                    await x.consumer.cancel();
-                    await x.channel.close();
-                })
-            );
-            if (publishChannel) {
-                await publishChannel.close();
+            if (!force) {
+                await Promise.all(
+                    consumers.map(async (x) => {
+                        await x.consumer.cancel();
+                        await x.channel.close();
+                    })
+                );
+                if (publishChannel) {
+                    await publishChannel.close();
+                }
             }
             await client.close();
             client = undefined;
@@ -158,8 +160,6 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                 channel = confirmChannel;
             } else {
                 if (!publishChannel) {
-                    console.log('creating new channel for publishing');
-
                     publishChannel = await client.channel();
                 }
                 channel = publishChannel;
@@ -195,7 +195,6 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                 await channel.prefetch(prefetch);
             }
             const tracker = createTracker();
-            console.log(args);
             const consumer = await channel.basicConsume(name, { noAck, exclusive, args }, async (message) => {
                 tracker.inc();
                 const wrappedMessage = makeHaredoMessage<unknown>(message, true, name);

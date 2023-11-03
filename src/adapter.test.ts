@@ -135,6 +135,17 @@ describe('adapter', () => {
             await Promise.all([consumer.cancel(), consumer.cancel()]);
             expect(mockConsumer.cancel).to.have.been.calledOnce();
         });
+        it('should force close', async () => {
+            await adapter.connect();
+            let callbackDone = false;
+            await adapter.subscribe('test', { onClose: stub() }, async () => {
+                await delay(1000);
+                callbackDone = true;
+            });
+            mockChannel.basicConsume.firstCall.lastArg({ bodyString: () => '"Hello, world"', properties: {} });
+            await adapter.close(true);
+            expect(callbackDone).to.be.false();
+        });
     });
     describe('sendToQueue', () => {
         beforeEach(async () => {
