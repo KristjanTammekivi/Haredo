@@ -16,7 +16,12 @@ import { applyMiddleware } from './utils/apply-middleware';
 import { castArray } from './utils/cast-array';
 import { mergeState } from './utils/merge-state';
 
-export const Haredo = ({ url, adapter = createAdapter(AMQPClient, AMQPQueue, url) }: HaredoOptions): HaredoInstance => {
+export const Haredo = ({
+    url,
+    tlsOptions,
+    appId,
+    adapter = createAdapter(AMQPClient, AMQPQueue, { url, tlsOptions })
+}: HaredoOptions): HaredoInstance => {
     return {
         connect: async () => {
             await adapter.connect();
@@ -33,7 +38,7 @@ export const Haredo = ({ url, adapter = createAdapter(AMQPClient, AMQPQueue, url
             if (typeof exchange === 'string') {
                 exchange = InternalExchange(exchange, type!, params, args);
             }
-            return exchangeChain<T>({ adapter, exchange });
+            return exchangeChain<T>({ adapter, exchange, appId });
         },
         queue: <T = unknown>(
             queue: string | QueueInterface<T>,
@@ -43,7 +48,7 @@ export const Haredo = ({ url, adapter = createAdapter(AMQPClient, AMQPQueue, url
             if (typeof queue === 'string') {
                 queue = Queue(queue, queueParams, queueArguments);
             }
-            return queueChain<T>({ adapter, queue, middleware: [] });
+            return queueChain<T>({ adapter, queue, middleware: [], appId });
         }
     };
 };
@@ -76,6 +81,9 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState): ExchangeChain<T>
         confirm: () => {
             return exchangeChain({ ...state, confirm: true });
         },
+        type: (type) => {
+            return setArgument('type', type);
+        },
         skipSetup: (skip = true) => {
             return exchangeChain({ ...state, skipSetup: skip });
         },
@@ -86,6 +94,7 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState): ExchangeChain<T>
                 routingKey,
                 state.json === false ? (message as unknown as string) : JSON.stringify(message),
                 {
+                    ...(state.appId ? { appId: state.appId } : {}),
                     contentType: 'application/json',
                     confirm: !!state.confirm,
                     ...state.publishOptions,
@@ -175,6 +184,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
                 state.queue.name,
                 state.json === false ? (message as unknown as string) : JSON.stringify(message),
                 {
+                    ...(state.appId ? { appId: state.appId } : {}),
                     ...(state.json === false ? {} : { contentType: 'application/json' }),
                     ...state.publishOptions,
                     confirm: !!state.confirm
@@ -242,6 +252,9 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
                     await consumer.cancel();
                 }
             };
+        },
+        type: (type: string) => {
+            return setPublishOption('type', type);
         },
         streamOffset: (offset) => {
             return setSubscribeArgument('x-stream-offset', offset);

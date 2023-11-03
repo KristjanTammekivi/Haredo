@@ -158,6 +158,25 @@ describe('haredo', () => {
                 contentType: 'application/json'
             });
         });
+        it('should be possible to set message type', async () => {
+            await haredo.exchange('someExchange', 'topic').type('testmessagetype').publish('some message', 'rk');
+            expect(adapter.publish).to.have.been.calledOnce();
+            expect(adapter.publish).to.have.been.calledWith('someExchange', 'rk', '"some message"', {
+                type: 'testmessagetype',
+                confirm: false,
+                contentType: 'application/json'
+            });
+        });
+        it('should use appId when set', async () => {
+            const rabbit = Haredo({ url: rabbitURL + '/test', adapter, appId: 'myApp' });
+            await rabbit.exchange('someExchange', 'topic').publish('some message', 'rk');
+            expect(adapter.publish).to.have.been.calledOnce();
+            expect(adapter.publish).to.have.been.calledWith('someExchange', 'rk', '"some message"', {
+                appId: 'myApp',
+                confirm: false,
+                contentType: 'application/json'
+            });
+        });
     });
     describe('queue', () => {
         describe('publish', () => {
@@ -252,6 +271,25 @@ describe('haredo', () => {
                 expect(adapter.sendToQueue).to.have.been.calledWith('test', '"testmessage"', {
                     expiration: '1000',
                     appId: 'test',
+                    confirm: false,
+                    contentType: 'application/json'
+                });
+            });
+            it('should set message type', async () => {
+                await haredo.queue('test').type('testmessagetype').publish('testmessage');
+                expect(adapter.sendToQueue).to.have.been.calledOnce();
+                expect(adapter.sendToQueue).to.have.been.calledWith('test', '"testmessage"', {
+                    type: 'testmessagetype',
+                    confirm: false,
+                    contentType: 'application/json'
+                });
+            });
+            it('should send appId when set', async () => {
+                const rabbit = Haredo({ url: rabbitURL + '/test', adapter, appId: 'myApp' });
+                await rabbit.queue('test').publish('testmessage');
+                expect(adapter.sendToQueue).to.have.been.calledOnce();
+                expect(adapter.sendToQueue).to.have.been.calledWith('test', '"testmessage"', {
+                    appId: 'myApp',
                     confirm: false,
                     contentType: 'application/json'
                 });

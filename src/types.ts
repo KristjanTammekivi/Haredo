@@ -25,6 +25,11 @@ export interface HaredoOptions {
     url: string | RabbitUrl;
     tlsOptions?: AMQPTlsOptions;
     adapter?: Adapter;
+    /**
+     * The name of the application. This will be used as the appId when
+     * publishing messages.
+     */
+    appId?: string;
 }
 export interface RabbitUrl {
     protocol: 'amqp' | 'amqps';
@@ -63,6 +68,10 @@ export interface ExchangeChain<T = unknown> extends SharedChain {
      * as received by the broker.
      */
     confirm(): this;
+    /**
+     * Set an arbitrary type for the message.
+     */
+    type(type: string): this;
     publish(message: T, routingKey: string): Promise<void>;
     delay(milliseconds: number): ExchangeChain<T>;
     setArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): ExchangeChain<T>;
@@ -78,7 +87,11 @@ export interface QueuePublishChain<T> {
      * return a promise that will resolve when the message has been confirmed
      * as received by the broker.
      */
-    confirm(): this;
+    confirm(): QueuePublishChain<T>;
+    /**
+     * Set an arbitrary type for the message.
+     */
+    type(type: string): QueuePublishChain<T>;
     publish(message: T): Promise<void>;
     setPublishArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): QueuePublishChain<T>;
 }
@@ -176,6 +189,7 @@ export interface ChainState {
     bindings?: { exchange: ExchangeInterface; patterns: string[] }[];
     headers?: Record<string, string | number>;
     publishOptions?: PublishOptions;
+    appId?: string;
 }
 
 export interface QueueChainState<T> extends ChainState {

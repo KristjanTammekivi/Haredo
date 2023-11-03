@@ -48,7 +48,7 @@ describe('adapter', () => {
         mockQueue = stub({
             publish: () => Promise<void>
         }) as any;
-        adapter = createAdapter(mockAmqp as any, stub().returns(mockQueue) as any, 'url');
+        adapter = createAdapter(mockAmqp as any, stub().returns(mockQueue) as any, { url: 'url' });
     });
     describe('connect', () => {
         it('should call connect on connection', async () => {
@@ -81,12 +81,14 @@ describe('adapter', () => {
         });
         it('should create an url when passed an object', async () => {
             const objectAdapter = createAdapter(mockAmqp as any, stub().returns(mockQueue) as any, {
-                hostname: 'localhost',
-                password: 'guest',
-                port: 5672,
-                protocol: 'amqp',
-                username: 'guest',
-                vhost: '/'
+                url: {
+                    hostname: 'localhost',
+                    password: 'guest',
+                    port: 5672,
+                    protocol: 'amqp',
+                    username: 'guest',
+                    vhost: '/'
+                }
             });
             await objectAdapter.connect();
             expect(mockAmqp)

@@ -4,7 +4,8 @@ import {
     AMQPProperties,
     AMQPQueue,
     ExchangeParams,
-    QueueParams
+    QueueParams,
+    AMQPTlsOptions
 } from '@cloudamqp/amqp-client';
 import { ExchangeArguments } from './exchange';
 import { HaredoMessage, makeHaredoMessage } from './haredo-message';
@@ -65,7 +66,12 @@ export interface Adapter {
     ): Promise<Consumer>;
 }
 
-export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue, url: string | RabbitUrl): Adapter => {
+export interface AdapterOptions {
+    url: string | RabbitUrl;
+    tlsOptions?: AMQPTlsOptions;
+}
+
+export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue, { url }: AdapterOptions): Adapter => {
     let client: AMQPClient | undefined;
     let clientPromise: Promise<any> | undefined;
     let consumers: { channel: AMQPChannel; consumer: Consumer }[] = [];
