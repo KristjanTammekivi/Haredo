@@ -26,8 +26,8 @@ export const Haredo = ({
         connect: async () => {
             await adapter.connect();
         },
-        close: async () => {
-            await adapter.close();
+        close: async (force) => {
+            await adapter.close(force);
         },
         exchange: <T = unknown>(
             exchange: string | ExchangeInterface<T>,

@@ -18,7 +18,11 @@ export interface HaredoInstance {
     ): ExchangeChain<T>;
     queue<T = unknown>(queue: QueueInterface<T>): QueueChain<T>;
     queue<T = unknown>(queue: string, params?: QueueParams, args?: QueueArguments): QueueChain<T>;
-    close(): Promise<void>;
+    /**
+     * Cancel all consumers, wait for callbacks
+     * to finish and close the connection to the broker.
+     */
+    close(force?: boolean): Promise<void>;
 }
 
 export interface HaredoOptions {
