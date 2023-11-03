@@ -19,14 +19,15 @@ const start = async () => {
         .queue(stream)
         .streamOffset(addTime(new Date(), -100))
         .prefetch(1)
-        .subscribe(async (data) => {
+        .subscribe(async (data, { raw, streamOffset }) => {
+            console.log(raw, streamOffset);
             console.log(new Date(), 'Message received:', data.id);
         });
 
     let iteration = 1;
     while (true) {
         await publish(haredo, { id: iteration++ });
-        await delay(1000);
+        await delay(5000);
     }
 };
 

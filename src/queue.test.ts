@@ -152,4 +152,18 @@ describe('queue', () => {
         await haredo.queue(queue).setup();
         expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-single-active-consumer': true });
     });
+    it('should set maxAge', async () => {
+        const queue = Queue('test').maxAge('7D');
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-max-age': '7D' });
+    });
+    it('should set streamMaxSegmentSize', async () => {
+        const queue = Queue('test').streamMaxSegmentSize(100_000_000);
+        await haredo.queue(queue).setup();
+        expect(adapter.createQueue).to.have.been.calledWith(
+            'test',
+            {},
+            { 'x-stream-max-segment-size-bytes': 100_000_000 }
+        );
+    });
 });

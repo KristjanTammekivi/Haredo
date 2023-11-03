@@ -1,6 +1,7 @@
 import { QueueParams } from '@cloudamqp/amqp-client';
 import { ExchangeInterface } from './exchange';
 import { set } from './utils/set';
+import { Retention } from './types';
 
 type XOverflow = 'drop-head' | 'reject-publish' | 'reject-publish-dlx';
 
@@ -55,6 +56,15 @@ interface KnownQueueArguments {
      * See https://www.rabbitmq.com/consumers.html#single-active-consumer
      */
     'x-single-active-consumer'?: boolean;
+    /**
+     * Maximum age of the messages in the stream. Retention is only evaluated when
+     * a new segment is added to the stream
+     */
+    'x-max-age'?: Retention;
+    /**
+     * A stream is divided up into fixed size segment files on disk. This setting controls the size of these. Default: (500000000 bytes).
+     */
+    'x-stream-max-segment-size-bytes'?: number;
 }
 
 export type QueueArguments = Omit<Record<string, string | number | boolean>, keyof KnownQueueArguments> &
@@ -89,7 +99,9 @@ export const Queue = <T = unknown>(
         expires: (ms) => setArgument('x-expires', ms),
         maxPriority: (priority) => setArgument('x-max-priority', priority),
         deliveryLimit: (limit) => setArgument('x-delivery-limit', limit),
-        singleActiveConsumer: () => setArgument('x-single-active-consumer', true)
+        singleActiveConsumer: () => setArgument('x-single-active-consumer', true),
+        maxAge: (maxAge) => setArgument('x-max-age', maxAge),
+        streamMaxSegmentSize: (bytes) => setArgument('x-stream-max-segment-size-bytes', bytes)
     };
 };
 
@@ -166,4 +178,17 @@ export interface QueueInterface<TMESSAGE = unknown> {
      * See https://www.rabbitmq.com/consumers.html#single-active-consumer
      */
     singleActiveConsumer(): QueueInterface<TMESSAGE>;
+    /**
+     * Set the max age of the messages in the stream.
+     * Retention is only evaluated when a new segment is added to the stream.
+     * Valid units are: Y, M, D, h, m, s
+     */
+    maxAge(maxAge: Retention): QueueInterface<TMESSAGE>;
+    /**
+     * Set the max segment size of the stream.
+     * A stream is divided up into fixed size segment files on disk.
+     * This setting controls the size of these.
+     * Default: (500_000_000 bytes).
+     */
+    streamMaxSegmentSize(bytes: number): QueueInterface<TMESSAGE>;
 }

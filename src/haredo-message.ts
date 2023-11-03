@@ -118,6 +118,10 @@ export interface HaredoMessage<T = unknown> extends Methods {
      * Amount of attempts the broker has done to deliver the message
      */
     deliveryCount?: number;
+    /**
+     * Stream offset of the message. Only available for streams
+     */
+    streamOffset?: number;
 }
 
 export interface Methods {
@@ -198,6 +202,7 @@ export const makeHaredoMessage = <T = unknown>(
         type: raw.properties.type,
         userId: raw.properties.userId,
         deliveryCount: deliveryCount && !Number.isNaN(Number(deliveryCount)) ? Number(deliveryCount) : undefined,
+        streamOffset: raw.properties.headers?.['x-stream-offset'] as number,
         [messageSymbol]: true
     };
 };

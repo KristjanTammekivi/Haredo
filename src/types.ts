@@ -93,7 +93,7 @@ export interface HaredoConsumer {
 }
 
 type RetentionUnit = 'Y' | 'M' | 'D' | 'h' | 'm' | 's';
-type Retention = `${ number }${ RetentionUnit }`;
+export type Retention = `${ number }${ RetentionUnit }`;
 
 export type StreamOffset = 'first' | 'last' | 'next' | number | Retention | Date;
 
