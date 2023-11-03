@@ -39,6 +39,7 @@ describe('haredo', () => {
             close: () => Promise.resolve(),
             createQueue: () => Promise.resolve(),
             createExchange: () => Promise.resolve(),
+            bindExchange: () => Promise.resolve(),
             publish: () => Promise.resolve()
         } as any);
         haredo = Haredo({ url: rabbitURL + '/test', adapter });
@@ -176,6 +177,52 @@ describe('haredo', () => {
                 confirm: false,
                 contentType: 'application/json'
             });
+        });
+        it('should set up E2E bindings', async () => {
+            await haredo
+                .exchange('someExchange', 'topic')
+                .bindExchange('someOtherExchange', 'rk', 'topic')
+                .publish('some message', 'rk');
+            expect(adapter.createExchange).to.have.been.calledTwice();
+            expect(adapter.createExchange).to.have.been.calledWith('someExchange');
+            expect(adapter.createExchange).to.have.been.calledWith('someOtherExchange');
+            expect(adapter.bindExchange).to.have.been.calledOnce();
+            expect(adapter.bindExchange).to.have.been.calledWith('someExchange', 'someOtherExchange', 'rk');
+        });
+        it('should create the exchange when skipSetup is called with { skipCreate: false }', async () => {
+            await haredo
+                .exchange('someExchange', 'topic')
+                .skipSetup({ skipCreate: false })
+                .bindExchange('someOtherExchange', 'rk', 'topic')
+                .publish('some message', 'rk');
+            expect(adapter.createExchange).to.have.been.calledOnce();
+            expect(adapter.createExchange).to.have.been.calledWith('someExchange');
+        });
+        it('should create the bound exchange when skipSetup is called with { skipBoundExchanges: false }', async () => {
+            await haredo
+                .exchange('someExchange', 'topic')
+                .skipSetup({ skipBoundExchanges: false })
+                .bindExchange('someOtherExchange', 'rk', 'topic')
+                .publish('some message', 'rk');
+            expect(adapter.createExchange).to.have.been.calledOnce();
+            expect(adapter.createExchange).to.have.been.calledWith('someOtherExchange');
+        });
+        it('should create the bindings when skipSetup is called with { skipBindings: false }', async () => {
+            await haredo
+                .exchange('someExchange', 'topic')
+                .skipSetup({ skipBindings: false })
+                .bindExchange('someOtherExchange', 'rk', 'topic')
+                .publish('some message', 'rk');
+            expect(adapter.bindExchange).to.have.been.calledOnce();
+            expect(adapter.bindExchange).to.have.been.calledWith('someExchange', 'someOtherExchange', 'rk');
+        });
+        it('should be possible to bind an exchange object', async () => {
+            await haredo
+                .exchange('someExchange', 'topic')
+                .bindExchange(Exchange('someOtherExchange', 'topic'), 'rk')
+                .publish('some message', 'rk');
+            expect(adapter.bindExchange).to.have.been.calledOnce();
+            expect(adapter.bindExchange).to.have.been.calledWith('someExchange', 'someOtherExchange', 'rk');
         });
     });
     describe('queue', () => {
@@ -407,6 +454,38 @@ describe('haredo', () => {
                     .skipSetup()
                     .subscribe(() => {});
                 expect(adapter.createQueue).to.not.have.been.called();
+            });
+            it('should create the queue when skipSetup is called with { skipCreate: false }', async () => {
+                await haredo
+                    .queue('test')
+                    .skipSetup({ skipCreate: false })
+                    .bindExchange('testexchange', '#', 'topic')
+                    .subscribe(() => {});
+                expect(adapter.createQueue).to.have.been.calledOnce();
+            });
+            it('should create the bound exchange when skipSetup is called with { skipBoundExchanges: false }', async () => {
+                await haredo
+                    .queue('test')
+                    .skipSetup({ skipBoundExchanges: false })
+                    .bindExchange('testexchange', '#', 'topic')
+                    .subscribe(() => {});
+                expect(adapter.createExchange).to.have.been.calledOnce();
+            });
+            it('should create the bindings when skipSetup is called with { skipBindings: false }', async () => {
+                await haredo
+                    .queue('test')
+                    .skipSetup({ skipBindings: false })
+                    .bindExchange('testexchange', '#', 'topic')
+                    .subscribe(() => {});
+                expect(adapter.bindQueue).to.have.been.calledOnce();
+            });
+            it('should not create the the bound exchange when skipSetup is called with { skipCreate: false }', async () => {
+                await haredo
+                    .queue('test')
+                    .skipSetup({ skipCreate: true })
+                    .bindExchange('testexchange', '#', 'topic')
+                    .subscribe(() => {});
+                expect(adapter.createExchange).to.not.have.been.called();
             });
             it('should call middleware with the message', async () => {
                 const middleware = stub().resolves();
@@ -675,7 +754,6 @@ describe('haredo', () => {
     });
 });
 
-// TODO: [>3.0.0] - make sure this isn't leaking
 // declare module './types' {
 //     interface QueueChain<T = unknown> {
 //         cid(cid: string): this;

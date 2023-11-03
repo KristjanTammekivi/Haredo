@@ -66,6 +66,21 @@ export interface RabbitUrl {
     vhost: string;
 }
 
+export interface SkipSetupOptions {
+    /**
+     * If true then don't create the exchanges that are bound to this queue / exchange
+     */
+    skipBoundExchanges?: boolean;
+    /**
+     * If true then don't create the queue / exchange
+     */
+    skipCreate?: boolean;
+    /**
+     * If true then don't create the bindings
+     */
+    skipBindings?: boolean;
+}
+
 export interface SharedChain {
     /**
      * Set up the topology declared in the chain.
@@ -77,7 +92,7 @@ export interface SharedChain {
      * Normally all queues / exchanges / bindings will be created each time
      * subscribe / publish is called. This method will skip that step.
      */
-    skipSetup(): this;
+    skipSetup(options?: SkipSetupOptions | boolean): this;
     /**
      * Always serialize messages as JSON. This will make the publish method
      * always serialize the message as JSON before sending it to the broker.
@@ -113,6 +128,8 @@ export interface ExchangeChain<T = unknown> extends SharedChain {
     expiration(milliseconds: number): this;
     publish(message: T, routingKey: string): Promise<void>;
     delay(milliseconds: number): ExchangeChain<T>;
+    bindExchange(sourceExchange: string, routingKey: string | string[], type: ExchangeType): ExchangeChain<T>;
+    bindExchange(sourceExchange: ExchangeInterface, routingKey: string | string[]): ExchangeChain<T>;
     setArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): ExchangeChain<T>;
 }
 
@@ -235,7 +252,7 @@ export interface QueueSubscribeChain<T> {
 
 export interface ChainState {
     adapter: Adapter;
-    skipSetup?: boolean;
+    skipSetup?: SkipSetupOptions;
     confirm?: boolean;
     json?: boolean;
     bindings?: { exchange: ExchangeInterface; patterns: string[] }[];

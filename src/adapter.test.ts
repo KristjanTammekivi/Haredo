@@ -27,7 +27,8 @@ describe('adapter', () => {
             close: () => Promise.resolve(),
             basicPublish: () => Promise.resolve(),
             prefetch: () => Promise.resolve(),
-            confirmSelect: () => Promise.resolve()
+            confirmSelect: () => Promise.resolve(),
+            exchangeBind: () => Promise.resolve()
         }) as any;
         mockClient = stub({
             connect: () => Promise.resolve(),
@@ -279,6 +280,18 @@ describe('adapter', () => {
                 .to.have.been.calledOnce()
                 .and.to.have.been.calledWith('testQueue', 'testExchange', '#');
         });
+        it('should close channel after binding', async () => {
+            await adapter.connect();
+            await adapter.bindQueue('testQueue', 'testExchange');
+            expect(mockChannel.close).to.have.been.calledOnce();
+        });
+        it('should be possible to send binding arguments', async () => {
+            await adapter.connect();
+            await adapter.bindQueue('testQueue', 'testExchange', '#', { 'x-match': 'all' });
+            expect(mockChannel.queueBind)
+                .to.have.been.calledOnce()
+                .and.to.have.been.calledWith('testQueue', 'testExchange', '#', { 'x-match': 'all' });
+        });
     });
     describe('subscribe', () => {
         beforeEach(async () => {
@@ -355,6 +368,42 @@ describe('adapter', () => {
             await adapter.subscribe('test', { onClose: stub(), args: { 'x-stream-offset': 'last' } }, () => {});
             expect(mockChannel.basicConsume).to.have.been.calledOnce();
             expect(mockChannel.basicConsume.firstCall.args[1].args).to.partially.eql({ 'x-stream-offset': 'last' });
+        });
+        it('should close channel when cancelling consumer', async () => {
+            const consumer = await adapter.subscribe('test', { onClose: stub() }, () => {});
+            await consumer.cancel();
+            expect(mockChannel.close).to.have.been.calledOnce();
+        });
+    });
+    describe('bindExchange', () => {
+        it('should bind one exchange to another', async () => {
+            await adapter.connect();
+            await adapter.bindExchange('testExchange', 'testExchange2', '#');
+            expect(mockChannel.exchangeBind).to.have.been.calledOnce();
+            expect(mockChannel.exchangeBind).to.have.been.calledWith('testExchange', 'testExchange2', '#');
+        });
+        it('should close channel after binding', async () => {
+            await adapter.connect();
+            await adapter.bindExchange('testExchange', 'testExchange2', '#');
+            expect(mockChannel.close).to.have.been.calledOnce();
+        });
+        it('should be possible to send binding arguments', async () => {
+            await adapter.connect();
+            await adapter.bindExchange('testExchange', 'testExchange2', '#', { 'x-match': 'all' });
+            expect(mockChannel.exchangeBind).to.have.been.calledOnce();
+            expect(mockChannel.exchangeBind).to.have.been.calledWith('testExchange', 'testExchange2', '#', {
+                'x-match': 'all'
+            });
+        });
+        it('should throw if called before connect', async () => {
+            await expect(adapter.bindExchange('testExchange', 'testExchange2', '#')).to.reject(/No client/);
+        });
+        it('should default the routing key to #', async () => {
+            await adapter.connect();
+            await adapter.bindExchange('testExchange', 'testExchange2');
+            expect(mockChannel.exchangeBind)
+                .to.have.been.calledOnce()
+                .and.to.have.been.calledWith('testExchange', 'testExchange2', '#');
         });
     });
 });

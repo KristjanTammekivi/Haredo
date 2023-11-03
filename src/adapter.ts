@@ -51,12 +51,20 @@ export interface PublishOptions extends AMQPProperties {
     confirm?: boolean;
 }
 
+interface KnownBindingArguments {
+    'x-match'?: 'all' | 'any';
+}
+
+export type BindingArguments = Omit<Record<string, string | number>, keyof KnownBindingArguments> &
+    KnownBindingArguments;
+
 export interface Adapter {
     connect(): Promise<AMQPClient>;
     close(force?: boolean): Promise<void>;
     createQueue(name: string | undefined, options?: QueueParams, args?: QueueArguments): Promise<string>;
     createExchange(name: string, type: string, options?: ExchangeParams, args?: ExchangeArguments): Promise<void>;
-    bindQueue(queueName: string, exchangeName: string, routingKey?: string): Promise<void>;
+    bindQueue(queueName: string, exchangeName: string, routingKey?: string, args?: BindingArguments): Promise<void>;
+    bindExchange(destination: string, source: string, routingKey?: string, args?: BindingArguments): Promise<void>;
     sendToQueue(name: string, message: string, options: PublishOptions): Promise<void>;
     publish(exchange: string, routingKey: string, message: string, options: PublishOptions): Promise<void>;
     subscribe(
@@ -113,7 +121,6 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                 await Promise.all(
                     consumers.map(async (x) => {
                         await x.consumer.cancel();
-                        await x.channel.close();
                     })
                 );
                 if (publishChannel) {
@@ -146,12 +153,27 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                 await channel.close();
             }
         },
-        bindQueue: async (queueName, exchangeName, routingKey) => {
+        bindQueue: async (queueName, exchangeName, routingKey, args) => {
             if (!client) {
                 throw new Error('No client');
             }
             const channel = await client.channel();
-            await channel.queueBind(queueName, exchangeName, routingKey || '#');
+            try {
+                await channel.queueBind(queueName, exchangeName, routingKey || '#', args);
+            } finally {
+                await channel.close();
+            }
+        },
+        bindExchange: async (destination, source, routingKey, args) => {
+            if (!client) {
+                throw new Error('No client');
+            }
+            const channel = await client.channel();
+            try {
+                await channel.exchangeBind(destination, source, routingKey || '#', args);
+            } finally {
+                await channel.close();
+            }
         },
         sendToQueue: async (name, message, { confirm, ...options }) => {
             if (!client) {
@@ -209,7 +231,6 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
             });
             let cancelPromise: Promise<void> | undefined;
             const wrappedConsumer = {
-                channel,
                 cancel: async () => {
                     if (cancelPromise) {
                         return cancelPromise;
@@ -219,6 +240,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                     });
                     await cancelPromise;
                     consumers = consumers.filter((x) => x.consumer !== wrappedConsumer);
+                    await channel.close();
                 }
             };
             consumers = [...consumers, { channel, consumer: wrappedConsumer }];

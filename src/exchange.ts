@@ -52,23 +52,23 @@ export interface ExchangeInterface<T = unknown> {
      * Set the exchange as autoDelete.
      * AutoDelete exchanges will be deleted when there are no queues bound to it.
      */
-    autoDelete: (autoDelete?: boolean) => ExchangeInterface<T>;
+    autoDelete(autoDelete?: boolean): this;
     /**
      * Set the exchange as durable. Durable exchanges will survive broker restarts.
      */
-    durable: (durable?: boolean) => ExchangeInterface<T>;
+    durable(durable?: boolean): this;
     /**
      * Set the exchange as passive. Passive exchanges will not be created by the broker.
      */
-    passive: (passive?: boolean) => ExchangeInterface<T>;
+    passive(passive?: boolean): this;
     /**
      * Set the alternate exchange for this exchange.
      * If a message cannot be routed to any queue
      * in this exchange, it will be sent to the alternate exchange.
      */
-    alternateExchange: (alternate: string | ExchangeInterface) => ExchangeInterface<T>;
+    alternateExchange(alternate: string | ExchangeInterface): this;
     /**
      * Set the exchange as delayed exchange
      */
-    delayed: () => ExchangeInterface<T>;
+    delayed(): this;
 }

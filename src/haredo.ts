@@ -11,7 +11,8 @@ import type {
     HaredoInstance,
     HaredoOptions,
     QueueChain,
-    QueueChainState
+    QueueChainState,
+    SkipSetupOptions
 } from './types';
 import { applyMiddleware } from './utils/apply-middleware';
 import { castArray } from './utils/cast-array';
@@ -58,16 +59,32 @@ export const Haredo = ({
 
 const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Extension[]): ExchangeChain<T> => {
     const setup = async () => {
-        if (state.skipSetup) {
+        if (!state.skipSetup?.skipCreate) {
+            await state.adapter.createExchange(
+                state.exchange.name,
+                state.exchange.type,
+                state.exchange.params,
+                state.exchange.args
+            );
+        }
+        if (!state.bindings) {
             return;
         }
-        await state.adapter.createExchange(
-            state.exchange.name,
-            state.exchange.type,
-            state.exchange.params,
-            state.exchange.args
+        await Promise.all(
+            state.bindings.map(async (binding) => {
+                if (!state.skipSetup?.skipBoundExchanges) {
+                    await state.adapter.createExchange(
+                        binding.exchange.name,
+                        binding.exchange.type,
+                        binding.exchange.params,
+                        binding.exchange.args
+                    );
+                }
+                for (const pattern of binding.patterns) {
+                    await state.adapter.bindExchange(state.exchange.name, binding.exchange.name, pattern);
+                }
+            })
         );
-        // TODO: E2E bindings?
     };
     const setArgument = (key: keyof AMQPProperties, value: AMQPProperties[keyof AMQPProperties]) => {
         return exchangeChain(
@@ -94,7 +111,19 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Exten
             return setArgument('type', type);
         },
         skipSetup: (skip = true) => {
-            return exchangeChain({ ...state, skipSetup: skip }, extensions);
+            const skipSetupOptions: SkipSetupOptions =
+                typeof skip === 'boolean'
+                    ? {
+                          skipBindings: true,
+                          skipBoundExchanges: true,
+                          skipCreate: true
+                      }
+                    : {
+                          skipBindings: skip.skipBindings ?? true,
+                          skipBoundExchanges: skip.skipBoundExchanges ?? true,
+                          skipCreate: skip.skipCreate ?? true
+                      };
+            return exchangeChain({ ...state, skipSetup: skipSetupOptions }, extensions);
         },
         priority: (priority: number) => {
             return setArgument('priority', priority);
@@ -102,6 +131,19 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Exten
         setHeader,
         expiration: (ms: number) => {
             return setArgument('expiration', `${ ms }`);
+        },
+        bindExchange: (exchange: string | ExchangeInterface, patterns: string | string[], type?: ExchangeType) => {
+            const binding = {
+                exchange: typeof exchange === 'string' ? InternalExchange(exchange, type!) : exchange,
+                patterns: castArray(patterns)
+            };
+            return exchangeChain(
+                {
+                    ...state,
+                    bindings: [...(state.bindings || []), binding]
+                },
+                extensions
+            );
         },
         publish: async (message: T, routingKey: string) => {
             await setup();
@@ -134,23 +176,25 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Exten
 
 const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extension[]): QueueChain<T> => {
     const setup = async () => {
-        if (state.skipSetup) {
-            return;
+        let queueName = state.queue.name;
+        if (!state.skipSetup?.skipCreate) {
+            queueName = await state.adapter.createQueue(state.queue.name, state.queue.params, state.queue.args);
         }
-        const queueName = await state.adapter.createQueue(state.queue.name, state.queue.params, state.queue.args);
         if (!state.bindings) {
             return;
         }
         await Promise.all(
             state.bindings.map(async (binding) => {
-                await state.adapter.createExchange(
-                    binding.exchange.name,
-                    binding.exchange.type,
-                    binding.exchange.params,
-                    binding.exchange.args
-                );
+                if (!state.skipSetup?.skipBoundExchanges) {
+                    await state.adapter.createExchange(
+                        binding.exchange.name,
+                        binding.exchange.type,
+                        binding.exchange.params,
+                        binding.exchange.args
+                    );
+                }
                 for (const pattern of binding.patterns) {
-                    await state.adapter.bindQueue(queueName, binding.exchange.name, pattern);
+                    await state.adapter.bindQueue(queueName!, binding.exchange.name, pattern);
                 }
             })
         );
@@ -191,11 +235,19 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
                 extensions
             );
         },
-        skipSetup: () => {
+        skipSetup: (skip = true) => {
+            const skipSetupOptions: SkipSetupOptions =
+                typeof skip === 'boolean'
+                    ? { skipCreate: skip, skipBindings: skip, skipBoundExchanges: skip }
+                    : {
+                          skipCreate: skip.skipCreate ?? true,
+                          skipBindings: skip.skipBindings ?? true,
+                          skipBoundExchanges: skip.skipBoundExchanges ?? true
+                      };
             return queueChain(
                 {
                     ...state,
-                    skipSetup: true
+                    skipSetup: skipSetupOptions
                 },
                 extensions
             );
