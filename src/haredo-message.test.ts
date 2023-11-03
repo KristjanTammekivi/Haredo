@@ -1,6 +1,7 @@
 import { expect } from 'hein';
-import { HaredoMessage, isHaredoMessage, makeHaredoMessage } from './haredo-message';
+import { isHaredoMessage, makeHaredoMessage } from './haredo-message';
 import { SinonSpy, spy } from 'sinon';
+import { HaredoMessage } from './types';
 describe('HaredoMessage', () => {
     let message: HaredoMessage<any>;
     let nackSpy: SinonSpy;

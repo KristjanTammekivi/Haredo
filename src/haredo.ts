@@ -2,11 +2,12 @@ import { AMQPClient, AMQPProperties, AMQPQueue, ExchangeParams, QueueParams } fr
 import { Consumer, SubscribeArguments, createAdapter } from './adapter';
 import { MissingQueueNameError } from './errors';
 import { ExchangeArguments, ExchangeInterface, ExchangeType, InternalExchange } from './exchange';
-import { HaredoMessage } from './haredo-message';
+import { HaredoMessage } from './types';
 import { Queue, QueueArguments, QueueInterface } from './queue';
 import type {
     ExchangeChain,
     ExchangeChainState,
+    Extension,
     HaredoInstance,
     HaredoOptions,
     QueueChain,
@@ -20,6 +21,8 @@ export const Haredo = ({
     url,
     tlsOptions,
     appId,
+    extensions = [],
+    globalMiddleware = [],
     adapter = createAdapter(AMQPClient, AMQPQueue, { url, tlsOptions })
 }: HaredoOptions): HaredoInstance => {
     return {
@@ -38,7 +41,7 @@ export const Haredo = ({
             if (typeof exchange === 'string') {
                 exchange = InternalExchange(exchange, type!, params, args);
             }
-            return exchangeChain<T>({ adapter, exchange, appId });
+            return exchangeChain<T>({ adapter, exchange, appId }, extensions);
         },
         queue: <T = unknown>(
             queue: string | QueueInterface<T>,
@@ -48,12 +51,12 @@ export const Haredo = ({
             if (typeof queue === 'string') {
                 queue = Queue(queue, queueParams, queueArguments);
             }
-            return queueChain<T>({ adapter, queue, middleware: [], appId });
+            return queueChain<T>({ adapter, queue, middleware: [...globalMiddleware], appId }, extensions);
         }
     };
 };
 
-const exchangeChain = <T = unknown>(state: ExchangeChainState): ExchangeChain<T> => {
+const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Extension[]): ExchangeChain<T> => {
     const setup = async () => {
         if (state.skipSetup) {
             return;
@@ -67,25 +70,28 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState): ExchangeChain<T>
         // TODO: E2E bindings?
     };
     const setArgument = (key: keyof AMQPProperties, value: AMQPProperties[keyof AMQPProperties]) => {
-        return exchangeChain(mergeState(state, { publishOptions: { ...state.publishOptions, [key]: value } }));
+        return exchangeChain(
+            mergeState(state, { publishOptions: { ...state.publishOptions, [key]: value } }),
+            extensions
+        );
     };
     return {
         setup,
         setArgument,
         delay: (milliseconds: number) => {
-            return exchangeChain(mergeState(state, { headers: { 'x-delay': milliseconds } }));
+            return exchangeChain(mergeState(state, { headers: { 'x-delay': milliseconds } }), extensions);
         },
         json: (json) => {
-            return exchangeChain({ ...state, json });
+            return exchangeChain({ ...state, json }, extensions);
         },
         confirm: () => {
-            return exchangeChain({ ...state, confirm: true });
+            return exchangeChain({ ...state, confirm: true }, extensions);
         },
         type: (type) => {
             return setArgument('type', type);
         },
         skipSetup: (skip = true) => {
-            return exchangeChain({ ...state, skipSetup: skip });
+            return exchangeChain({ ...state, skipSetup: skip }, extensions);
         },
         publish: async (message: T, routingKey: string) => {
             await setup();
@@ -101,11 +107,22 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState): ExchangeChain<T>
                     ...(state.headers ? { headers: state.headers } : {})
                 }
             );
-        }
+        },
+        ...Object.fromEntries(
+            extensions
+                .filter((x) => x.exchange)
+                .map((extension) => [
+                    extension.name,
+                    (...args: any[]) => {
+                        const modifiedState = extension.exchange!(state)(...args);
+                        return exchangeChain(modifiedState, extensions);
+                    }
+                ])
+        )
     };
 };
 
-const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
+const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extension[]): QueueChain<T> => {
     const setup = async () => {
         if (state.skipSetup) {
             return;
@@ -129,49 +146,64 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
         );
     };
     const setPublishOption = (key: keyof AMQPProperties, value: AMQPProperties[keyof AMQPProperties]) => {
-        return queueChain(mergeState(state, { publishOptions: { ...state.publishOptions, [key]: value } }));
+        return queueChain(mergeState(state, { publishOptions: { ...state.publishOptions, [key]: value } }), extensions);
     };
     const setSubscribeArgument = (
         key: keyof SubscribeArguments,
         value: SubscribeArguments[keyof SubscribeArguments]
     ) => {
-        return queueChain(mergeState(state, { subscribeArguments: { ...state.subscribeArguments, [key]: value } }));
+        return queueChain(
+            mergeState(state, { subscribeArguments: { ...state.subscribeArguments, [key]: value } }),
+            extensions
+        );
     };
     return {
         setup,
         setPublishArgument: setPublishOption,
         backoff: (backoff) => {
-            return queueChain(mergeState(state, { backoff }));
+            return queueChain(mergeState(state, { backoff }), extensions);
         },
         use: (...middleware) => {
-            return queueChain(mergeState(state, { middleware }));
+            return queueChain(mergeState(state, { middleware }), extensions);
         },
         json: (json) => {
-            return queueChain({ ...state, json });
+            return queueChain({ ...state, json }, extensions);
         },
         confirm: () => {
-            return queueChain({
-                ...state,
-                confirm: true
-            });
+            return queueChain(
+                {
+                    ...state,
+                    confirm: true
+                },
+                extensions
+            );
         },
         skipSetup: () => {
-            return queueChain({
-                ...state,
-                skipSetup: true
-            });
+            return queueChain(
+                {
+                    ...state,
+                    skipSetup: true
+                },
+                extensions
+            );
         },
         concurrency: (count: number) => {
-            return queueChain({
-                ...state,
-                prefetch: count
-            });
+            return queueChain(
+                {
+                    ...state,
+                    prefetch: count
+                },
+                extensions
+            );
         },
         prefetch: (count: number) => {
-            return queueChain({
-                ...state,
-                prefetch: count
-            });
+            return queueChain(
+                {
+                    ...state,
+                    prefetch: count
+                },
+                extensions
+            );
         },
         publish: async (message: any) => {
             await setup();
@@ -187,6 +219,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
                     ...(state.appId ? { appId: state.appId } : {}),
                     ...(state.json === false ? {} : { contentType: 'application/json' }),
                     ...state.publishOptions,
+                    ...(state.headers ? { headers: state.headers } : {}),
                     confirm: !!state.confirm
                 }
             );
@@ -196,10 +229,13 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
                 exchange: typeof exchange === 'string' ? InternalExchange(exchange, type!) : exchange,
                 patterns: castArray(patterns)
             };
-            return queueChain({
-                ...state,
-                bindings: [...(state.bindings || []), binding]
-            });
+            return queueChain(
+                {
+                    ...state,
+                    bindings: [...(state.bindings || []), binding]
+                },
+                extensions
+            );
         },
         subscribe: async (callback) => {
             await setup();
@@ -258,6 +294,17 @@ const queueChain = <T = unknown>(state: QueueChainState<T>): QueueChain<T> => {
         },
         streamOffset: (offset) => {
             return setSubscribeArgument('x-stream-offset', offset);
-        }
+        },
+        ...Object.fromEntries(
+            extensions
+                .filter((x) => x.queue)
+                .map((extension) => [
+                    extension.name,
+                    (...args: any[]) => {
+                        const modifiedState = extension.queue!(state)(...args);
+                        return queueChain(modifiedState, extensions);
+                    }
+                ])
+        )
     };
 };

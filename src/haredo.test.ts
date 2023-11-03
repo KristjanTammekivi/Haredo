@@ -530,4 +530,91 @@ describe('haredo', () => {
             });
         });
     });
+    describe('extend', () => {
+        it('should be possible to extend haredo queue chain', async () => {
+            const extendedHaredo = Haredo({
+                url: 'amqp://localhost:5672',
+                extensions: [
+                    {
+                        name: 'cid',
+                        queue: (state) => (cid: string) => {
+                            return {
+                                ...state,
+                                headers: {
+                                    ...state.headers,
+                                    'x-cid': cid
+                                }
+                            };
+                        }
+                    }
+                ],
+                adapter
+            });
+            await extendedHaredo.connect();
+            await (extendedHaredo.queue('test') as any).cid('123').publish('test');
+            expect(adapter.sendToQueue).to.have.been.calledOnce();
+            expect(adapter.sendToQueue).to.have.been.calledWith('test', '"test"', {
+                confirm: false,
+                contentType: 'application/json',
+                headers: {
+                    'x-cid': '123'
+                }
+            });
+        });
+        it('should be possible to extend haredo exchange chain', async () => {
+            const extendedHaredo = Haredo({
+                url: 'amqp://localhost:5672',
+                extensions: [
+                    {
+                        name: 'cid',
+                        exchange: (state) => (cid: string) => {
+                            return {
+                                ...state,
+                                headers: {
+                                    ...state.headers,
+                                    'x-cid': cid
+                                }
+                            };
+                        }
+                    }
+                ],
+                adapter
+            });
+            await extendedHaredo.connect();
+            await (extendedHaredo.exchange('test', 'topic') as any).cid('123').publish('test', 'rk');
+            expect(adapter.publish).to.have.been.calledOnce();
+            expect(adapter.publish).to.have.been.calledWith('test', 'rk', '"test"', {
+                confirm: false,
+                contentType: 'application/json',
+                headers: {
+                    'x-cid': '123'
+                }
+            });
+        });
+    });
+    describe('globalMiddleware', () => {
+        it('should add global middleware', async () => {
+            const middleware = stub().resolves();
+            const h = Haredo({
+                url: 'amqp://localhost:5672',
+                adapter,
+                globalMiddleware: [middleware]
+            });
+            await h.connect();
+            await h.queue('test').subscribe(() => {});
+            const message = makeTestMessage('some message');
+            await adapter.subscribe.firstCall.lastArg(message);
+            expect(middleware).to.have.been.calledOnce();
+        });
+    });
 });
+
+// TODO: [>3.0.0] - make sure this isn't leaking
+// declare module './types' {
+//     interface QueueChain<T = unknown> {
+//         cid(cid: string): this;
+//     }
+//     interface ExchangeChain<T = unknown> {
+//         cid(cid: string): this;
+//     }
+// }

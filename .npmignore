@@ -3,6 +3,7 @@
 .vscode
 coverage
 dist/**/*.test.ts
+dist/examples
 docker
 docs
 node_modules

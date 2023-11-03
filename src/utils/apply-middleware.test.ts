@@ -1,8 +1,9 @@
 import { expect } from 'hein';
 import { spy } from 'sinon';
-import { HaredoMessage, makeHaredoMessage } from '../haredo-message';
+import { makeHaredoMessage } from '../haredo-message';
 import { applyMiddleware } from './apply-middleware';
 import { delay } from './delay';
+import { HaredoMessage } from '../types';
 
 describe('applyMiddleware', () => {
     let message: HaredoMessage<any>;

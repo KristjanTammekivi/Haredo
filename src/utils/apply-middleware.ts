@@ -1,4 +1,4 @@
-import { HaredoMessage } from '../haredo-message';
+import { HaredoMessage } from '../types';
 import { SubscribeCallback } from '../types';
 
 export interface Middleware<T = unknown> {

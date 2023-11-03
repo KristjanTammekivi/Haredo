@@ -1,10 +1,17 @@
-import { AMQPTlsOptions, ExchangeParams, AMQPProperties, QueueParams } from '@cloudamqp/amqp-client';
+import {
+    AMQPTlsOptions,
+    ExchangeParams,
+    AMQPProperties,
+    QueueParams,
+    AMQPMessage,
+    Field
+} from '@cloudamqp/amqp-client';
 import { Adapter, PublishOptions, SubscribeArguments } from './adapter';
 import { ExchangeArguments, ExchangeInterface, ExchangeType } from './exchange';
 import { QueueArguments, QueueInterface } from './queue';
 import { Middleware } from './utils/apply-middleware';
 import { FailureBackoff } from './backoffs';
-import { HaredoMessage } from './haredo-message';
+import { TypedEventEmitter } from './utils/typed-event-target';
 
 export interface HaredoInstance {
     connect(): Promise<void>;
@@ -25,6 +32,12 @@ export interface HaredoInstance {
     close(force?: boolean): Promise<void>;
 }
 
+export interface Extension {
+    name: string;
+    exchange?(state: ExchangeChainState): (...args: any[]) => ExchangeChainState;
+    queue?(state: QueueChainState<unknown>): (...args: any[]) => QueueChainState<unknown>;
+}
+
 export interface HaredoOptions {
     url: string | RabbitUrl;
     tlsOptions?: AMQPTlsOptions;
@@ -34,7 +47,16 @@ export interface HaredoOptions {
      * publishing messages.
      */
     appId?: string;
+    /**
+     * Additional methods to add to the chains.
+     */
+    extensions?: Extension[];
+    /**
+     * Add global middlewares to be run for all consumers
+     */
+    globalMiddleware?: Middleware[];
 }
+
 export interface RabbitUrl {
     protocol: 'amqp' | 'amqps';
     username: string;
@@ -209,3 +231,138 @@ export interface ExchangeChainState extends ChainState {
 }
 
 type Merge<T, U> = unknown extends T ? U : unknown extends U ? T : T | U;
+
+export const messageSymbol = Symbol('message');
+
+export interface HaredoMessageEvents {
+    ack: null;
+    nack: boolean;
+}
+
+export interface HaredoMessage<T = unknown> extends Methods {
+    [messageSymbol]: true;
+    emitter: TypedEventEmitter<HaredoMessageEvents>;
+
+    /**
+     * Raw message from amqplib
+     */
+    raw: AMQPMessage;
+    /**
+     * Message contents
+     */
+    data: T;
+    /**
+     * Unparsed message data
+     */
+    dataString: string | null;
+    /**
+     * Returns true if message has been acked/nacked
+     */
+    isHandled(): boolean;
+    /**
+     * Returns true if the message has been nacked
+     */
+    isNacked(): boolean;
+    /**
+     * Returns true if the message has been acked
+     */
+    isAcked(): boolean;
+    /**
+     * Headers of the message
+     */
+    headers: AMQPProperties['headers'];
+    /**
+     * Return the specified header
+     * @param header header to return
+     */
+    getHeader<TFIELD = Field>(header: string): TFIELD;
+
+    contentType?: string;
+    contentEncoding?: string;
+    /**
+     * Either 1 for non-persistent or 2 for persistent
+     */
+    deliveryMode?: 1 | 2;
+    /**
+     * Priority of a message. See [priority queues](https://www.rabbitmq.com/priority.html)
+     */
+    priority?: number;
+    /**
+     * Used for RPC system to match messages to their replies
+     */
+    correlationId?: string;
+    /**
+     * Queue name to reply to for RPC
+     */
+    replyTo?: string;
+    /**
+     * If supplied, the message will be discarded from a queue once it's been there longer than the given number of milliseconds
+     */
+    expiration?: number;
+    /**
+     * Arbitrary application-specific identifier for the message
+     */
+    messageId?: string;
+    /**
+     * A timestamp for the message. Rounded to the nearest second when provided
+     */
+    timestamp?: Date;
+    /**
+     * An arbitrary application-specific type for the message
+     */
+    type?: string;
+    /**
+     * If supplied, RabbitMQ will compare it to the username supplied when opening the connection, and reject messages for which it does not match
+     */
+    userId?: string;
+    /**
+     * An arbitrary identifier for the originating application
+     */
+    appId?: string;
+
+    /**
+     * consumerTag of the consumer the message originates from
+     */
+    consumerTag?: string;
+    /**
+     * deliveryTag of the message (used to identify the message between consumer and broker)
+     */
+    deliveryTag: number;
+    /**
+     * True if the message has been sent to a consumer at least once
+     */
+    redelivered: boolean;
+    /**
+     * Name of the exchange the message originates from
+     */
+    exchange?: string;
+    /**
+     * Routingkey. If routingkey was not set then this equals to the name of the queue
+     */
+    routingKey?: string;
+    /**
+     * Name of the queue this message was consumed from
+     */
+    queue: string;
+    /**
+     * Amount of attempts the broker has done to deliver the message
+     */
+    deliveryCount?: number;
+    /**
+     * Stream offset of the message. Only available for streams
+     */
+    streamOffset?: number;
+}
+
+export interface Methods {
+    /**
+     * Mark the message as done, removes it from the queue
+     */
+    ack(): Promise<void>;
+    /**
+     * Nack the message. If requeue is false (defaults to true)
+     * then the message will be discarded. Otherwise it will be returned to
+     * the front of the queue
+     */
+    nack(requeue?: boolean): Promise<void>;
+}

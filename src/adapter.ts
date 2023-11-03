@@ -8,9 +8,9 @@ import {
     AMQPTlsOptions
 } from '@cloudamqp/amqp-client';
 import { ExchangeArguments } from './exchange';
-import { HaredoMessage, makeHaredoMessage } from './haredo-message';
+import { makeHaredoMessage } from './haredo-message';
 import { QueueArguments } from './queue';
-import { RabbitUrl, StreamOffset } from './types';
+import { HaredoMessage, RabbitUrl, StreamOffset } from './types';
 import { normalizeUrl } from './utils/normalize-url';
 import { createTracker } from './utils/tracker';
 
