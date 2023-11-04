@@ -1,5 +1,5 @@
 import { AMQPClient, AMQPProperties, AMQPQueue, ExchangeParams, QueueParams } from '@cloudamqp/amqp-client';
-import { Consumer, SubscribeArguments, createAdapter } from './adapter';
+import { BindingArguments, Consumer, SubscribeArguments, createAdapter } from './adapter';
 import { MissingQueueNameError } from './errors';
 import { ExchangeArguments, ExchangeInterface, ExchangeType, InternalExchange } from './exchange';
 import { HaredoMessage } from './types';
@@ -81,7 +81,12 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Exten
                     );
                 }
                 for (const pattern of binding.patterns) {
-                    await state.adapter.bindExchange(state.exchange.name, binding.exchange.name, pattern);
+                    await state.adapter.bindExchange(
+                        state.exchange.name,
+                        binding.exchange.name,
+                        pattern,
+                        binding.bindingArguments
+                    );
                 }
             })
         );
@@ -132,10 +137,17 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Exten
         expiration: (ms: number) => {
             return setArgument('expiration', `${ ms }`);
         },
-        bindExchange: (exchange: string | ExchangeInterface, patterns: string | string[], type?: ExchangeType) => {
+        bindExchange: (
+            exchange: string | ExchangeInterface,
+            patterns: string | string[],
+            type?: ExchangeType | BindingArguments,
+            bindingArguments?: BindingArguments
+        ) => {
+            bindingArguments = typeof type === 'object' ? type : bindingArguments;
             const binding = {
-                exchange: typeof exchange === 'string' ? InternalExchange(exchange, type!) : exchange,
-                patterns: castArray(patterns)
+                exchange: typeof exchange === 'string' ? InternalExchange(exchange, type as ExchangeType) : exchange,
+                patterns: castArray(patterns),
+                bindingArguments
             };
             return exchangeChain(
                 {
@@ -159,6 +171,20 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Exten
                     ...(state.headers ? { headers: state.headers } : {})
                 }
             );
+        },
+        delete: async (options) => {
+            await state.adapter.deleteExchange(state.exchange.name, options);
+        },
+        unbindExchange: async (
+            exchange: string | ExchangeInterface,
+            patterns: string | string[],
+            bindingArguments?: BindingArguments
+        ) => {
+            const exchangeName = typeof exchange === 'string' ? exchange : exchange.name;
+            const patternsArray = castArray(patterns);
+            for (const pattern of patternsArray) {
+                await state.adapter.unbindExchange(state.exchange.name, exchangeName, pattern, bindingArguments);
+            }
         },
         ...Object.fromEntries(
             extensions
@@ -194,7 +220,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
                     );
                 }
                 for (const pattern of binding.patterns) {
-                    await state.adapter.bindQueue(queueName!, binding.exchange.name, pattern);
+                    await state.adapter.bindQueue(queueName!, binding.exchange.name, pattern, binding.bindingArguments);
                 }
             })
         );
@@ -296,10 +322,17 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
                 }
             );
         },
-        bindExchange: (exchange: string | ExchangeInterface, patterns: string | string[], type?: ExchangeType) => {
+        bindExchange: (
+            exchange: string | ExchangeInterface,
+            patterns: string | string[],
+            type?: ExchangeType | BindingArguments,
+            bindingArguments?: BindingArguments
+        ) => {
+            bindingArguments = typeof type === 'object' ? type : bindingArguments;
             const binding = {
-                exchange: typeof exchange === 'string' ? InternalExchange(exchange, type!) : exchange,
-                patterns: castArray(patterns)
+                exchange: typeof exchange === 'string' ? InternalExchange(exchange, type as ExchangeType) : exchange,
+                patterns: castArray(patterns),
+                bindingArguments
             };
             return queueChain(
                 {
@@ -366,6 +399,32 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
         },
         streamOffset: (offset) => {
             return setSubscribeArgument('x-stream-offset', offset);
+        },
+        delete: async (options) => {
+            if (!state.queue.name) {
+                throw new MissingQueueNameError();
+            }
+            await state.adapter.deleteQueue(state.queue.name, options);
+        },
+        purge: async () => {
+            if (!state.queue.name) {
+                throw new MissingQueueNameError();
+            }
+            await state.adapter.purgeQueue(state.queue.name);
+        },
+        unbindExchange: async (
+            exchange: string | ExchangeInterface,
+            patterns: string | string[],
+            bindingArguments?: BindingArguments
+        ) => {
+            if (!state.queue.name) {
+                throw new MissingQueueNameError();
+            }
+            const exchangeName = typeof exchange === 'string' ? exchange : exchange.name;
+            const patternsArray = castArray(patterns);
+            for (const pattern of patternsArray) {
+                await state.adapter.unbindQueue(state.queue.name, exchangeName, pattern, bindingArguments);
+            }
         },
         ...Object.fromEntries(
             extensions

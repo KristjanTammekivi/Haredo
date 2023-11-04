@@ -21,14 +21,19 @@ describe('adapter', () => {
         mockChannel = stub({
             publish: () => Promise.resolve(),
             queue: () => Promise.resolve(),
+            queueDelete: () => Promise.resolve(),
             exchangeDeclare: () => Promise.resolve(),
+            exchangeDelete: () => Promise.resolve(),
             queueBind: () => Promise.resolve(),
+            queueUnbind: () => Promise.resolve(),
             basicConsume: () => Promise.resolve(),
             close: () => Promise.resolve(),
             basicPublish: () => Promise.resolve(),
             prefetch: () => Promise.resolve(),
             confirmSelect: () => Promise.resolve(),
-            exchangeBind: () => Promise.resolve()
+            exchangeBind: () => Promise.resolve(),
+            exchangeUnbind: () => Promise.resolve(),
+            queuePurge: () => Promise.resolve()
         }) as any;
         mockClient = stub({
             connect: () => Promise.resolve(),
@@ -404,6 +409,132 @@ describe('adapter', () => {
             expect(mockChannel.exchangeBind)
                 .to.have.been.calledOnce()
                 .and.to.have.been.calledWith('testExchange', 'testExchange2', '#');
+        });
+    });
+    describe('deleteQueue', () => {
+        it('should throw if called before connect', async () => {
+            await expect(adapter.deleteQueue('test')).to.reject(/No client/);
+        });
+        it('should delete queue', async () => {
+            await adapter.connect();
+            await adapter.deleteQueue('test');
+            expect(mockChannel.queueDelete).to.have.been.calledOnce();
+            expect(mockChannel.queueDelete).to.have.been.calledWith('test');
+        });
+        it('should close channel after deleting queue', async () => {
+            await adapter.connect();
+            await adapter.deleteQueue('test');
+            expect(mockChannel.close).to.have.been.calledOnce();
+        });
+        it('should forward ifUnused', async () => {
+            await adapter.connect();
+            await adapter.deleteQueue('test', { ifUnused: true });
+            expect(mockChannel.queueDelete).to.have.been.calledOnce();
+            expect(mockChannel.queueDelete).to.have.been.calledWith('test', { ifUnused: true, ifEmpty: false });
+        });
+        it('should foward ifEmpty', async () => {
+            await adapter.connect();
+            await adapter.deleteQueue('test', { ifEmpty: true });
+            expect(mockChannel.queueDelete).to.have.been.calledOnce();
+            expect(mockChannel.queueDelete).to.have.been.calledWith('test', { ifUnused: false, ifEmpty: true });
+        });
+    });
+    describe('deleteExchange', () => {
+        it('should throw if called before connect', async () => {
+            await expect(adapter.deleteExchange('test')).to.reject(/No client/);
+        });
+        it('should delete exchange', async () => {
+            await adapter.connect();
+            await adapter.deleteExchange('test');
+            expect(mockChannel.exchangeDelete).to.have.been.calledOnce();
+            expect(mockChannel.exchangeDelete).to.have.been.calledWith('test');
+        });
+        it('should close channel after deleting exchange', async () => {
+            await adapter.connect();
+            await adapter.deleteExchange('test');
+            expect(mockChannel.close).to.have.been.calledOnce();
+        });
+        it('should forward ifUnused', async () => {
+            await adapter.connect();
+            await adapter.deleteExchange('test', { ifUnused: true });
+            expect(mockChannel.exchangeDelete).to.have.been.calledOnce();
+            expect(mockChannel.exchangeDelete).to.have.been.calledWith('test', { ifUnused: true });
+        });
+    });
+    describe('unbindQueue', () => {
+        it('should throw if called before connect', async () => {
+            await expect(adapter.unbindQueue('testQueue', 'testExchange')).to.reject(/No client/);
+        });
+        it('should unbind queue', async () => {
+            await adapter.connect();
+            await adapter.unbindQueue('testQueue', 'testExchange');
+            expect(mockChannel.queueUnbind).to.have.been.calledOnce();
+            expect(mockChannel.queueUnbind).to.have.been.calledWith('testQueue', 'testExchange', '#');
+        });
+        it('should close channel after unbinding queue', async () => {
+            await adapter.connect();
+            await adapter.unbindQueue('testQueue', 'testExchange');
+            expect(mockChannel.close).to.have.been.calledOnce();
+        });
+        it('should default the routing key to #', async () => {
+            await adapter.connect();
+            await adapter.unbindQueue('testQueue', 'testExchange');
+            expect(mockChannel.queueUnbind)
+                .to.have.been.calledOnce()
+                .and.to.have.been.calledWith('testQueue', 'testExchange', '#');
+        });
+        it('should forward arguments', async () => {
+            await adapter.connect();
+            await adapter.unbindQueue('testQueue', 'testExchange', '#', { 'x-match': 'all' });
+            expect(mockChannel.queueUnbind)
+                .to.have.been.calledOnce()
+                .and.to.have.been.calledWith('testQueue', 'testExchange', '#', { 'x-match': 'all' });
+        });
+    });
+    describe('unbindExchange', () => {
+        it('should throw if called before connect', async () => {
+            await expect(adapter.unbindExchange('testExchange', 'testExchange2')).to.reject(/No client/);
+        });
+        it('should unbind exchange', async () => {
+            await adapter.connect();
+            await adapter.unbindExchange('testExchange', 'testExchange2');
+            expect(mockChannel.exchangeUnbind).to.have.been.calledOnce();
+            expect(mockChannel.exchangeUnbind).to.have.been.calledWith('testExchange', 'testExchange2', '#');
+        });
+        it('should close channel after unbinding exchange', async () => {
+            await adapter.connect();
+            await adapter.unbindExchange('testExchange', 'testExchange2');
+            expect(mockChannel.close).to.have.been.calledOnce();
+        });
+        it('should default the routing key to #', async () => {
+            await adapter.connect();
+            await adapter.unbindExchange('testExchange', 'testExchange2');
+            expect(mockChannel.exchangeUnbind)
+                .to.have.been.calledOnce()
+                .and.to.have.been.calledWith('testExchange', 'testExchange2', '#');
+        });
+        it('should forward arguments', async () => {
+            await adapter.connect();
+            await adapter.unbindExchange('testExchange', 'testExchange2', '#', { 'x-match': 'all' });
+            expect(mockChannel.exchangeUnbind)
+                .to.have.been.calledOnce()
+                .and.to.have.been.calledWith('testExchange', 'testExchange2', '#', { 'x-match': 'all' });
+        });
+    });
+    describe('purgeQueue', () => {
+        it('should throw if called before connect', async () => {
+            await expect(adapter.purgeQueue('test')).to.reject(/No client/);
+        });
+        it('should purge queue', async () => {
+            await adapter.connect();
+            await adapter.purgeQueue('test');
+            expect(mockChannel.queuePurge).to.have.been.calledOnce();
+            expect(mockChannel.queuePurge).to.have.been.calledWith('test');
+        });
+        it('should close channel after purging queue', async () => {
+            await adapter.connect();
+            await adapter.purgeQueue('test');
+            expect(mockChannel.close).to.have.been.calledOnce();
         });
     });
 });

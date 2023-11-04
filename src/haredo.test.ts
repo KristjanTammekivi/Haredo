@@ -32,15 +32,20 @@ describe('haredo', () => {
     let consumerStub: Consumer;
     beforeEach(async () => {
         adapter = stub({
-            connect: () => Promise.resolve(),
+            bindExchange: () => Promise.resolve(),
             bindQueue: () => Promise.resolve(),
+            close: () => Promise.resolve(),
+            connect: () => Promise.resolve(),
+            createExchange: () => Promise.resolve(),
+            createQueue: () => Promise.resolve(),
+            deleteExchange: () => Promise.resolve(),
+            deleteQueue: () => Promise.resolve(),
+            publish: () => Promise.resolve(),
+            purgeQueue: () => Promise.resolve(),
             sendToQueue: () => Promise.resolve(),
             subscribe: () => Promise.resolve(),
-            close: () => Promise.resolve(),
-            createQueue: () => Promise.resolve(),
-            createExchange: () => Promise.resolve(),
-            bindExchange: () => Promise.resolve(),
-            publish: () => Promise.resolve()
+            unbindExchange: () => Promise.resolve(),
+            unbindQueue: () => Promise.resolve()
         } as any);
         haredo = Haredo({ url: rabbitURL + '/test', adapter });
         adapter.createQueue.resolves('test');
@@ -749,6 +754,111 @@ describe('haredo', () => {
                 confirm: false,
                 contentType: 'application/json',
                 expiration: '1000'
+            });
+        });
+    });
+    describe('bindExchange', () => {
+        it('should forward binding arguments to adapter when binding to a queue', async () => {
+            await haredo.queue('test').bindExchange('testexchange', 'rk', 'topic', { 'x-match': 'any' }).setup();
+            expect(adapter.bindQueue).to.have.been.calledOnce();
+            expect(adapter.bindQueue).to.have.been.calledWith('test', 'testexchange', 'rk', { 'x-match': 'any' });
+        });
+        it('should forward binding arguments to adapter when binding to an exchange', async () => {
+            await haredo
+                .exchange('testexchange', 'topic')
+                .bindExchange('testexchange2', 'rk', 'topic', { 'x-match': 'any' })
+                .setup();
+            expect(adapter.bindExchange).to.have.been.calledOnce();
+            expect(adapter.bindExchange).to.have.been.calledWith('testexchange', 'testexchange2', 'rk', {
+                'x-match': 'any'
+            });
+        });
+        it('should forward binding arguments to adapter when binding an exchange to an exchange object', async () => {
+            const exchange = Exchange('testexchange2', 'topic');
+            await haredo.exchange('testexchange', 'topic').bindExchange(exchange, 'rk', { 'x-match': 'any' }).setup();
+            expect(adapter.bindExchange).to.have.been.calledOnce();
+            expect(adapter.bindExchange).to.have.been.calledWith('testexchange', 'testexchange2', 'rk', {
+                'x-match': 'any'
+            });
+        });
+        it('should forward binding arguments to adapter when binding a queue to an exchange object', async () => {
+            const exchange = Exchange('testexchange2', 'topic');
+            await haredo.queue('test').bindExchange(exchange, 'rk', { 'x-match': 'any' }).setup();
+            expect(adapter.bindQueue).to.have.been.calledOnce();
+            expect(adapter.bindQueue).to.have.been.calledWith('test', 'testexchange2', 'rk', {
+                'x-match': 'any'
+            });
+        });
+    });
+    describe('delete', () => {
+        it('should delete queue', async () => {
+            await haredo.queue('test').delete();
+            expect(adapter.deleteQueue).to.have.been.calledOnce();
+            expect(adapter.deleteQueue).to.have.been.calledWith('test');
+        });
+        it('should throw on anonymous queues', async () => {
+            await expect(haredo.queue(Queue()).delete()).to.reject(MissingQueueNameError);
+        });
+        it('should forward delete arguments to adapter', async () => {
+            await haredo.queue('test').delete({ ifEmpty: true, ifUnused: true });
+            expect(adapter.deleteQueue).to.have.been.calledOnce();
+            expect(adapter.deleteQueue).to.have.been.calledWith('test', { ifEmpty: true, ifUnused: true });
+        });
+        it('should delete exchange', async () => {
+            await haredo.exchange('test', 'topic').delete();
+            expect(adapter.deleteExchange).to.have.been.calledOnce();
+            expect(adapter.deleteExchange).to.have.been.calledWith('test');
+        });
+        it('should forward delete arguments to adapter on delete exchange', async () => {
+            await haredo.exchange('test', 'topic').delete({ ifUnused: true });
+            expect(adapter.deleteExchange).to.have.been.calledOnce();
+            expect(adapter.deleteExchange).to.have.been.calledWith('test', { ifUnused: true });
+        });
+    });
+    describe('purge', () => {
+        it('should purge queue', async () => {
+            await haredo.queue('test').purge();
+            expect(adapter.purgeQueue).to.have.been.calledOnce();
+            expect(adapter.purgeQueue).to.have.been.calledWith('test');
+        });
+        it('should throw on anonymous queues', async () => {
+            await expect(haredo.queue(Queue()).purge()).to.reject(MissingQueueNameError);
+        });
+    });
+    describe('unbindExchange', () => {
+        it('should unbind a queue', async () => {
+            await haredo.queue('test').unbindExchange('testexchange', '', { 'x-match': 'any' });
+            expect(adapter.unbindQueue).to.have.been.calledOnce();
+            expect(adapter.unbindQueue).to.have.been.calledWith('test', 'testexchange', '', {
+                'x-match': 'any'
+            });
+        });
+        it('should throw error on anonymous queues', async () => {
+            await expect(haredo.queue(Queue()).unbindExchange('testexchange', '', { 'x-match': 'any' })).to.reject(
+                MissingQueueNameError
+            );
+        });
+        it('should unbind an exchange', async () => {
+            await haredo.exchange('testexchange', 'topic').unbindExchange('testexchange2', '', { 'x-match': 'any' });
+            expect(adapter.unbindExchange).to.have.been.calledOnce();
+            expect(adapter.unbindExchange).to.have.been.calledWith('testexchange', 'testexchange2', '', {
+                'x-match': 'any'
+            });
+        });
+        it('should unbind a queue from an exchange object', async () => {
+            const exchange = Exchange('testexchange', 'topic');
+            await haredo.queue('test').unbindExchange(exchange, '', { 'x-match': 'any' });
+            expect(adapter.unbindQueue).to.have.been.calledOnce();
+            expect(adapter.unbindQueue).to.have.been.calledWith('test', 'testexchange', '', {
+                'x-match': 'any'
+            });
+        });
+        it('should unbind an exchange from an exchange object', async () => {
+            const exchange = Exchange('testexchange', 'topic');
+            await haredo.exchange('testexchange2', 'topic').unbindExchange(exchange, '', { 'x-match': 'any' });
+            expect(adapter.unbindExchange).to.have.been.calledOnce();
+            expect(adapter.unbindExchange).to.have.been.calledWith('testexchange2', 'testexchange', '', {
+                'x-match': 'any'
             });
         });
     });

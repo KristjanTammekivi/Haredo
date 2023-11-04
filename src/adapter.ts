@@ -58,14 +58,37 @@ interface KnownBindingArguments {
 export type BindingArguments = Omit<Record<string, string | number>, keyof KnownBindingArguments> &
     KnownBindingArguments;
 
+export interface QueueDeleteOptions {
+    /**
+     * Only delete if the queue doesn't have any consumers
+     */
+    ifUnused?: boolean;
+    /**
+     * Only delete if the queue is empty
+     */
+    ifEmpty?: boolean;
+}
+
+export interface ExchangeDeleteOptions {
+    /**
+     * Only delete if the exchange doesn't have any bindings
+     */
+    ifUnused?: boolean;
+}
+
 export interface Adapter {
     connect(): Promise<AMQPClient>;
     close(force?: boolean): Promise<void>;
     createQueue(name: string | undefined, options?: QueueParams, args?: QueueArguments): Promise<string>;
+    deleteQueue(name: string, options?: QueueDeleteOptions): Promise<void>;
     createExchange(name: string, type: string, options?: ExchangeParams, args?: ExchangeArguments): Promise<void>;
+    deleteExchange(name: string, options?: ExchangeDeleteOptions): Promise<void>;
     bindQueue(queueName: string, exchangeName: string, routingKey?: string, args?: BindingArguments): Promise<void>;
+    unbindQueue(queueName: string, exchangeName: string, routingKey?: string, args?: BindingArguments): Promise<void>;
     bindExchange(destination: string, source: string, routingKey?: string, args?: BindingArguments): Promise<void>;
+    unbindExchange(destination: string, source: string, routingKey?: string, args?: BindingArguments): Promise<void>;
     sendToQueue(name: string, message: string, options: PublishOptions): Promise<void>;
+    purgeQueue(name: string): Promise<void>;
     publish(exchange: string, routingKey: string, message: string, options: PublishOptions): Promise<void>;
     subscribe(
         name: string,
@@ -142,6 +165,17 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                 await channel.close();
             }
         },
+        deleteQueue: async (name, { ifUnused = false, ifEmpty = false } = {}) => {
+            if (!client) {
+                throw new Error('No client');
+            }
+            const channel = await client.channel();
+            try {
+                await channel.queueDelete(name, { ifUnused, ifEmpty });
+            } finally {
+                await channel.close();
+            }
+        },
         createExchange: async (name, type, options, args) => {
             if (!client) {
                 throw new Error('No client');
@@ -149,6 +183,17 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
             const channel = await client.channel();
             try {
                 await channel.exchangeDeclare(name, type, options, args);
+            } finally {
+                await channel.close();
+            }
+        },
+        deleteExchange: async (name, { ifUnused = false } = {}) => {
+            if (!client) {
+                throw new Error('No client');
+            }
+            const channel = await client.channel();
+            try {
+                await channel.exchangeDelete(name, { ifUnused });
             } finally {
                 await channel.close();
             }
@@ -164,6 +209,17 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                 await channel.close();
             }
         },
+        unbindQueue: async (queueName, exchangeName, routingKey, args) => {
+            if (!client) {
+                throw new Error('No client');
+            }
+            const channel = await client.channel();
+            try {
+                await channel.queueUnbind(queueName, exchangeName, routingKey || '#', args);
+            } finally {
+                await channel.close();
+            }
+        },
         bindExchange: async (destination, source, routingKey, args) => {
             if (!client) {
                 throw new Error('No client');
@@ -171,6 +227,17 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
             const channel = await client.channel();
             try {
                 await channel.exchangeBind(destination, source, routingKey || '#', args);
+            } finally {
+                await channel.close();
+            }
+        },
+        unbindExchange: async (destination, source, routingKey, args) => {
+            if (!client) {
+                throw new Error('No client');
+            }
+            const channel = await client.channel();
+            try {
+                await channel.exchangeUnbind(destination, source, routingKey || '#', args);
             } finally {
                 await channel.close();
             }
@@ -194,6 +261,17 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
             }
             const q = new Queue(channel, name);
             await q.publish(message, options);
+        },
+        purgeQueue: async (name) => {
+            if (!client) {
+                throw new Error('No client');
+            }
+            const channel = await client.channel();
+            try {
+                await channel.queuePurge(name);
+            } finally {
+                await channel.close();
+            }
         },
         publish: async (exchange, routingKey, message, { confirm, immediate, mandatory, ...options }) => {
             if (!client) {

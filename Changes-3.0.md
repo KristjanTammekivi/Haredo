@@ -47,7 +47,7 @@ Before it was allowed to do the following
 
 ```ts
 haredo.queue('test')
-    .bindExchange('testExchange', 'topci', '#')
+    .bindExchange('testExchange', '#', 'topic')
     .publish('Message');
 ```
 
@@ -62,4 +62,39 @@ Methods from preparedMessage were moved directly to the chain
 haredo.exchange('someExchange', 'topic')
     .delay(60 * 1000)
     .publish(data)
+```
+
+# Improved skipSetup
+
+In v2 skipSetup was basically just a boolean
+```ts
+haredo.queue('test')
+    .bindExchange('testExchange', '#', 'topic')
+    .skipSetup(true)
+```
+
+In v3 instead of a boolean you can pass in an object for finer control of what is skipped
+
+```ts
+haredo.queue('test')
+    .bindExchange('testExchange', '#', 'topic')
+    .skipSetup({
+        skipCreate: false,
+        skipBoundExchanges: true,
+        skipBindings: false,
+    })
+```
+
+In this example the exchange itself won't be created, but queue and bindings will be.
+
+# Delete, Unbind and Purge
+
+These are new methods
+
+```ts
+await haredo.queue('testqueue').delete();
+await haredo.exchange('testexchange').delete();
+await haredo.queue('testqueue').unbindExchange('testexchange', '#');
+await haredo.exchange('testexchange').unbindExchange('secondexchange', '#');
+await haredo.queue('testqueue').purge();
 ```

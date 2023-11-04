@@ -6,7 +6,14 @@ import {
     AMQPMessage,
     Field
 } from '@cloudamqp/amqp-client';
-import { Adapter, PublishOptions, SubscribeArguments } from './adapter';
+import {
+    Adapter,
+    BindingArguments,
+    ExchangeDeleteOptions,
+    PublishOptions,
+    QueueDeleteOptions,
+    SubscribeArguments
+} from './adapter';
 import { ExchangeArguments, ExchangeInterface, ExchangeType } from './exchange';
 import { QueueArguments, QueueInterface } from './queue';
 import { Middleware } from './utils/apply-middleware';
@@ -101,6 +108,12 @@ export interface SharedChain {
      * @param [autoSerialize=true]
      */
     json(autoSerialize?: boolean): this;
+    unbindExchange(name: string, routingKey: string | string[], bindingArguments?: BindingArguments): Promise<void>;
+    unbindExchange(
+        name: ExchangeInterface,
+        routingKey: string | string[],
+        bindingArguments?: BindingArguments
+    ): Promise<void>;
 }
 export interface ExchangeChain<T = unknown> extends SharedChain {
     /**
@@ -128,16 +141,26 @@ export interface ExchangeChain<T = unknown> extends SharedChain {
     expiration(milliseconds: number): this;
     publish(message: T, routingKey: string): Promise<void>;
     delay(milliseconds: number): ExchangeChain<T>;
-    bindExchange(sourceExchange: string, routingKey: string | string[], type: ExchangeType): ExchangeChain<T>;
-    bindExchange(sourceExchange: ExchangeInterface, routingKey: string | string[]): ExchangeChain<T>;
+    bindExchange(
+        sourceExchange: string,
+        routingKey: string | string[],
+        type: ExchangeType,
+        bindingArguments?: BindingArguments
+    ): ExchangeChain<T>;
+    bindExchange(
+        sourceExchange: ExchangeInterface,
+        routingKey: string | string[],
+        bindingArguments?: BindingArguments
+    ): ExchangeChain<T>;
     setArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): ExchangeChain<T>;
+    delete(options?: ExchangeDeleteOptions): Promise<void>;
 }
 
 export type SubscribeCallback<T> = (data: T, message: HaredoMessage<T>) => any;
 
 export interface QueueChain<T = unknown> extends SharedChain, QueueSubscribeChain<T>, QueuePublishChain<T> {}
 
-export interface QueuePublishChain<T> {
+export interface QueuePublishChain<T> extends SharedChain {
     /**
      * Set the publish to use confirm mode. This will make the publish method
      * return a promise that will resolve when the message has been confirmed
@@ -163,6 +186,14 @@ export interface QueuePublishChain<T> {
     expiration(milliseconds: number): QueuePublishChain<T>;
     publish(message: T): Promise<void>;
     setPublishArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): QueuePublishChain<T>;
+    /**
+     * Delete the queue
+     */
+    delete(options?: QueueDeleteOptions): Promise<void>;
+    /**
+     * Purge the queue. This will remove all messages from the queue.
+     */
+    purge(): Promise<void>;
 }
 
 export interface HaredoConsumer {
@@ -179,7 +210,7 @@ export type Retention = `${ number }${ RetentionUnit }`;
 
 export type StreamOffset = 'first' | 'last' | 'next' | number | Retention | Date;
 
-export interface QueueSubscribeChain<T> {
+export interface QueueSubscribeChain<T> extends SharedChain {
     /**
      * Subscribe to the queue. When .skipSetup has not been called this will
      * also set up the queue and any bound exchanges that may be present.
@@ -221,7 +252,12 @@ export interface QueueSubscribeChain<T> {
      * (if skipSetup is called it will not be set up and bindings won't be made,
      * calling bindExchange and skipSetup together does not make sense)
      */
-    bindExchange(name: string, routingKey: string | string[], type: ExchangeType): QueueSubscribeChain<T>;
+    bindExchange(
+        name: string,
+        routingKey: string | string[],
+        type: ExchangeType,
+        bindingArguments?: BindingArguments
+    ): QueueSubscribeChain<T>;
     /**
      * Bind an exchange to the queue. This will also setup the exchange
      * (if skipSetup is called it will not be set up and bindings won't be made,
@@ -229,11 +265,9 @@ export interface QueueSubscribeChain<T> {
      */
     bindExchange<TEXCHANGE = unknown>(
         exchange: ExchangeInterface<TEXCHANGE>,
-        routingKey: string | string[]
+        routingKey: string | string[],
+        bindingArguments?: BindingArguments
     ): QueueSubscribeChain<Merge<T, TEXCHANGE>>;
-    // TODO: max-age style interval
-    // TODO: offset
-    // TODO: timestamp
     /**
      * Set the offset to start reading from. This will only work with streams
      * The possible values are:
@@ -255,7 +289,7 @@ export interface ChainState {
     skipSetup?: SkipSetupOptions;
     confirm?: boolean;
     json?: boolean;
-    bindings?: { exchange: ExchangeInterface; patterns: string[] }[];
+    bindings?: { exchange: ExchangeInterface; patterns: string[]; bindingArguments?: BindingArguments | undefined }[];
     headers?: Record<string, Field>;
     publishOptions?: PublishOptions;
     appId?: string;
