@@ -17,6 +17,7 @@ import type {
 import { applyMiddleware } from './utils/apply-middleware';
 import { castArray } from './utils/cast-array';
 import { mergeState } from './utils/merge-state';
+import { Logger, createLogger } from './utils/logger';
 
 export const Haredo = ({
     url,
@@ -24,14 +25,17 @@ export const Haredo = ({
     appId,
     extensions = [],
     globalMiddleware = [],
-    adapter = createAdapter(AMQPClient, AMQPQueue, { url, tlsOptions })
+    log = () => {},
+    adapter
 }: HaredoOptions): HaredoInstance => {
+    const logger = createLogger(log).component('haredo');
+    adapter = adapter ?? createAdapter(AMQPClient, AMQPQueue, { url, tlsOptions }, logger.component('adapter'));
     return {
         connect: async () => {
-            await adapter.connect();
+            await adapter!.connect();
         },
         close: async (force) => {
-            await adapter.close(force);
+            await adapter!.close(force);
         },
         exchange: <T = unknown>(
             exchange: string | ExchangeInterface<T>,
@@ -42,7 +46,7 @@ export const Haredo = ({
             if (typeof exchange === 'string') {
                 exchange = InternalExchange(exchange, type!, params, args);
             }
-            return exchangeChain<T>({ adapter, exchange, appId }, extensions);
+            return exchangeChain<T>({ adapter: adapter!, exchange, appId }, logger, extensions);
         },
         queue: <T = unknown>(
             queue: string | QueueInterface<T>,
@@ -52,12 +56,20 @@ export const Haredo = ({
             if (typeof queue === 'string') {
                 queue = Queue(queue, queueParams, queueArguments);
             }
-            return queueChain<T>({ adapter, queue, middleware: [...globalMiddleware], appId }, extensions);
+            return queueChain<T>(
+                { adapter: adapter!, queue, middleware: [...globalMiddleware], appId },
+                logger,
+                extensions
+            );
         }
     };
 };
 
-const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Extension[]): ExchangeChain<T> => {
+const exchangeChain = <T = unknown>(
+    state: ExchangeChainState,
+    logger: Logger,
+    extensions: Extension[]
+): ExchangeChain<T> => {
     const setup = async () => {
         if (!state.skipSetup?.skipCreate) {
             await state.adapter.createExchange(
@@ -94,23 +106,24 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Exten
     const setArgument = (key: keyof AMQPProperties, value: AMQPProperties[keyof AMQPProperties]) => {
         return exchangeChain(
             mergeState(state, { publishOptions: { ...state.publishOptions, [key]: value } }),
+            logger,
             extensions
         );
     };
     const setHeader = (key: string, value: any) => {
-        return exchangeChain(mergeState(state, { headers: { ...state.headers, [key]: value } }), extensions);
+        return exchangeChain(mergeState(state, { headers: { ...state.headers, [key]: value } }), logger, extensions);
     };
     return {
         setup,
         setArgument,
         delay: (milliseconds: number) => {
-            return exchangeChain(mergeState(state, { headers: { 'x-delay': milliseconds } }), extensions);
+            return exchangeChain(mergeState(state, { headers: { 'x-delay': milliseconds } }), logger, extensions);
         },
         json: (json) => {
-            return exchangeChain({ ...state, json }, extensions);
+            return exchangeChain({ ...state, json }, logger, extensions);
         },
         confirm: () => {
-            return exchangeChain({ ...state, confirm: true }, extensions);
+            return exchangeChain({ ...state, confirm: true }, logger, extensions);
         },
         type: (type) => {
             return setArgument('type', type);
@@ -128,7 +141,7 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Exten
                           skipBoundExchanges: skip.skipBoundExchanges ?? true,
                           skipCreate: skip.skipCreate ?? true
                       };
-            return exchangeChain({ ...state, skipSetup: skipSetupOptions }, extensions);
+            return exchangeChain({ ...state, skipSetup: skipSetupOptions }, logger, extensions);
         },
         priority: (priority: number) => {
             return setArgument('priority', priority);
@@ -154,6 +167,7 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Exten
                     ...state,
                     bindings: [...(state.bindings || []), binding]
                 },
+                logger,
                 extensions
             );
         },
@@ -193,17 +207,19 @@ const exchangeChain = <T = unknown>(state: ExchangeChainState, extensions: Exten
                     extension.name,
                     (...args: any[]) => {
                         const modifiedState = extension.exchange!(state)(...args);
-                        return exchangeChain(modifiedState, extensions);
+                        return exchangeChain(modifiedState, logger, extensions);
                     }
                 ])
         )
     };
 };
 
-const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extension[]): QueueChain<T> => {
+const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, extensions: Extension[]): QueueChain<T> => {
     const setup = async () => {
+        const setupLogger = logger.component('setup');
         let queueName = state.queue.name;
         if (!state.skipSetup?.skipCreate) {
+            setupLogger.debug('Asserting queue', state.queue.name);
             queueName = await state.adapter.createQueue(state.queue.name, state.queue.params, state.queue.args);
         }
         if (!state.bindings) {
@@ -212,6 +228,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
         await Promise.all(
             state.bindings.map(async (binding) => {
                 if (!state.skipSetup?.skipBoundExchanges) {
+                    setupLogger.debug('Asserting exchange', binding.exchange.name);
                     await state.adapter.createExchange(
                         binding.exchange.name,
                         binding.exchange.type,
@@ -220,13 +237,18 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
                     );
                 }
                 for (const pattern of binding.patterns) {
+                    setupLogger.debug('Binding queue', queueName, 'to exchange', binding.exchange.name);
                     await state.adapter.bindQueue(queueName!, binding.exchange.name, pattern, binding.bindingArguments);
                 }
             })
         );
     };
     const setPublishOption = (key: keyof AMQPProperties, value: AMQPProperties[keyof AMQPProperties]) => {
-        return queueChain(mergeState(state, { publishOptions: { ...state.publishOptions, [key]: value } }), extensions);
+        return queueChain(
+            mergeState(state, { publishOptions: { ...state.publishOptions, [key]: value } }),
+            logger,
+            extensions
+        );
     };
     const setSubscribeArgument = (
         key: keyof SubscribeArguments,
@@ -234,23 +256,24 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
     ) => {
         return queueChain(
             mergeState(state, { subscribeArguments: { ...state.subscribeArguments, [key]: value } }),
+            logger,
             extensions
         );
     };
     const setHeader = (key: string, value: any) => {
-        return queueChain(mergeState(state, { headers: { ...state.headers, [key]: value } }), extensions);
+        return queueChain(mergeState(state, { headers: { ...state.headers, [key]: value } }), logger, extensions);
     };
     return {
         setup,
         setPublishArgument: setPublishOption,
         backoff: (backoff) => {
-            return queueChain(mergeState(state, { backoff }), extensions);
+            return queueChain(mergeState(state, { backoff }), logger, extensions);
         },
         use: (...middleware) => {
-            return queueChain(mergeState(state, { middleware }), extensions);
+            return queueChain(mergeState(state, { middleware }), logger, extensions);
         },
         json: (json) => {
-            return queueChain({ ...state, json }, extensions);
+            return queueChain({ ...state, json }, logger, extensions);
         },
         confirm: () => {
             return queueChain(
@@ -258,6 +281,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
                     ...state,
                     confirm: true
                 },
+                logger,
                 extensions
             );
         },
@@ -275,6 +299,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
                     ...state,
                     skipSetup: skipSetupOptions
                 },
+                logger,
                 extensions
             );
         },
@@ -284,6 +309,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
                     ...state,
                     prefetch: count
                 },
+                logger,
                 extensions
             );
         },
@@ -293,6 +319,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
                     ...state,
                     prefetch: count
                 },
+                logger,
                 extensions
             );
         },
@@ -312,7 +339,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
             }
             return state.adapter.sendToQueue(
                 state.queue.name,
-                state.json === false ? (message as unknown as string) : JSON.stringify(message),
+                state.json === false ? (message as string) : JSON.stringify(message),
                 {
                     ...(state.appId ? { appId: state.appId } : {}),
                     ...(state.json === false ? {} : { contentType: 'application/json' }),
@@ -339,10 +366,12 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
                     ...state,
                     bindings: [...(state.bindings || []), binding]
                 },
+                logger,
                 extensions
             );
         },
         subscribe: async (callback) => {
+            const subscribeLogger = logger.component('subscribe');
             await setup();
             let isCancelled = false;
             let consumer: Consumer;
@@ -376,6 +405,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
                         try {
                             await applyMiddleware(state.middleware, callback, message);
                         } catch (error) {
+                            subscribeLogger.setError(error).setMessage(message).error('Error thrown in subscribe');
                             // TODO: log / emit error
                             await message.nack(false);
                             state.backoff?.fail?.(error);
@@ -404,12 +434,14 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
             if (!state.queue.name) {
                 throw new MissingQueueNameError();
             }
+            logger.info('Deleting queue', state.queue.name);
             await state.adapter.deleteQueue(state.queue.name, options);
         },
         purge: async () => {
             if (!state.queue.name) {
                 throw new MissingQueueNameError();
             }
+            logger.info('Purging queue', state.queue.name);
             await state.adapter.purgeQueue(state.queue.name);
         },
         unbindExchange: async (
@@ -433,7 +465,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, extensions: Extensio
                     extension.name,
                     (...args: any[]) => {
                         const modifiedState = extension.queue!(state)(...args);
-                        return queueChain(modifiedState, extensions);
+                        return queueChain(modifiedState, logger, extensions);
                     }
                 ])
         )

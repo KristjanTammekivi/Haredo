@@ -9,7 +9,7 @@ describe('haredo integration', () => {
     let haredo: HaredoInstance;
     beforeEach(async () => {
         await rabbitAdmin.createVhost('test');
-        haredo = Haredo({ url: 'amqp://localhost:5672/test' });
+        haredo = Haredo({ url: 'amqp://localhost:5672/test', log: () => {} });
         await haredo.connect();
     });
     afterEach(async () => {

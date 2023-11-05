@@ -19,6 +19,7 @@ import { QueueArguments, QueueInterface } from './queue';
 import { Middleware } from './utils/apply-middleware';
 import { FailureBackoff } from './backoffs';
 import { TypedEventEmitter } from './utils/typed-event-target';
+import { LogFunction, Logger } from './utils/logger';
 
 export interface HaredoInstance {
     /**
@@ -92,6 +93,7 @@ export interface HaredoOptions {
      * Add global middlewares to be run for all consumers
      */
     globalMiddleware?: Middleware[];
+    log?: LogFunction;
 }
 
 export interface RabbitUrl {

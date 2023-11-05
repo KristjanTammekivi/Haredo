@@ -5,6 +5,7 @@ import { Adapter, createAdapter } from './adapter';
 import { delay } from './utils/delay';
 import { isHaredoMessage } from './haredo-message';
 import { NotConnectedError } from './errors';
+import { Logger, createLogger } from './utils/logger';
 
 // eslint-disable-next-line mocha/no-exports
 export type Stubify<T> = {
@@ -18,7 +19,9 @@ describe('adapter', () => {
     let mockConsumer: Stubify<AMQPConsumer>;
     let mockQueue: Stubify<AMQPQueue>;
     let adapter: Adapter;
+    let logger: Logger;
     beforeEach(() => {
+        logger = createLogger(() => {});
         mockChannel = stub({
             publish: () => Promise.resolve(),
             queue: () => Promise.resolve(),
@@ -55,7 +58,7 @@ describe('adapter', () => {
         mockQueue = stub({
             publish: () => Promise<void>
         }) as any;
-        adapter = createAdapter(mockAmqp as any, stub().returns(mockQueue) as any, { url: 'url' });
+        adapter = createAdapter(mockAmqp as any, stub().returns(mockQueue) as any, { url: 'url' }, logger);
     });
     describe('connect', () => {
         it('should call connect on connection', async () => {
@@ -73,7 +76,7 @@ describe('adapter', () => {
         });
         it('should call connect again when connection disconnects', async () => {
             await adapter.connect();
-            mockClient.onerror(new AMQPError('Big sad', mockClient as any));
+            mockClient.onerror('big sad');
             expect(mockClient.connect).to.have.been.calledTwice();
         });
         it('should recall connect if it fails the first time', async () => {
@@ -87,20 +90,40 @@ describe('adapter', () => {
             expect(mockClient.connect).to.have.been.calledOnce();
         });
         it('should create an url when passed an object', async () => {
-            const objectAdapter = createAdapter(mockAmqp as any, stub().returns(mockQueue) as any, {
-                url: {
-                    hostname: 'localhost',
-                    password: 'guest',
-                    port: 5672,
-                    protocol: 'amqp',
-                    username: 'guest',
-                    vhost: '/'
-                }
-            });
+            const objectAdapter = createAdapter(
+                mockAmqp as any,
+                stub().returns(mockQueue) as any,
+                {
+                    url: {
+                        hostname: 'localhost',
+                        password: 'guest',
+                        port: 5672,
+                        protocol: 'amqp',
+                        username: 'guest',
+                        vhost: '/'
+                    }
+                },
+                logger
+            );
             await objectAdapter.connect();
             expect(mockAmqp)
                 .to.have.been.calledOnce()
                 .and.to.have.been.calledWith('amqp://guest:guest@localhost:5672/');
+        });
+        it('should forward TLS arguments', async () => {
+            const objectAdapter = createAdapter(
+                mockAmqp as any,
+                stub().returns(mockQueue) as any,
+                {
+                    url: 'url',
+                    tlsOptions: {
+                        passphrase: 'passphrase'
+                    }
+                },
+                logger
+            );
+            await objectAdapter.connect();
+            expect(mockAmqp).to.have.been.calledOnce().and.to.have.been.calledWith('url', { passphrase: 'passphrase' });
         });
     });
     describe('close', () => {
@@ -122,6 +145,12 @@ describe('adapter', () => {
         it('should close publisher channel', async () => {
             await adapter.connect();
             await adapter.sendToQueue('test', 'some message', {});
+            await adapter.close();
+            expect(mockChannel.close).to.have.been.calledOnce();
+        });
+        it('should close confirm channel', async () => {
+            await adapter.connect();
+            await adapter.sendToQueue('test', 'some message', { confirm: true });
             await adapter.close();
             expect(mockChannel.close).to.have.been.calledOnce();
         });
@@ -186,6 +215,18 @@ describe('adapter', () => {
             await adapter.close();
             await expect(adapter.sendToQueue('test', 'some message', {})).to.reject(NotConnectedError);
         });
+        it('should unset confirm channel after channel error', async () => {
+            await adapter.sendToQueue('test', 'some message', { confirm: true });
+            mockChannel.onerror('big sad');
+            await adapter.sendToQueue('test', 'some message', { confirm: true });
+            expect(mockClient.channel).to.have.been.calledTwice();
+        });
+        it('should unset publish channel after channel error', async () => {
+            await adapter.sendToQueue('test', 'some message', {});
+            mockChannel.onerror('big sad');
+            await adapter.sendToQueue('test', 'some message', {});
+            expect(mockClient.channel).to.have.been.calledTwice();
+        });
     });
     describe('publish', () => {
         beforeEach(async () => {
@@ -217,6 +258,18 @@ describe('adapter', () => {
         it('should throw if called before connect', async () => {
             await adapter.close();
             await expect(adapter.publish('test', '#', 'test', { confirm: true })).to.reject(NotConnectedError);
+        });
+        it('should unset confirm channel after channel error', async () => {
+            await adapter.publish('test', '#', 'test', { confirm: true });
+            mockChannel.onerror('big sad');
+            await adapter.publish('test', '#', 'test', { confirm: true });
+            expect(mockClient.channel).to.have.been.calledTwice();
+        });
+        it('should unset publish channel after channel error', async () => {
+            await adapter.publish('test', '#', 'test', {});
+            mockChannel.onerror('big sad');
+            await adapter.publish('test', '#', 'test', {});
+            expect(mockClient.channel).to.have.been.calledTwice();
         });
     });
     describe('setupQueue', () => {
@@ -378,6 +431,11 @@ describe('adapter', () => {
         it('should close channel when cancelling consumer', async () => {
             const consumer = await adapter.subscribe('test', { onClose: stub() }, () => {});
             await consumer.cancel();
+            expect(mockChannel.close).to.have.been.calledOnce();
+        });
+        it('should close channel if basicConsume throws', async () => {
+            mockChannel.basicConsume.throws(new Error('big sad'));
+            await expect(adapter.subscribe('test', { onClose: stub() }, () => {})).to.reject();
             expect(mockChannel.close).to.have.been.calledOnce();
         });
     });

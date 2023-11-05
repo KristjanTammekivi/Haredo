@@ -14,6 +14,7 @@ import { HaredoMessage, RabbitUrl, StreamOffset } from './types';
 import { normalizeUrl } from './utils/normalize-url';
 import { createTracker } from './utils/tracker';
 import { NotConnectedError } from './errors';
+import { Logger } from './utils/logger';
 
 // arguments passed to consumer
 export interface SubscribeArguments {
@@ -103,16 +104,28 @@ export interface AdapterOptions {
     tlsOptions?: AMQPTlsOptions;
 }
 
-export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue, { url }: AdapterOptions): Adapter => {
+export const createAdapter = (
+    Client: typeof AMQPClient,
+    Queue: typeof AMQPQueue,
+    { url, tlsOptions }: AdapterOptions,
+    logger: Logger
+): Adapter => {
     let client: AMQPClient | undefined;
     let clientPromise: Promise<any> | undefined;
     let consumers: { channel: AMQPChannel; consumer: Consumer }[] = [];
-    let publishChannel: AMQPChannel;
-    let confirmChannel: AMQPChannel;
+    let publishChannel: AMQPChannel | undefined;
+    let confirmChannel: AMQPChannel | undefined;
     const loopGetConnection = async () => {
         while (true) {
             try {
-                const c = new Client(normalizeUrl(url));
+                const c = new Client(normalizeUrl(url), tlsOptions);
+                const AMQPClientLogger = logger.component('AMQPClient');
+                c.logger = {
+                    debug: AMQPClientLogger.debug,
+                    info: AMQPClientLogger.info,
+                    warn: AMQPClientLogger.warning,
+                    error: AMQPClientLogger.error
+                };
                 await c.connect();
                 return c;
             } catch {}
@@ -126,6 +139,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
             await clientPromise;
             return client!;
         }
+        logger.info('Connecting');
         clientPromise = loopGetConnection();
         client = await clientPromise;
         clientPromise = undefined;
@@ -141,17 +155,25 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
             if (!client) {
                 return;
             }
+            logger.info('Closing');
             if (!force) {
+                logger.info(`Waiting for ${ consumers.length } consumers to close`);
                 await Promise.all(
                     consumers.map(async (x) => {
                         await x.consumer.cancel();
                     })
                 );
+                logger.info('All consumers closed');
                 if (publishChannel) {
                     await publishChannel.close();
                 }
+                if (confirmChannel) {
+                    await confirmChannel.close();
+                }
             }
+            logger.info('Closing client');
             await client.close();
+            logger.info('Closed');
             client = undefined;
         },
         createQueue: async (name, options, args) => {
@@ -251,12 +273,20 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
             if (confirm) {
                 if (!confirmChannel) {
                     confirmChannel = await client.channel();
+                    confirmChannel.onerror = (reason) => {
+                        logger.error('Confirm channel closed by server:', reason);
+                        confirmChannel = undefined;
+                    };
                     await confirmChannel.confirmSelect();
                 }
                 channel = confirmChannel;
             } else {
                 if (!publishChannel) {
                     publishChannel = await client.channel();
+                    publishChannel.onerror = (reason) => {
+                        logger.error('Publish channel closed by server:', reason);
+                        publishChannel = undefined;
+                    };
                 }
                 channel = publishChannel;
             }
@@ -282,12 +312,20 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
             if (confirm) {
                 if (!confirmChannel) {
                     confirmChannel = await client.channel();
+                    confirmChannel.onerror = (reason) => {
+                        logger.error('Confirm channel closed by server:', reason);
+                        confirmChannel = undefined;
+                    };
                     await confirmChannel.confirmSelect();
                 }
                 channel = confirmChannel;
             } else {
                 if (!publishChannel) {
                     publishChannel = await client.channel();
+                    publishChannel.onerror = (reason) => {
+                        logger.error('Publish channel closed by server:', reason);
+                        publishChannel = undefined;
+                    };
                 }
                 channel = publishChannel;
             }
@@ -298,40 +336,46 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
                 throw new NotConnectedError();
             }
             const channel = await client.channel();
-            if (prefetch) {
-                await channel.prefetch(prefetch);
-            }
-            const tracker = createTracker();
-            const consumer = await channel.basicConsume(name, { noAck, exclusive, args }, async (message) => {
-                tracker.inc();
-                const wrappedMessage = makeHaredoMessage<unknown>(message, true, name);
-                await callback(wrappedMessage);
-                tracker.dec();
-            });
-            let cancelPromise: Promise<void> | undefined;
-            const wrappedConsumer = {
-                cancel: async () => {
-                    if (cancelPromise) {
-                        return cancelPromise;
-                    }
-                    cancelPromise = consumer.cancel().then(async () => {
-                        await tracker.wait();
-                    });
-                    await cancelPromise;
-                    consumers = consumers.filter((x) => x.consumer !== wrappedConsumer);
-                    await channel.close();
+            try {
+                if (prefetch) {
+                    await channel.prefetch(prefetch);
                 }
-            };
-            consumers = [...consumers, { channel, consumer: wrappedConsumer }];
-            consumer
-                .wait()
-                .then(() => {
-                    onClose(null);
-                })
-                .catch((error) => {
-                    onClose(error);
+                const tracker = createTracker();
+                const consumer = await channel.basicConsume(name, { noAck, exclusive, args }, async (message) => {
+                    tracker.inc();
+                    const wrappedMessage = makeHaredoMessage<unknown>(message, true, name);
+                    await callback(wrappedMessage);
+                    tracker.dec();
                 });
-            return wrappedConsumer;
+                let cancelPromise: Promise<void> | undefined;
+                const wrappedConsumer = {
+                    cancel: async () => {
+                        if (cancelPromise) {
+                            return cancelPromise;
+                        }
+                        cancelPromise = consumer.cancel().then(async () => {
+                            await tracker.wait();
+                        });
+                        await cancelPromise;
+                        consumers = consumers.filter((x) => x.consumer !== wrappedConsumer);
+                        await channel.close();
+                    }
+                };
+                consumers = [...consumers, { channel, consumer: wrappedConsumer }];
+                consumer
+                    .wait()
+                    .then(() => {
+                        onClose(null);
+                    })
+                    .catch((error) => {
+                        onClose(error);
+                    });
+                return wrappedConsumer;
+            } catch (error) {
+                logger.error('Error subscribing to queue:', error);
+                await channel.close();
+                throw error;
+            }
         }
     };
 };
