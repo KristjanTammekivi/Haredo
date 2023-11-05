@@ -10,3 +10,9 @@ export class FailedParsingJsonError extends HaredoError {
         super('Failed to parse JSON for message');
     }
 }
+
+export class NotConnectedError extends HaredoError {
+    constructor() {
+        super('Not connected to RabbitMQ');
+    }
+}

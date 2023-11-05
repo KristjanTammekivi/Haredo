@@ -4,6 +4,7 @@ import { SinonStub, spy, stub } from 'sinon';
 import { Adapter, createAdapter } from './adapter';
 import { delay } from './utils/delay';
 import { isHaredoMessage } from './haredo-message';
+import { NotConnectedError } from './errors';
 
 // eslint-disable-next-line mocha/no-exports
 export type Stubify<T> = {
@@ -183,7 +184,7 @@ describe('adapter', () => {
         });
         it('should throw if called when disconnected', async () => {
             await adapter.close();
-            await expect(adapter.sendToQueue('test', 'some message', {})).to.reject(/No client/);
+            await expect(adapter.sendToQueue('test', 'some message', {})).to.reject(NotConnectedError);
         });
     });
     describe('publish', () => {
@@ -215,7 +216,7 @@ describe('adapter', () => {
         });
         it('should throw if called before connect', async () => {
             await adapter.close();
-            await expect(adapter.publish('test', '#', 'test', { confirm: true })).to.reject(/No client/);
+            await expect(adapter.publish('test', '#', 'test', { confirm: true })).to.reject(NotConnectedError);
         });
     });
     describe('setupQueue', () => {
@@ -232,7 +233,7 @@ describe('adapter', () => {
                 .and.to.have.been.calledWith('test', { durable: true }, { 'x-queue-type': 'quorum' });
         });
         it('should throw if called before connect', async () => {
-            await expect(adapter.createQueue('test')).to.reject(/No client/);
+            await expect(adapter.createQueue('test')).to.reject(NotConnectedError);
         });
         it('should close channel after creating queue', async () => {
             await adapter.connect();
@@ -261,7 +262,7 @@ describe('adapter', () => {
                 );
         });
         it('should throw if called before connect', async () => {
-            await expect(adapter.createExchange('test', 'topic')).to.reject(/No client/);
+            await expect(adapter.createExchange('test', 'topic')).to.reject(NotConnectedError);
         });
         it('should close channel after creating exchange', async () => {
             await adapter.connect();
@@ -276,7 +277,7 @@ describe('adapter', () => {
             expect(mockChannel.queueBind).to.have.been.calledOnce();
         });
         it('should throw if called before connect', async () => {
-            await expect(adapter.bindQueue('testQueue', 'testExchange', '#')).to.reject(/No client/);
+            await expect(adapter.bindQueue('testQueue', 'testExchange', '#')).to.reject(NotConnectedError);
         });
         it('should default the routing key to #', async () => {
             await adapter.connect();
@@ -367,7 +368,7 @@ describe('adapter', () => {
         });
         it('should throw if called while disconnected', async () => {
             await adapter.close();
-            await expect(adapter.subscribe('test', { onClose: stub() }, () => {})).to.reject(/No client/);
+            await expect(adapter.subscribe('test', { onClose: stub() }, () => {})).to.reject(NotConnectedError);
         });
         it('should send subscribe arguments to subscribe', async () => {
             await adapter.subscribe('test', { onClose: stub(), args: { 'x-stream-offset': 'last' } }, () => {});
@@ -401,7 +402,7 @@ describe('adapter', () => {
             });
         });
         it('should throw if called before connect', async () => {
-            await expect(adapter.bindExchange('testExchange', 'testExchange2', '#')).to.reject(/No client/);
+            await expect(adapter.bindExchange('testExchange', 'testExchange2', '#')).to.reject(NotConnectedError);
         });
         it('should default the routing key to #', async () => {
             await adapter.connect();
@@ -413,7 +414,7 @@ describe('adapter', () => {
     });
     describe('deleteQueue', () => {
         it('should throw if called before connect', async () => {
-            await expect(adapter.deleteQueue('test')).to.reject(/No client/);
+            await expect(adapter.deleteQueue('test')).to.reject(NotConnectedError);
         });
         it('should delete queue', async () => {
             await adapter.connect();
@@ -441,7 +442,7 @@ describe('adapter', () => {
     });
     describe('deleteExchange', () => {
         it('should throw if called before connect', async () => {
-            await expect(adapter.deleteExchange('test')).to.reject(/No client/);
+            await expect(adapter.deleteExchange('test')).to.reject(NotConnectedError);
         });
         it('should delete exchange', async () => {
             await adapter.connect();
@@ -463,7 +464,7 @@ describe('adapter', () => {
     });
     describe('unbindQueue', () => {
         it('should throw if called before connect', async () => {
-            await expect(adapter.unbindQueue('testQueue', 'testExchange')).to.reject(/No client/);
+            await expect(adapter.unbindQueue('testQueue', 'testExchange')).to.reject(NotConnectedError);
         });
         it('should unbind queue', async () => {
             await adapter.connect();
@@ -493,7 +494,7 @@ describe('adapter', () => {
     });
     describe('unbindExchange', () => {
         it('should throw if called before connect', async () => {
-            await expect(adapter.unbindExchange('testExchange', 'testExchange2')).to.reject(/No client/);
+            await expect(adapter.unbindExchange('testExchange', 'testExchange2')).to.reject(NotConnectedError);
         });
         it('should unbind exchange', async () => {
             await adapter.connect();
@@ -523,7 +524,7 @@ describe('adapter', () => {
     });
     describe('purgeQueue', () => {
         it('should throw if called before connect', async () => {
-            await expect(adapter.purgeQueue('test')).to.reject(/No client/);
+            await expect(adapter.purgeQueue('test')).to.reject(NotConnectedError);
         });
         it('should purge queue', async () => {
             await adapter.connect();

@@ -13,6 +13,7 @@ import { QueueArguments } from './queue';
 import { HaredoMessage, RabbitUrl, StreamOffset } from './types';
 import { normalizeUrl } from './utils/normalize-url';
 import { createTracker } from './utils/tracker';
+import { NotConnectedError } from './errors';
 
 // arguments passed to consumer
 export interface SubscribeArguments {
@@ -155,7 +156,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         createQueue: async (name, options, args) => {
             if (!client) {
-                throw new Error('No client');
+                throw new NotConnectedError();
             }
             const channel = await client.channel();
             try {
@@ -167,7 +168,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         deleteQueue: async (name, { ifUnused = false, ifEmpty = false } = {}) => {
             if (!client) {
-                throw new Error('No client');
+                throw new NotConnectedError();
             }
             const channel = await client.channel();
             try {
@@ -178,7 +179,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         createExchange: async (name, type, options, args) => {
             if (!client) {
-                throw new Error('No client');
+                throw new NotConnectedError();
             }
             const channel = await client.channel();
             try {
@@ -189,7 +190,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         deleteExchange: async (name, { ifUnused = false } = {}) => {
             if (!client) {
-                throw new Error('No client');
+                throw new NotConnectedError();
             }
             const channel = await client.channel();
             try {
@@ -200,7 +201,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         bindQueue: async (queueName, exchangeName, routingKey, args) => {
             if (!client) {
-                throw new Error('No client');
+                throw new NotConnectedError();
             }
             const channel = await client.channel();
             try {
@@ -211,7 +212,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         unbindQueue: async (queueName, exchangeName, routingKey, args) => {
             if (!client) {
-                throw new Error('No client');
+                throw new NotConnectedError();
             }
             const channel = await client.channel();
             try {
@@ -222,7 +223,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         bindExchange: async (destination, source, routingKey, args) => {
             if (!client) {
-                throw new Error('No client');
+                throw new NotConnectedError();
             }
             const channel = await client.channel();
             try {
@@ -233,7 +234,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         unbindExchange: async (destination, source, routingKey, args) => {
             if (!client) {
-                throw new Error('No client');
+                throw new NotConnectedError();
             }
             const channel = await client.channel();
             try {
@@ -244,7 +245,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         sendToQueue: async (name, message, { confirm, ...options }) => {
             if (!client) {
-                throw new Error('No client');
+                throw new NotConnectedError();
             }
             let channel: AMQPChannel;
             if (confirm) {
@@ -264,7 +265,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         purgeQueue: async (name) => {
             if (!client) {
-                throw new Error('No client');
+                throw new NotConnectedError();
             }
             const channel = await client.channel();
             try {
@@ -275,7 +276,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         publish: async (exchange, routingKey, message, { confirm, immediate, mandatory, ...options }) => {
             if (!client) {
-                throw new Error('No client');
+                throw new NotConnectedError();
             }
             let channel: AMQPChannel;
             if (confirm) {
@@ -294,7 +295,7 @@ export const createAdapter = (Client: typeof AMQPClient, Queue: typeof AMQPQueue
         },
         subscribe: async (name, { onClose, prefetch, args, noAck = false, exclusive = false }, callback) => {
             if (!client) {
-                throw new Error('No client');
+                throw new NotConnectedError();
             }
             const channel = await client.channel();
             if (prefetch) {

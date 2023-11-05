@@ -21,6 +21,9 @@ import { FailureBackoff } from './backoffs';
 import { TypedEventEmitter } from './utils/typed-event-target';
 
 export interface HaredoInstance {
+    /**
+     * Connect to the broker
+     */
     connect(): Promise<void>;
     exchange<T = unknown>(exchange: ExchangeInterface<T>): ExchangeChain<T>;
 
@@ -40,14 +43,41 @@ export interface HaredoInstance {
 }
 
 export interface Extension {
+    /**
+     * Name of the function to be added to the chain.
+     * For example 'cid' will add a cid method to the chain.
+     * See src/examples/extensions.ts
+     */
     name: string;
+    /**
+     * Implementation of the function to be added to the exchange chain.
+     * On call it will be invoked with the current state of the chain
+     * and should return a function that will be added to the chain.
+     * The returned function will be invoked with the arguments passed
+     * to the function on the chain and it should return the full state,
+     * not just the modifications to the state.
+     */
     exchange?(state: ExchangeChainState): (...args: any[]) => ExchangeChainState;
+    /**
+     * Implementation of the function to be added to the queue chain.
+     * On call it will be invoked with the current state of the chain
+     * and should return a function that will be added to the chain.
+     * The returned function will be invoked with the arguments passed
+     * to the function on the chain and it should return the full state,
+     * not just the modifications to the state.
+     */
     queue?(state: QueueChainState<unknown>): (...args: any[]) => QueueChainState<unknown>;
 }
 
 export interface HaredoOptions {
     url: string | RabbitUrl;
+    /**
+     * TLS options to use when connecting to the broker
+     */
     tlsOptions?: AMQPTlsOptions;
+    /**
+     * Adapter to use for commands to the broker. Useful for testing.
+     */
     adapter?: Adapter;
     /**
      * The name of the application. This will be used as the appId when
@@ -108,6 +138,9 @@ export interface SharedChain {
      * @param [autoSerialize=true]
      */
     json(autoSerialize?: boolean): this;
+    /**
+     * Unbind an exchange from the exchange / queue.
+     */
     unbindExchange(name: string, routingKey: string | string[], bindingArguments?: BindingArguments): Promise<void>;
     unbindExchange(
         name: ExchangeInterface,
@@ -139,8 +172,20 @@ export interface ExchangeChain<T = unknown> extends SharedChain {
      * Set the message expiration time in milliseconds
      */
     expiration(milliseconds: number): this;
+    /**
+     * Publish a message to the exchange. Unless .json(false) has been called
+     * the message will be serialized as JSON before being sent to the broker.
+     */
     publish(message: T, routingKey: string): Promise<void>;
+    /**
+     * Set the x-delay header on the message. Used in combination with delayed
+     * exchanges.
+     */
     delay(milliseconds: number): ExchangeChain<T>;
+    /**
+     * Bind an exchange to the exchange. Unless .skipSetup has been called
+     * the bound exchange will also be created during setup.
+     */
     bindExchange(
         sourceExchange: string,
         routingKey: string | string[],
@@ -152,7 +197,13 @@ export interface ExchangeChain<T = unknown> extends SharedChain {
         routingKey: string | string[],
         bindingArguments?: BindingArguments
     ): ExchangeChain<T>;
+    /**
+     * Set an argument for publishing messages to the exchange.
+     */
     setArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): ExchangeChain<T>;
+    /**
+     * Delete the exchange
+     */
     delete(options?: ExchangeDeleteOptions): Promise<void>;
 }
 
@@ -184,6 +235,10 @@ export interface QueuePublishChain<T> extends SharedChain {
      * Set the message expiration time in milliseconds
      */
     expiration(milliseconds: number): QueuePublishChain<T>;
+    /**
+     * Send a message to the queue. Unless .json(false) has been called
+     * the message will be serialized as JSON before being sent to the broker.
+     */
     publish(message: T): Promise<void>;
     setPublishArgument<K extends keyof AMQPProperties>(key: K, value: AMQPProperties[K]): QueuePublishChain<T>;
     /**
