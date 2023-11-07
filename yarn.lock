@@ -597,9 +597,9 @@
   integrity sha512-9GcLXF0/v3t80caGs5p2rRfkB+a8VBGLJZVih6CNFkx8IZ994wiKKLSRs9nuFwk1HevWs/1mnUmkApGrSGsShA==
 
 "@types/wtfnode@^0.7.0":
-  version "0.7.2"
-  resolved "https://registry.yarnpkg.com/@types/wtfnode/-/wtfnode-0.7.2.tgz#f46c23c232c5b4da46b18c28cc99e6e1b08fcd49"
-  integrity sha512-pJXFIeY+nSK+vgijyNcIt4stSxpOujYhom9kVFnSn9p21xiKn8pGf4uXzXc/RnwKTXE9i9QdGIb01XyJeDvsSg==
+  version "0.7.3"
+  resolved "https://registry.yarnpkg.com/@types/wtfnode/-/wtfnode-0.7.3.tgz#92b57816ee241e5c40c0650fc506a08c54d78bee"
+  integrity sha512-UMkHpx+o2xRWLJ7PmT3bBzvIA9/0oFw80oPtY/xO4jfdq+Gznn4wP7K9B/JjMxyxy+wF+5oRPIykxeBbEDjwRg==
 
 "@typescript-eslint/eslint-plugin@^5.59.0":
   version "5.62.0"
