@@ -407,7 +407,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
                         } catch (error) {
                             subscribeLogger.setError(error).setMessage(message).error('Error thrown in subscribe');
                             // TODO: log / emit error
-                            await message.nack(false);
+                            await message.nack(true);
                             state.backoff?.fail?.(error);
                             return;
                         }

@@ -532,7 +532,7 @@ describe('haredo', () => {
                 const message = spy(makeTestMessage('some message'));
                 await adapter.subscribe.firstCall.lastArg(message);
                 expect(message.nack).to.have.been.calledOnce();
-                expect(message.nack).to.have.been.calledWith(false);
+                expect(message.nack).to.have.been.calledWith(true);
             });
         });
         describe('backoff', () => {

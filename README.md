@@ -5,12 +5,12 @@
 [![npm](https://img.shields.io/npm/v/haredo.svg)](https://www.npmjs.com/package/haredo)
 [![npm](https://img.shields.io/npm/dw/haredo.svg)](https://www.npmjs.com/package/haredo)
 [![Build Status](https://travis-ci.com/KristjanTammekivi/Haredo.svg?token=5sH57fp4gyjYbXpM9ZY9&branch=master)](https://travis-ci.com/KristjanTammekivi/Haredo)
-[![Coverage Status](https://coveralls.io/repos/github/KristjanTammekivi/Haredo/badge.svg?branch=master)](https://coveralls.io/github/KristjanTammekivi/Haredo?branch=master)
 ![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/npm/haredo)
 
 Yet another RabbitMQ library
 
-- [Motivation](#motivation)
+TODO:
+
 - [Features](#features)
 - [Usage](#usage)
 
@@ -27,9 +27,9 @@ Working examples are available on [github](https://github.com/KristjanTammekivi/
 ### Initializing
 
 ```typescript
-import { haredo } from 'haredo';
-const rabbit = haredo({
-    connection: 'amqp://localhost:5672/'
+import { Haredo } from 'haredo';
+const rabbit = Haredo({
+    url: 'amqp://localhost:5672/'
 });
 ```
 
@@ -47,7 +47,7 @@ rabbit.queue('my-queue')
 
 ### Publishing to an exchange
 
-_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/routing.ts#L26)_
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/routing.ts)_
 
 ```typescript
 rabbit.exchange('my-exchange').publish({ id: 5, status: 'active' }, 'item.created');
@@ -55,7 +55,7 @@ rabbit.exchange('my-exchange').publish({ id: 5, status: 'active' }, 'item.create
 
 ### Publishing to a queue
 
-_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/simple.ts#L16)_
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/simple.ts)_
 
 ```typescript
 rabbit.queue('my-queue').publish({ id: 5, status: 'inactive' });

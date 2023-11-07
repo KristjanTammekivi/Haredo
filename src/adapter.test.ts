@@ -293,6 +293,22 @@ describe('adapter', () => {
             await adapter.createQueue('test');
             expect(mockChannel.close).to.have.been.calledOnce();
         });
+        it('should not try to close channel if onerror is called', async () => {
+            await adapter.connect();
+            mockChannel.queue.returns(delay(20).then(() => ({ queue: 'test' })));
+            const promise = adapter.createQueue('test');
+            await delay(5);
+            mockChannel.onerror('big sad');
+            await promise;
+            expect(mockChannel.close).to.not.have.been.called();
+        });
+        it('should wait for connection before creating queue', async () => {
+            mockClient.connect.returns(delay(20));
+            const connectPromise = adapter.connect();
+            await delay(5);
+            await adapter.createQueue('test');
+            await connectPromise;
+        });
     });
     describe('setupExchange', () => {
         it('should create exchange', async () => {

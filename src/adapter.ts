@@ -15,6 +15,7 @@ import { normalizeUrl } from './utils/normalize-url';
 import { createTracker } from './utils/tracker';
 import { NotConnectedError } from './errors';
 import { Logger } from './utils/logger';
+import { delay } from './utils/delay';
 
 // arguments passed to consumer
 export interface SubscribeArguments {
@@ -104,17 +105,25 @@ export interface AdapterOptions {
     tlsOptions?: AMQPTlsOptions;
 }
 
+type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'closing' | 'closed';
+
 export const createAdapter = (
     Client: typeof AMQPClient,
     Queue: typeof AMQPQueue,
     { url, tlsOptions }: AdapterOptions,
     logger: Logger
 ): Adapter => {
+    let status: ConnectionStatus = 'disconnected';
     let client: AMQPClient | undefined;
     let clientPromise: Promise<any> | undefined;
     let consumers: { channel: AMQPChannel; consumer: Consumer }[] = [];
     let publishChannel: AMQPChannel | undefined;
     let confirmChannel: AMQPChannel | undefined;
+    const connectionLogger = logger.component('connection');
+    const setConnectionStatus = (newStatus: ConnectionStatus) => {
+        status = newStatus;
+        connectionLogger.info(`Setting status to ${ status }`);
+    };
     const loopGetConnection = async () => {
         while (true) {
             try {
@@ -126,9 +135,38 @@ export const createAdapter = (
                     warn: AMQPClientLogger.warning,
                     error: AMQPClientLogger.error
                 };
+                logger.info('Connecting');
                 await c.connect();
                 return c;
-            } catch {}
+            } catch (error) {
+                logger.setError(error).error('Error connecting to RabbitMQ, retrying in 5 seconds');
+                // TODO: configurable delay
+                await delay(500);
+            }
+        }
+    };
+    const waitForClient = async () => {
+        if (['disconnected', 'closed'].includes(status)) {
+            throw new NotConnectedError();
+        }
+        if (!client) {
+            await clientPromise;
+        }
+    };
+    const useChannel = async <T>(callback: (channel: AMQPChannel) => Promise<T>): Promise<T> => {
+        await waitForClient();
+        const channel = await client!.channel();
+        let isChannelOpen = true;
+        channel.onerror = (reason) => {
+            logger.warning('Channel closed by server:', reason);
+            isChannelOpen = false;
+        };
+        try {
+            return await callback(channel);
+        } finally {
+            if (isChannelOpen) {
+                await channel.close();
+            }
         }
     };
     const connect = async () => {
@@ -139,15 +177,18 @@ export const createAdapter = (
             await clientPromise;
             return client!;
         }
-        logger.info('Connecting');
-        clientPromise = loopGetConnection();
-        client = await clientPromise;
+        setConnectionStatus('connecting');
+        const connectionPromise = loopGetConnection();
+        clientPromise = connectionPromise.then(() => delay(5));
+        client = await connectionPromise;
+        setConnectionStatus('connected');
         clientPromise = undefined;
-        client!.onerror = () => {
+        client.onerror = (error) => {
             client = undefined;
+            logger.setError(error).warning('Disconnected');
             void connect();
         };
-        return client!;
+        return client;
     };
     return {
         connect,
@@ -155,6 +196,7 @@ export const createAdapter = (
             if (!client) {
                 return;
             }
+            setConnectionStatus('closing');
             logger.info('Closing');
             if (!force) {
                 logger.info(`Waiting for ${ consumers.length } consumers to close`);
@@ -175,104 +217,60 @@ export const createAdapter = (
             await client.close();
             logger.info('Closed');
             client = undefined;
+            setConnectionStatus('closed');
         },
         createQueue: async (name, options, args) => {
-            if (!client) {
-                throw new NotConnectedError();
-            }
-            const channel = await client.channel();
-            try {
+            return useChannel(async (channel) => {
                 const queue = await channel.queue(name, options, args);
                 return queue.name;
-            } finally {
-                await channel.close();
-            }
+            });
         },
         deleteQueue: async (name, { ifUnused = false, ifEmpty = false } = {}) => {
-            if (!client) {
-                throw new NotConnectedError();
-            }
-            const channel = await client.channel();
-            try {
+            await useChannel(async (channel) => {
                 await channel.queueDelete(name, { ifUnused, ifEmpty });
-            } finally {
-                await channel.close();
-            }
+            });
         },
         createExchange: async (name, type, options, args) => {
-            if (!client) {
-                throw new NotConnectedError();
-            }
-            const channel = await client.channel();
-            try {
+            await useChannel(async (channel) => {
                 await channel.exchangeDeclare(name, type, options, args);
-            } finally {
-                await channel.close();
-            }
+            });
         },
         deleteExchange: async (name, { ifUnused = false } = {}) => {
-            if (!client) {
-                throw new NotConnectedError();
-            }
-            const channel = await client.channel();
-            try {
+            await useChannel(async (channel) => {
                 await channel.exchangeDelete(name, { ifUnused });
-            } finally {
-                await channel.close();
-            }
+            });
         },
         bindQueue: async (queueName, exchangeName, routingKey, args) => {
-            if (!client) {
-                throw new NotConnectedError();
-            }
-            const channel = await client.channel();
-            try {
+            await useChannel(async (channel) => {
                 await channel.queueBind(queueName, exchangeName, routingKey || '#', args);
-            } finally {
-                await channel.close();
-            }
+            });
         },
         unbindQueue: async (queueName, exchangeName, routingKey, args) => {
-            if (!client) {
-                throw new NotConnectedError();
-            }
-            const channel = await client.channel();
-            try {
+            await useChannel(async (channel) => {
                 await channel.queueUnbind(queueName, exchangeName, routingKey || '#', args);
-            } finally {
-                await channel.close();
-            }
+            });
         },
         bindExchange: async (destination, source, routingKey, args) => {
-            if (!client) {
-                throw new NotConnectedError();
-            }
-            const channel = await client.channel();
-            try {
+            await useChannel(async (channel) => {
                 await channel.exchangeBind(destination, source, routingKey || '#', args);
-            } finally {
-                await channel.close();
-            }
+            });
         },
         unbindExchange: async (destination, source, routingKey, args) => {
-            if (!client) {
-                throw new NotConnectedError();
-            }
-            const channel = await client.channel();
-            try {
+            await useChannel(async (channel) => {
                 await channel.exchangeUnbind(destination, source, routingKey || '#', args);
-            } finally {
-                await channel.close();
-            }
+            });
+        },
+        purgeQueue: async (name) => {
+            await useChannel(async (channel) => {
+                await channel.queuePurge(name);
+            });
         },
         sendToQueue: async (name, message, { confirm, ...options }) => {
-            if (!client) {
-                throw new NotConnectedError();
-            }
+            await waitForClient();
             let channel: AMQPChannel;
             if (confirm) {
                 if (!confirmChannel) {
-                    confirmChannel = await client.channel();
+                    confirmChannel = await client!.channel();
                     confirmChannel.onerror = (reason) => {
                         logger.error('Confirm channel closed by server:', reason);
                         confirmChannel = undefined;
@@ -282,7 +280,7 @@ export const createAdapter = (
                 channel = confirmChannel;
             } else {
                 if (!publishChannel) {
-                    publishChannel = await client.channel();
+                    publishChannel = await client!.channel();
                     publishChannel.onerror = (reason) => {
                         logger.error('Publish channel closed by server:', reason);
                         publishChannel = undefined;
@@ -293,25 +291,12 @@ export const createAdapter = (
             const q = new Queue(channel, name);
             await q.publish(message, options);
         },
-        purgeQueue: async (name) => {
-            if (!client) {
-                throw new NotConnectedError();
-            }
-            const channel = await client.channel();
-            try {
-                await channel.queuePurge(name);
-            } finally {
-                await channel.close();
-            }
-        },
         publish: async (exchange, routingKey, message, { confirm, immediate, mandatory, ...options }) => {
-            if (!client) {
-                throw new NotConnectedError();
-            }
+            await waitForClient();
             let channel: AMQPChannel;
             if (confirm) {
                 if (!confirmChannel) {
-                    confirmChannel = await client.channel();
+                    confirmChannel = await client!.channel();
                     confirmChannel.onerror = (reason) => {
                         logger.error('Confirm channel closed by server:', reason);
                         confirmChannel = undefined;
@@ -321,7 +306,7 @@ export const createAdapter = (
                 channel = confirmChannel;
             } else {
                 if (!publishChannel) {
-                    publishChannel = await client.channel();
+                    publishChannel = await client!.channel();
                     publishChannel.onerror = (reason) => {
                         logger.error('Publish channel closed by server:', reason);
                         publishChannel = undefined;
@@ -332,10 +317,8 @@ export const createAdapter = (
             await channel.basicPublish(exchange, routingKey, message, options, mandatory, immediate);
         },
         subscribe: async (name, { onClose, prefetch, args, noAck = false, exclusive = false }, callback) => {
-            if (!client) {
-                throw new NotConnectedError();
-            }
-            const channel = await client.channel();
+            await waitForClient();
+            const channel = await client!.channel();
             try {
                 if (prefetch) {
                     await channel.prefetch(prefetch);
