@@ -7,8 +7,6 @@
 [![Build Status](https://travis-ci.com/KristjanTammekivi/Haredo.svg?token=5sH57fp4gyjYbXpM9ZY9&branch=master)](https://travis-ci.com/KristjanTammekivi/Haredo)
 ![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/npm/haredo)
 
-Yet another RabbitMQ library
-
 TODO:
 
 - [Features](#features)
@@ -19,6 +17,8 @@ TODO:
  - TypeScript
  - Chaining based API
  - Graceful closing
+ - Automatic setup of queues and exchanges
+ - Automatic acking / nacking based on the promise returned from the subscriber
 
 ## Usage
 
@@ -28,7 +28,7 @@ Working examples are available on [github](https://github.com/KristjanTammekivi/
 
 ```typescript
 import { Haredo } from 'haredo';
-const rabbit = Haredo({
+const haredo = Haredo({
     url: 'amqp://localhost:5672/'
 });
 ```
@@ -38,7 +38,7 @@ const rabbit = Haredo({
 _[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/routing.ts)_
 
 ```typescript
-rabbit.queue('my-queue')
+haredo.queue('my-queue')
     .bindExchange('testExchange', '#', 'topic', { durable: false }) // Can be omitted if you don't want to bind the queue to an exchange right now
     .subscribe(async (message) => {
         console.log(message.data);
@@ -50,7 +50,7 @@ rabbit.queue('my-queue')
 _[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/routing.ts)_
 
 ```typescript
-rabbit.exchange('my-exchange').publish({ id: 5, status: 'active' }, 'item.created');
+haredo.exchange('my-exchange').publish({ id: 5, status: 'active' }, 'item.created');
 ```
 
 ### Publishing to a queue
@@ -58,13 +58,13 @@ rabbit.exchange('my-exchange').publish({ id: 5, status: 'active' }, 'item.create
 _[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/simple.ts)_
 
 ```typescript
-rabbit.queue('my-queue').publish({ id: 5, status: 'inactive' });
+haredo.queue('my-queue').publish({ id: 5, status: 'inactive' });
 ```
 
 ### Limit concurrency
 
 ```typescript
-rabbit.queue('my-queue')
+haredo.queue('my-queue')
     .prefetch(5) // same as .concurrency(5)
     .subscribe(async (message) => {
         console.log(message);
@@ -82,7 +82,7 @@ interface Message {.exchange
     id: number;
 }
 const delayedExchange = Exchange<Message>('my-delayed-exchange', 'x-delayed-message').delayed('topic');
-await rabbit.queue('my-queue')
+await haredo.queue('my-queue')
     .bindExchange(delayedExchange, '#')
     .subscribe((data, { timestamp }) => {
         console.log(`Received message in ${ Date.now() - timestamp }ms id:${ data.id } `);
@@ -92,7 +92,7 @@ while (true) {
     id += 1;
     console.log('Publishing message', id);
     const msg = delayedMessage.json({ id }).timestamp(Date.now());
-    await rabbit
+    await haredo
         .exchange(delayedExchange)
         .delay(1000)
         .publish(msg);
@@ -111,7 +111,7 @@ _[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src
 _[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/backoff.ts)_
 
 ```typescript
-await rabbit.queue('my-queue')
+await haredo.queue('my-queue')
     .backoff(standardBackoff({
         failThreshold: 3,
         failSpan: 5000,
@@ -124,7 +124,7 @@ await rabbit.queue('my-queue')
 
 ### Dead letter
 
-[View on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/dlx.ts)
+[View on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/dead-letter-exchange.ts)
 
 ### Middleware
 
@@ -139,7 +139,7 @@ const timeMessage: Middleware = ({ queue }, next) => {
     console.log(`Message took ${ Date.now() - start }ms`);
 }
 
-await rabbit.queue('my-queue')
+await haredo.queue('my-queue')
     .use(timeMessage)
     .subscribe(() => {
         throw new Error('Nack this message for me')
@@ -151,3 +151,81 @@ await rabbit.queue('my-queue')
 Calling consumer.close() will send cancel to channel and wait for existing messages to be handled before resolving the returned promise.
 
 Calling haredoInstance.close() will gracefully close all of it's consumers
+
+### Automatic setup
+
+By default Haredo will automatically assert the queus and exchanges and bind them
+to each other. This can be disabled by calling .skipSetup()
+
+```typescript
+await haredo.queue('my-queue')
+    .skipSetup()
+    .subscribe(() => {
+        throw new Error('Nack this message for me');
+    });
+
+// Only create the queue, don't bind it to any exchanges and don't create any exchanges
+await haredo.queue('my-queue')
+    .bindExchange('testExchange', '#', 'topic', { durable: false })
+    .skipSetup({ skipBoundExchanges: true, skipBindings: true, skipCreate: false });
+
+```
+
+### Extending Haredo
+
+Add new methods to the Haredo instance
+
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/extensions.ts)_
+
+```typescript
+
+declare module 'haredo/types' {
+    interface QueueChain<T> {
+        cid(cid: string): this;
+    }
+}
+
+const haredo = Haredo({
+    url: 'amqp://localhost:5672/'
+    extensions: [
+        {
+            name: 'cid',
+            queue: (state) => {
+                return (cid: string) => ({
+                    ...state,
+                    headers: {
+                        ...state.headers,
+                        'x-cid': cid
+                    }
+                });
+            }
+        }
+    ]
+});
+
+await haredo.queue('my-queue')
+    .cid('123')
+    .publish({ id: 5, status: 'inactive' });
+```
+
+### Global middleware
+
+Add a middleware that will be called for every message in every subscriber
+
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/extensions.ts)_
+
+```typescript
+declare module 'haredo/types' {
+    interface HaredoMessage<T> {
+        cid?: string;
+    }
+}
+const haredo = Haredo({
+    url: 'amqp://localhost:5672/'
+    globalMiddleware: [
+        (message) => {
+            message.cid = message.headers?.['x-cid'] as string;
+        }
+    ]
+});
+```

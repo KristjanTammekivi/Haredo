@@ -1,6 +1,5 @@
 import { standardBackoff } from '../backoffs';
 import { Haredo } from '../haredo';
-import { delay } from '../utils/delay';
 
 const start = async () => {
     const haredo = Haredo({ url: process.env.RABBIT_URL || 'amqp://localhost' });

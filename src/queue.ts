@@ -115,14 +115,17 @@ export interface QueueInterface<TMESSAGE = unknown> {
     ): QueueInterface<TMESSAGE>;
     /**
      * Set the queue type to quorum.
+     * See https://www.rabbitmq.com/quorum-queues.html
      */
     quorum(): QueueInterface<TMESSAGE>;
     /**
      * Set the queue type to stream.
+     * See https://www.rabbitmq.com/streams.html
      */
     stream(): QueueInterface<TMESSAGE>;
     /**
      * Set the queue to auto delete when the last consumer disconnects.
+     * Not allowed for quorum queues or streams
      */
     autoDelete(autoDelete?: boolean): QueueInterface<TMESSAGE>;
     /**

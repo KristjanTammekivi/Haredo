@@ -43,6 +43,7 @@ export const InternalExchange = <T = unknown>(
     delayed: () => InternalExchange(name, 'x-delayed-message', params, set(args, 'x-delayed-type', type))
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface ExchangeInterface<T = unknown> {
     name: string;
     type: ExchangeType;

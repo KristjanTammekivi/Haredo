@@ -11,6 +11,17 @@
     "typescript"
   ],
   "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./types": "./dist/types.js"
+  },
+  "typesVersions": {
+    "*": {
+      "assert": [
+        "dist/types"
+      ]
+    }
+  },
   "scripts": {
     "build": "rimraf dist && npm run build:ts",
     "lint": "eslint --ext .ts src",

@@ -486,9 +486,10 @@ export interface HaredoMessage<T = unknown> extends Methods {
      */
     queue: string;
     /**
-     * Amount of attempts the broker has done to deliver the message
+     * Amount of attempts the broker has done to deliver the message.
+     * undefined on first attempt
      */
-    deliveryCount?: number;
+    deliveryCount: number | undefined;
     /**
      * Stream offset of the message. Only available for streams
      */
