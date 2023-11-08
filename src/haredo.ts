@@ -22,7 +22,7 @@ import { Logger, createLogger } from './utils/logger';
 export const Haredo = ({
     url,
     tlsOptions,
-    appId,
+    defaults = {},
     extensions = [],
     globalMiddleware = [],
     log = () => {},
@@ -46,7 +46,7 @@ export const Haredo = ({
             if (typeof exchange === 'string') {
                 exchange = InternalExchange(exchange, type!, params, args);
             }
-            return exchangeChain<T>({ adapter: adapter!, exchange, appId }, logger, extensions);
+            return exchangeChain<T>({ adapter: adapter!, exchange, appId: defaults.appId }, logger, extensions);
         },
         queue: <T = unknown>(
             queue: string | QueueInterface<T>,
@@ -57,7 +57,13 @@ export const Haredo = ({
                 queue = Queue(queue, queueParams, queueArguments);
             }
             return queueChain<T>(
-                { adapter: adapter!, queue, middleware: [...globalMiddleware], appId },
+                {
+                    adapter: adapter!,
+                    queue,
+                    middleware: [...globalMiddleware],
+                    appId: defaults.appId,
+                    prefetch: defaults.concurrency
+                },
                 logger,
                 extensions
             );

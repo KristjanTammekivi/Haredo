@@ -19,7 +19,7 @@ import { QueueArguments, QueueInterface } from './queue';
 import { Middleware } from './utils/apply-middleware';
 import { FailureBackoff } from './backoffs';
 import { TypedEventEmitter } from './utils/typed-event-target';
-import { LogFunction, Logger } from './utils/logger';
+import { LogFunction } from './utils/logger';
 
 export interface HaredoInstance {
     /**
@@ -80,11 +80,18 @@ export interface HaredoOptions {
      * Adapter to use for commands to the broker. Useful for testing.
      */
     adapter?: Adapter;
-    /**
-     * The name of the application. This will be used as the appId when
-     * publishing messages.
-     */
-    appId?: string;
+    defaults?: {
+        /**
+         * The name of the application. This will be used as the appId when
+         * publishing messages.
+         */
+        appId?: string;
+        /**
+         * The default concurrency to use for consumers. This can be overridden
+         * by calling .concurrency (or it's alias, .prefetch) on the chain.
+         */
+        concurrency?: number;
+    };
     /**
      * Additional methods to add to the chains.
      */

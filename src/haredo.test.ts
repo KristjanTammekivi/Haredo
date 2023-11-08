@@ -174,7 +174,7 @@ describe('haredo', () => {
             });
         });
         it('should use appId when set', async () => {
-            const rabbit = Haredo({ url: rabbitURL + '/test', adapter, appId: 'myApp' });
+            const rabbit = Haredo({ url: rabbitURL + '/test', adapter, defaults: { appId: 'myApp' } });
             await rabbit.exchange('someExchange', 'topic').publish('some message', 'rk');
             expect(adapter.publish).to.have.been.calledOnce();
             expect(adapter.publish).to.have.been.calledWith('someExchange', 'rk', '"some message"', {
@@ -228,6 +228,13 @@ describe('haredo', () => {
                 .publish('some message', 'rk');
             expect(adapter.bindExchange).to.have.been.calledOnce();
             expect(adapter.bindExchange).to.have.been.calledWith('someExchange', 'someOtherExchange', 'rk');
+        });
+        it('should set a default concurrency', async () => {
+            haredo = Haredo({ url: rabbitURL + '/test', adapter, defaults: { concurrency: 5 } });
+            await haredo.connect();
+            await haredo.queue('testQueue').subscribe(() => {});
+            expect(adapter.subscribe).to.have.been.calledOnce();
+            expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ prefetch: 5 });
         });
     });
     describe('queue', () => {
@@ -339,7 +346,7 @@ describe('haredo', () => {
                 });
             });
             it('should send appId when set', async () => {
-                const rabbit = Haredo({ url: rabbitURL + '/test', adapter, appId: 'myApp' });
+                const rabbit = Haredo({ url: rabbitURL + '/test', adapter, defaults: { appId: 'myApp' } });
                 await rabbit.queue('test').publish('testmessage');
                 expect(adapter.sendToQueue).to.have.been.calledOnce();
                 expect(adapter.sendToQueue).to.have.been.calledWith('test', '"testmessage"', {
