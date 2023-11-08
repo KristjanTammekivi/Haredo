@@ -7,10 +7,26 @@
 [![Build Status](https://travis-ci.com/KristjanTammekivi/Haredo.svg?token=5sH57fp4gyjYbXpM9ZY9&branch=master)](https://travis-ci.com/KristjanTammekivi/Haredo)
 ![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/npm/haredo)
 
-TODO:
+RabbitMQ client for Node.js with a focus on simplicity and type safety.
+
+## Table of Contents
 
 - [Features](#features)
 - [Usage](#usage)
+- [Initializing](#initializing)
+- [Listening for messages](#listening-for-messages)
+- [Publishing to an exchange](#publishing-to-an-exchange)
+- [Publishing to a queue](#publishing-to-a-queue)
+- [Limit concurrency](#limit-concurrency)
+- [Delayed messages](#delayed-messages)
+- [Quorum queues with delivery limits](#quorum-queues-with-delivery-limits)
+- [Message throttling](#message-throttling)
+- [Dead letter](#dead-letter)
+- [Middleware](#middleware)
+- [Graceful shutdown](#graceful-shutdown)
+- [Automatic setup](#automatic-setup)
+- [Extending Haredo](#extending-haredo)
+- [Global middleware](#global-middleware)
 
 ## Features
 
