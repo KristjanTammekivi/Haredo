@@ -160,11 +160,21 @@ const exchangeChain = <T = unknown>(
             exchange: string | ExchangeInterface,
             patterns: string | string[],
             type?: ExchangeType | BindingArguments,
+            exchangeParams?: BindingArguments | ExchangeParams,
+            exchangeArguments?: ExchangeArguments,
             bindingArguments?: BindingArguments
         ) => {
             bindingArguments = typeof type === 'object' ? type : bindingArguments;
             const binding = {
-                exchange: typeof exchange === 'string' ? InternalExchange(exchange, type as ExchangeType) : exchange,
+                exchange:
+                    typeof exchange === 'string'
+                        ? InternalExchange(
+                              exchange,
+                              type as ExchangeType,
+                              exchangeParams as ExchangeParams,
+                              exchangeArguments
+                          )
+                        : exchange,
                 patterns: castArray(patterns),
                 bindingArguments
             };
@@ -359,11 +369,21 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
             exchange: string | ExchangeInterface,
             patterns: string | string[],
             type?: ExchangeType | BindingArguments,
+            exchangeParams?: BindingArguments | ExchangeParams,
+            exchangeArguments?: ExchangeArguments,
             bindingArguments?: BindingArguments
         ) => {
             bindingArguments = typeof type === 'object' ? type : bindingArguments;
             const binding = {
-                exchange: typeof exchange === 'string' ? InternalExchange(exchange, type as ExchangeType) : exchange,
+                exchange:
+                    typeof exchange === 'string'
+                        ? InternalExchange(
+                              exchange,
+                              type as ExchangeType,
+                              exchangeParams as ExchangeParams,
+                              exchangeArguments
+                          )
+                        : exchange,
                 patterns: castArray(patterns),
                 bindingArguments
             };

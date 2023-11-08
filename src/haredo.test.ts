@@ -766,14 +766,17 @@ describe('haredo', () => {
     });
     describe('bindExchange', () => {
         it('should forward binding arguments to adapter when binding to a queue', async () => {
-            await haredo.queue('test').bindExchange('testexchange', 'rk', 'topic', { 'x-match': 'any' }).setup();
+            await haredo
+                .queue('test')
+                .bindExchange('testexchange', 'rk', 'topic', {}, {}, { 'x-match': 'any' })
+                .setup();
             expect(adapter.bindQueue).to.have.been.calledOnce();
             expect(adapter.bindQueue).to.have.been.calledWith('test', 'testexchange', 'rk', { 'x-match': 'any' });
         });
         it('should forward binding arguments to adapter when binding to an exchange', async () => {
             await haredo
                 .exchange('testexchange', 'topic')
-                .bindExchange('testexchange2', 'rk', 'topic', { 'x-match': 'any' })
+                .bindExchange('testexchange2', 'rk', 'topic', {}, {}, { 'x-match': 'any' })
                 .setup();
             expect(adapter.bindExchange).to.have.been.calledOnce();
             expect(adapter.bindExchange).to.have.been.calledWith('testexchange', 'testexchange2', 'rk', {

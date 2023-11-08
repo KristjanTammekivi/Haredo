@@ -199,6 +199,8 @@ export interface ExchangeChain<T = unknown> extends SharedChain {
         sourceExchange: string,
         routingKey: string | string[],
         type: ExchangeType,
+        exchangeParams?: ExchangeParams,
+        exchangeArguments?: ExchangeArguments,
         bindingArguments?: BindingArguments
     ): ExchangeChain<T>;
     bindExchange(
@@ -320,6 +322,8 @@ export interface QueueSubscribeChain<T> extends SharedChain {
         name: string,
         routingKey: string | string[],
         type: ExchangeType,
+        exchangeParams?: ExchangeParams,
+        exchangeArguments?: ExchangeArguments,
         bindingArguments?: BindingArguments
     ): QueueSubscribeChain<T>;
     /**
