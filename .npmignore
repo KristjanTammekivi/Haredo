@@ -2,16 +2,19 @@
 .nyc_output
 .vscode
 coverage
-dist/**/*.test.ts
+dist/**/*.test.js
 dist/examples
 docker
 docs
 node_modules
 src
+test
 
+.history
 .eslintrc
 .gitignore
 .mocharc.json
 .nycrc
 tsconfig.json
 yarn.lock
+yarn-error.log
