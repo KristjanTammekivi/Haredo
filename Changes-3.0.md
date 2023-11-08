@@ -38,7 +38,6 @@ too.
 * haredo -> Haredo
 * makeExchangeConfig -> Exchange
 * makeQueueConfig -> Queue
-* preparedMessage -> Message
 
 # Split publishing and subscribing queue chains
 
