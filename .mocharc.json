@@ -2,7 +2,7 @@
     "require": [
         "ts-node/register/transpile-only"
     ],
-    "timeout": 30000,
+    "timeout": 2000,
     "extension": [
         "ts"
     ],
