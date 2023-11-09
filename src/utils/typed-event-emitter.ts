@@ -1,4 +1,4 @@
-import EventEmitter = require('events');
+import { EventEmitter } from 'node:events';
 
 export class TypedEventEmitter<T extends Record<string, any>> extends EventEmitter {
     emit<K extends keyof T & string>(type: K, data: T[K]): boolean {
