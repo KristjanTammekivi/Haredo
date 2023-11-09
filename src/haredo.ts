@@ -19,7 +19,7 @@ import { applyMiddleware } from './utils/apply-middleware';
 import { castArray } from './utils/cast-array';
 import { mergeState } from './utils/merge-state';
 import { Logger, createLogger } from './utils/logger';
-import { TypedEventEmitter } from './utils/typed-event-target';
+import { TypedEventEmitter } from './utils/typed-event-emitter';
 
 export const Haredo = ({
     url,

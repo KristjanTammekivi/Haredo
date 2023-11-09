@@ -18,7 +18,7 @@ import { ExchangeArguments, ExchangeInterface, ExchangeType } from './exchange';
 import { QueueArguments, QueueInterface } from './queue';
 import { Middleware } from './utils/apply-middleware';
 import { FailureBackoff } from './backoffs';
-import { TypedEventEmitter } from './utils/typed-event-target';
+import { TypedEventEmitter } from './utils/typed-event-emitter';
 import { LogFunction } from './utils/logger';
 
 export interface HaredoEvents {

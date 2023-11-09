@@ -1,6 +1,6 @@
 import { expect } from 'hein';
 import { mergeState } from './merge-state';
-import { TypedEventEmitter } from './typed-event-target';
+import { TypedEventEmitter } from './typed-event-emitter';
 
 describe('mergeState', () => {
     it('should merge arrays', () => {

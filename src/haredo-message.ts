@@ -1,6 +1,6 @@
 import { AMQPMessage, Field } from '@cloudamqp/amqp-client';
 import { parseJSON } from './utils/parse-json';
-import { TypedEventEmitter } from './utils/typed-event-target';
+import { TypedEventEmitter } from './utils/typed-event-emitter';
 import { HaredoMessage, HaredoMessageEvents, messageSymbol } from './types';
 
 export const makeHaredoMessage = <T = unknown>(

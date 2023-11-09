@@ -9,7 +9,7 @@ import { Haredo } from './haredo';
 import { makeHaredoMessage } from './haredo-message';
 import { Queue } from './queue';
 import { HaredoConsumer } from './types';
-import { TypedEventEmitter } from './utils/typed-event-target';
+import { TypedEventEmitter } from './utils/typed-event-emitter';
 
 config();
 

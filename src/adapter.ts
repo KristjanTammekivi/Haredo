@@ -16,7 +16,7 @@ import { createTracker } from './utils/tracker';
 import { NotConnectedError } from './errors';
 import { Logger } from './utils/logger';
 import { delay } from './utils/delay';
-import { TypedEventEmitter } from './utils/typed-event-target';
+import { TypedEventEmitter } from './utils/typed-event-emitter';
 
 // arguments passed to consumer
 export interface SubscribeArguments {

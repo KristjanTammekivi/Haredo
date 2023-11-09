@@ -1,4 +1,4 @@
-import { TypedEventEmitter } from './typed-event-target';
+import { TypedEventEmitter } from './typed-event-emitter';
 
 export const typedEventToPromise = async <U extends Record<string, any>, K extends keyof U & string>(
     emitter: TypedEventEmitter<U>,

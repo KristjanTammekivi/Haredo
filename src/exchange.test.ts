@@ -3,7 +3,7 @@ import { Adapter, Consumer } from './adapter';
 import { Haredo } from './haredo';
 import { expect } from 'hein';
 import { Exchange } from './exchange';
-import { TypedEventEmitter } from './utils/typed-event-target';
+import { TypedEventEmitter } from './utils/typed-event-emitter';
 
 const rabbitURL = process.env.RABBIT_URL || 'amqp://localhost:5672';
 
