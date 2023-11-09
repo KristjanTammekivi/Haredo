@@ -8,6 +8,7 @@ import type {
     ExchangeChain,
     ExchangeChainState,
     Extension,
+    HaredoEvents,
     HaredoInstance,
     HaredoOptions,
     QueueChain,
@@ -18,10 +19,12 @@ import { applyMiddleware } from './utils/apply-middleware';
 import { castArray } from './utils/cast-array';
 import { mergeState } from './utils/merge-state';
 import { Logger, createLogger } from './utils/logger';
+import { TypedEventEmitter } from './utils/typed-event-target';
 
 export const Haredo = ({
     url,
     tlsOptions,
+    reconnectDelay,
     defaults = {},
     extensions = [],
     globalMiddleware = [],
@@ -29,8 +32,18 @@ export const Haredo = ({
     adapter
 }: HaredoOptions): HaredoInstance => {
     const logger = createLogger(log).component('haredo');
-    adapter = adapter ?? createAdapter(AMQPClient, AMQPQueue, { url, tlsOptions }, logger.component('adapter'));
+    adapter =
+        adapter ??
+        createAdapter(AMQPClient, AMQPQueue, { url, tlsOptions, reconnectDelay }, logger.component('adapter'));
+    const emitter = new TypedEventEmitter<HaredoEvents>();
+    adapter.emitter.on('connected', () => {
+        emitter.emit('connected', null);
+    });
+    adapter.emitter.on('disconnected', () => {
+        emitter.emit('disconnected', null);
+    });
     return {
+        emitter,
         connect: async () => {
             await adapter!.connect();
         },
@@ -46,7 +59,11 @@ export const Haredo = ({
             if (typeof exchange === 'string') {
                 exchange = InternalExchange(exchange, type!, params, args);
             }
-            return exchangeChain<T>({ adapter: adapter!, exchange, appId: defaults.appId }, logger, extensions);
+            return exchangeChain<T>(
+                { emitter, adapter: adapter!, exchange, appId: defaults.appId },
+                logger,
+                extensions
+            );
         },
         queue: <T = unknown>(
             queue: string | QueueInterface<T>,
@@ -58,6 +75,7 @@ export const Haredo = ({
             }
             return queueChain<T>(
                 {
+                    emitter,
                     adapter: adapter!,
                     queue,
                     middleware: [...globalMiddleware],
@@ -422,9 +440,11 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
                     },
                     async (message: HaredoMessage<T>) => {
                         message.emitter.once('ack', () => {
+                            state.emitter.emit('message:ack', message);
                             state.backoff?.ack?.();
                         });
                         message.emitter.once('nack', (requeue) => {
+                            state.emitter.emit('message:nack', [requeue, message]);
                             state.backoff?.nack?.(requeue);
                         });
                         await state.backoff?.take();
@@ -432,7 +452,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
                             await applyMiddleware(state.middleware, callback, message);
                         } catch (error) {
                             subscribeLogger.setError(error).setMessage(message).error('Error thrown in subscribe');
-                            // TODO: log / emit error
+                            state.emitter.emit('message:error', [error, message]);
                             await message.nack(true);
                             state.backoff?.fail?.(error);
                             return;

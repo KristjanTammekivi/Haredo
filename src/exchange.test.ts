@@ -3,6 +3,7 @@ import { Adapter, Consumer } from './adapter';
 import { Haredo } from './haredo';
 import { expect } from 'hein';
 import { Exchange } from './exchange';
+import { TypedEventEmitter } from './utils/typed-event-target';
 
 const rabbitURL = process.env.RABBIT_URL || 'amqp://localhost:5672';
 
@@ -21,6 +22,7 @@ describe('exchange', () => {
             createExchange: () => Promise.resolve(),
             publish: () => Promise.resolve()
         } as any);
+        adapter.emitter = new TypedEventEmitter();
         haredo = Haredo({ url: rabbitURL + '/test', adapter });
         adapter.createQueue.resolves('test');
         consumerStub = stub({ cancel: () => Promise.resolve() });

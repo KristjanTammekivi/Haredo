@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import { expect } from 'hein';
 import { SinonStub, SinonStubbedInstance, match, spy, stub } from 'sinon';
-import { Adapter, Consumer } from './adapter';
+import { Adapter, AdapterEvents, Consumer } from './adapter';
 import { FailureBackoff } from './backoffs';
 import { MissingQueueNameError } from './errors';
 import { Exchange } from './exchange';
@@ -9,6 +9,7 @@ import { Haredo } from './haredo';
 import { makeHaredoMessage } from './haredo-message';
 import { Queue } from './queue';
 import { HaredoConsumer } from './types';
+import { TypedEventEmitter } from './utils/typed-event-target';
 
 config();
 
@@ -47,6 +48,7 @@ describe('haredo', () => {
             unbindExchange: () => Promise.resolve(),
             unbindQueue: () => Promise.resolve()
         } as any);
+        adapter.emitter = new TypedEventEmitter<AdapterEvents>();
         haredo = Haredo({ url: rabbitURL + '/test', adapter });
         adapter.createQueue.resolves('test');
         consumerStub = stub({ cancel: () => Promise.resolve() });
@@ -870,6 +872,65 @@ describe('haredo', () => {
             expect(adapter.unbindExchange).to.have.been.calledWith('testexchange2', 'testexchange', '', {
                 'x-match': 'any'
             });
+        });
+    });
+    describe('events', () => {
+        it('should emit connected event when adapter emits connected event', async () => {
+            const eventSpy = spy();
+            haredo.emitter.on('connected', eventSpy);
+            adapter.emitter.emit('connected', null);
+            expect(eventSpy).to.have.been.calledOnce();
+        });
+        it('should emit disconnected event when adapter emits disconnected event', async () => {
+            const eventSpy = spy();
+            haredo.emitter.on('disconnected', eventSpy);
+            adapter.emitter.emit('disconnected', null);
+            expect(eventSpy).to.have.been.calledOnce();
+        });
+        it('should emit message:error when a subscribe callback throws', async () => {
+            const error = new Error('test');
+            const eventSpy = spy();
+            await haredo.queue('test').subscribe(() => {
+                throw error;
+            });
+            haredo.emitter.on('message:error', eventSpy);
+            const message = makeTestMessage('test');
+            await adapter.subscribe.firstCall.lastArg(message);
+            expect(eventSpy).to.have.been.calledOnce();
+            expect(eventSpy.firstCall.firstArg).to.eql([error, message]);
+        });
+        it('should emit message:ack when a message is acked', async () => {
+            const eventSpy = spy();
+            await haredo.queue('test').subscribe(async (message, info) => {
+                await info.ack();
+            });
+            haredo.emitter.on('message:ack', eventSpy);
+            const message = makeTestMessage('test');
+            await adapter.subscribe.firstCall.lastArg(message);
+            expect(eventSpy).to.have.been.calledOnce();
+            expect(eventSpy.firstCall.firstArg).to.eql(message);
+        });
+        it('should emit message:nack when a message is nacked', async () => {
+            const eventSpy = spy();
+            await haredo.queue('test').subscribe(async (message, info) => {
+                await info.nack();
+            });
+            haredo.emitter.on('message:nack', eventSpy);
+            const message = makeTestMessage('test');
+            await adapter.subscribe.firstCall.lastArg(message);
+            expect(eventSpy).to.have.been.calledOnce();
+            expect(eventSpy.firstCall.firstArg).to.eql([true, message]);
+        });
+        it('should emit message:nack with requeue false when a message is nacked with requeue false', async () => {
+            const eventSpy = spy();
+            await haredo.queue('test').subscribe(async (message, info) => {
+                await info.nack(false);
+            });
+            haredo.emitter.on('message:nack', eventSpy);
+            const message = makeTestMessage('test');
+            await adapter.subscribe.firstCall.lastArg(message);
+            expect(eventSpy).to.have.been.calledOnce();
+            expect(eventSpy.firstCall.firstArg).to.eql([false, message]);
         });
     });
 });

@@ -21,6 +21,14 @@ import { FailureBackoff } from './backoffs';
 import { TypedEventEmitter } from './utils/typed-event-target';
 import { LogFunction } from './utils/logger';
 
+export interface HaredoEvents {
+    connected: null;
+    disconnected: null;
+    'message:error': [error: Error, message: HaredoMessage];
+    'message:ack': HaredoMessage;
+    'message:nack': [requeue: boolean, message: HaredoMessage];
+}
+
 export interface HaredoInstance {
     /**
      * Connect to the broker
@@ -41,6 +49,7 @@ export interface HaredoInstance {
      * to finish and close the connection to the broker.
      */
     close(force?: boolean): Promise<void>;
+    emitter: TypedEventEmitter<HaredoEvents>;
 }
 
 export interface Extension {
@@ -76,6 +85,12 @@ export interface HaredoOptions {
      * TLS options to use when connecting to the broker
      */
     tlsOptions?: AMQPTlsOptions;
+    /**
+     * Delay in milliseconds before trying to reconnect to the broker
+     * after a connection failure.
+     * @default 500
+     */
+    reconnectDelay?: number | ((attempt: number) => number);
     /**
      * Adapter to use for commands to the broker. Useful for testing.
      */
@@ -353,6 +368,7 @@ export interface QueueSubscribeChain<T> extends SharedChain {
 }
 
 export interface ChainState {
+    emitter: TypedEventEmitter<HaredoEvents>;
     adapter: Adapter;
     skipSetup?: SkipSetupOptions;
     confirm?: boolean;

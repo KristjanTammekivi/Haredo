@@ -6,6 +6,7 @@ import { delay } from './utils/delay';
 import { isHaredoMessage } from './haredo-message';
 import { NotConnectedError } from './errors';
 import { Logger, createLogger } from './utils/logger';
+import { typedEventToPromise } from './utils/event-to-promise';
 
 // eslint-disable-next-line mocha/no-exports
 export type Stubify<T> = {
@@ -111,7 +112,7 @@ describe('adapter', () => {
                 .and.to.have.been.calledWith('amqp://guest:guest@localhost:5672/');
         });
         it('should forward TLS arguments', async () => {
-            const objectAdapter = createAdapter(
+            adapter = createAdapter(
                 mockAmqp as any,
                 stub().returns(mockQueue) as any,
                 {
@@ -122,8 +123,38 @@ describe('adapter', () => {
                 },
                 logger
             );
-            await objectAdapter.connect();
+            await adapter.connect();
             expect(mockAmqp).to.have.been.calledOnce().and.to.have.been.calledWith('url', { passphrase: 'passphrase' });
+        });
+        it('should adjust reconnection delays', async () => {
+            adapter = createAdapter(mockAmqp as any, mockQueue as any, { url: 'url', reconnectDelay: 100 }, logger);
+            mockClient.connect.onFirstCall().rejects(new Error('big sad'));
+            const connectPromise = adapter.connect();
+            await delay(10);
+            expect(mockClient.connect).to.have.been.calledOnce();
+            await delay(130);
+            expect(mockClient.connect).to.have.been.calledTwice();
+            await connectPromise;
+        });
+        it('should adjust reconnection delays based on a callback', async () => {
+            adapter = createAdapter(
+                mockAmqp as any,
+                mockQueue as any,
+                { url: 'url', reconnectDelay: () => 100 },
+                logger
+            );
+            mockClient.connect.onFirstCall().rejects(new Error('big sad'));
+            const connectPromise = adapter.connect();
+            await delay(10);
+            expect(mockClient.connect).to.have.been.calledOnce();
+            await delay(130);
+            expect(mockClient.connect).to.have.been.calledTwice();
+            await connectPromise;
+        });
+        it('should emit connected event', async () => {
+            const promise = typedEventToPromise(adapter.emitter, 'connected');
+            await adapter.connect();
+            await promise;
         });
     });
     describe('close', () => {
@@ -183,6 +214,12 @@ describe('adapter', () => {
             mockChannel.basicConsume.firstCall.lastArg({ bodyString: () => '"Hello, world"', properties: {} });
             await adapter.close(true);
             expect(callbackDone).to.be.false();
+        });
+        it('should emit disconnect', async () => {
+            const promise = typedEventToPromise(adapter.emitter, 'disconnected');
+            await adapter.connect();
+            await adapter.close();
+            await promise;
         });
     });
     describe('sendToQueue', () => {

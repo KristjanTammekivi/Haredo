@@ -16,6 +16,7 @@ import { createTracker } from './utils/tracker';
 import { NotConnectedError } from './errors';
 import { Logger } from './utils/logger';
 import { delay } from './utils/delay';
+import { TypedEventEmitter } from './utils/typed-event-target';
 
 // arguments passed to consumer
 export interface SubscribeArguments {
@@ -79,7 +80,13 @@ export interface ExchangeDeleteOptions {
     ifUnused?: boolean;
 }
 
+export interface AdapterEvents {
+    connected: null;
+    disconnected: null;
+}
+
 export interface Adapter {
+    emitter: TypedEventEmitter<AdapterEvents>;
     connect(): Promise<AMQPClient>;
     close(force?: boolean): Promise<void>;
     createQueue(name: string | undefined, options?: QueueParams, args?: QueueArguments): Promise<string>;
@@ -103,6 +110,11 @@ export interface Adapter {
 export interface AdapterOptions {
     url: string | RabbitUrl;
     tlsOptions?: AMQPTlsOptions;
+    /**
+     * Add a delay between connection attempts.
+     * @default 500
+     */
+    reconnectDelay?: number | ((attempt: number) => number);
 }
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'closing' | 'closed';
@@ -110,7 +122,7 @@ type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'closing' 
 export const createAdapter = (
     Client: typeof AMQPClient,
     Queue: typeof AMQPQueue,
-    { url, tlsOptions }: AdapterOptions,
+    { url, tlsOptions, reconnectDelay = 500 }: AdapterOptions,
     logger: Logger
 ): Adapter => {
     let status: ConnectionStatus = 'disconnected';
@@ -124,7 +136,9 @@ export const createAdapter = (
         status = newStatus;
         connectionLogger.info(`Setting status to ${ status }`);
     };
+    const emitter = new TypedEventEmitter<AdapterEvents>();
     const loopGetConnection = async () => {
+        let attempt = 0;
         while (true) {
             try {
                 const c = new Client(normalizeUrl(url), tlsOptions);
@@ -140,8 +154,7 @@ export const createAdapter = (
                 return c;
             } catch (error) {
                 logger.setError(error).error('Error connecting to RabbitMQ, retrying in 5 seconds');
-                // TODO: configurable delay
-                await delay(500);
+                await delay(typeof reconnectDelay === 'number' ? reconnectDelay : reconnectDelay(++attempt));
             }
         }
     };
@@ -181,6 +194,7 @@ export const createAdapter = (
         const connectionPromise = loopGetConnection();
         clientPromise = connectionPromise.then(() => delay(5));
         client = await connectionPromise;
+        emitter.emit('connected', null);
         setConnectionStatus('connected');
         clientPromise = undefined;
         client.onerror = (error) => {
@@ -191,6 +205,7 @@ export const createAdapter = (
         return client;
     };
     return {
+        emitter,
         connect,
         close: async (force = false) => {
             if (!client) {
@@ -215,6 +230,7 @@ export const createAdapter = (
             }
             logger.info('Closing client');
             await client.close();
+            emitter.emit('disconnected', null);
             logger.info('Closed');
             client = undefined;
             setConnectionStatus('closed');
@@ -327,6 +343,7 @@ export const createAdapter = (
                 const consumer = await channel.basicConsume(name, { noAck, exclusive, args }, async (message) => {
                     tracker.inc();
                     const wrappedMessage = makeHaredoMessage<unknown>(message, true, name);
+                    // TODO: handle possible error when acking a message where channel is closed
                     await callback(wrappedMessage);
                     tracker.dec();
                 });

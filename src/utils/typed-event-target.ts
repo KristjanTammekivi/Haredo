@@ -1,6 +1,6 @@
 import EventEmitter = require('events');
 
-export class TypedEventEmitter<T extends Record<string | symbol, any>> extends EventEmitter {
+export class TypedEventEmitter<T extends Record<string, any>> extends EventEmitter {
     emit<K extends keyof T & string>(type: K, data: T[K]): boolean {
         return super.emit(type, data);
     }

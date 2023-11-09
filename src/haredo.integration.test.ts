@@ -5,11 +5,12 @@ import { Exchange } from './exchange';
 import { HaredoInstance } from './types';
 import { delay } from './utils/delay';
 
+const RABBIT_URL = 'amqp://localhost:5672/test';
 describe('haredo integration', () => {
     let haredo: HaredoInstance;
     beforeEach(async () => {
         await rabbitAdmin.createVhost('test');
-        haredo = Haredo({ url: 'amqp://localhost:5672/test', log: () => {} });
+        haredo = Haredo({ url: RABBIT_URL, log: () => {} });
         await haredo.connect();
     });
     afterEach(async () => {
