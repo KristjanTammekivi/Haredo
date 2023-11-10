@@ -87,7 +87,7 @@ export interface AdapterEvents {
 
 export interface Adapter {
     emitter: TypedEventEmitter<AdapterEvents>;
-    connect(): Promise<AMQPClient>;
+    connect(): Promise<void>;
     close(force?: boolean): Promise<void>;
     createQueue(name: string | undefined, options?: QueueParams, args?: QueueArguments): Promise<string>;
     deleteQueue(name: string, options?: QueueDeleteOptions): Promise<void>;
@@ -184,11 +184,10 @@ export const createAdapter = (
     };
     const connect = async () => {
         if (client) {
-            return client;
+            return;
         }
         if (clientPromise) {
-            await clientPromise;
-            return client!;
+            return clientPromise;
         }
         setConnectionStatus('connecting');
         const connectionPromise = loopGetConnection();
@@ -202,7 +201,6 @@ export const createAdapter = (
             logger.setError(error).warning('Disconnected');
             void connect();
         };
-        return client;
     };
     return {
         emitter,
