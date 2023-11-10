@@ -1,0 +1,8 @@
+*.test.*
+dist/.tsbuildinfo
+.eslintrc
+.mocharc.json
+.vscode
+src
+test
+tsconfig.json

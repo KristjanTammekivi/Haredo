@@ -393,15 +393,13 @@ export interface ExchangeChainState extends ChainState {
 
 type Merge<T, U> = unknown extends T ? U : unknown extends U ? T : T | U;
 
-export const messageSymbol = Symbol('message');
-
 export interface HaredoMessageEvents {
     ack: null;
     nack: boolean;
 }
 
 export interface HaredoMessage<T = unknown> extends Methods {
-    [messageSymbol]: true;
+    _type: 'HaredoMessage';
     emitter: TypedEventEmitter<HaredoMessageEvents>;
 
     /**

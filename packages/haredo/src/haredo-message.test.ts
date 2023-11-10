@@ -1,5 +1,5 @@
 import { expect } from 'hein';
-import { isHaredoMessage, makeHaredoMessage } from './haredo-message';
+import { makeHaredoMessage } from './haredo-message';
 import { SinonSpy, spy } from 'sinon';
 import { HaredoMessage } from './types';
 describe('HaredoMessage', () => {
@@ -104,10 +104,5 @@ describe('HaredoMessage', () => {
             'testQueue'
         );
         expect(message.deliveryCount).to.eq(1);
-    });
-    describe('isHaredoMessage', () => {
-        it('should return false if not a HaredoMessage', () => {
-            expect(isHaredoMessage(null)).to.be.false();
-        });
     });
 });

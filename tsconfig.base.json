@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "incremental": true,
+        "composite": true,
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "skipLibCheck": true
+    },
+}

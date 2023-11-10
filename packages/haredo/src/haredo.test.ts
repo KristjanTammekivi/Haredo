@@ -1,7 +1,8 @@
 import { config } from 'dotenv';
+import { TestAdapter, createTestAdapter } from 'haredo-test-adapter';
 import { expect } from 'hein';
 import { SinonStub, SinonStubbedInstance, match, spy, stub } from 'sinon';
-import { Adapter, AdapterEvents, Consumer } from './adapter';
+import { Consumer } from './adapter';
 import { FailureBackoff } from './backoffs';
 import { MissingQueueNameError } from './errors';
 import { Exchange } from './exchange';
@@ -9,7 +10,6 @@ import { Haredo } from './haredo';
 import { makeHaredoMessage } from './haredo-message';
 import { Queue } from './queue';
 import { HaredoConsumer } from './types';
-import { TypedEventEmitter } from './utils/typed-event-emitter';
 
 config();
 
@@ -29,26 +29,10 @@ const makeTestMessage = (content: string, { parse = false, queue = 'test' } = {}
 
 describe('haredo', () => {
     let haredo: ReturnType<typeof Haredo>;
-    let adapter: SinonStubbedInstance<Adapter>;
+    let adapter: SinonStubbedInstance<TestAdapter>;
     let consumerStub: Consumer;
     beforeEach(async () => {
-        adapter = stub({
-            bindExchange: () => Promise.resolve(),
-            bindQueue: () => Promise.resolve(),
-            close: () => Promise.resolve(),
-            connect: () => Promise.resolve(),
-            createExchange: () => Promise.resolve(),
-            createQueue: () => Promise.resolve(),
-            deleteExchange: () => Promise.resolve(),
-            deleteQueue: () => Promise.resolve(),
-            publish: () => Promise.resolve(),
-            purgeQueue: () => Promise.resolve(),
-            sendToQueue: () => Promise.resolve(),
-            subscribe: () => Promise.resolve(),
-            unbindExchange: () => Promise.resolve(),
-            unbindQueue: () => Promise.resolve()
-        } as any);
-        adapter.emitter = new TypedEventEmitter<AdapterEvents>();
+        adapter = createTestAdapter();
         haredo = Haredo({ url: rabbitURL + '/test', adapter });
         adapter.createQueue.resolves('test');
         consumerStub = stub({ cancel: () => Promise.resolve() });

@@ -1,0 +1,22 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "rootDir": "src",
+        "outDir": "./dist",
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "tsBuildInfoFile": "dist/.tsbuildinfo",
+        "target": "ES2018",
+        "noUnusedLocals": true,
+        "lib": [
+            "ES2022"
+        ]
+    },
+    "include": [
+        "./src/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "./dist/**/*"
+    ]
+}
