@@ -38,7 +38,7 @@ export interface SubscribeArguments {
     'x-stream-offset'?: StreamOffset;
 }
 
-interface SubscribeOptions {
+export interface SubscribeOptions {
     onClose: (reason: Error | null) => void;
     prefetch?: number;
     noAck?: boolean;
@@ -103,7 +103,7 @@ export interface Adapter {
     subscribe(
         name: string,
         options: SubscribeOptions,
-        callback: (message: HaredoMessage<unknown>) => void | Promise<void>
+        callback: (message: HaredoMessage<unknown>) => Promise<void>
     ): Promise<Consumer>;
 }
 

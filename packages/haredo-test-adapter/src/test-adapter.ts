@@ -1,13 +1,11 @@
 import type { ExchangeParams, QueueParams } from '@cloudamqp/amqp-client';
 import {
+    TypedEventEmitter,
     type Adapter,
     type AdapterEvents,
     type ExchangeArguments,
-    type ExchangeInterface,
     type ExchangeType,
-    type QueueArguments,
-    type QueueInterface,
-    TypedEventEmitter
+    type QueueArguments
 } from 'haredo';
 import { deepEqual } from 'node:assert';
 import { SinonStub, SinonStubbedInstance, stub } from 'sinon';
@@ -20,13 +18,15 @@ interface Queue {
 
 interface Exchange {
     name: string;
-    type: ExchangeInterface['type'];
+    type: ExchangeType;
     params: ExchangeParams;
     arguments: ExchangeArguments;
 }
 
 interface Subscriber {
-    queue: QueueInterface;
+    queue: string;
+    options: any;
+    callback: any;
 }
 
 export interface TestAdapter extends Adapter {
@@ -98,11 +98,16 @@ export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
             deleteExchange: (async () => {}) as Adapter['deleteExchange'],
             deleteQueue: (async () => {}) as Adapter['deleteQueue'],
             publish: (async () => {}) as Adapter['publish'],
-            subscribe: (async () => {
+            subscribe: async (name: string, options: any, callback: any) => {
+                subscribers.push({
+                    queue: name,
+                    options,
+                    callback
+                });
                 return {
                     cancel: async () => {}
                 };
-            }) as any as Adapter['subscribe'],
+            },
             purgeQueue: (async () => {}) as Adapter['purgeQueue'],
             sendToQueue: (async () => {}) as Adapter['sendToQueue'],
             unbindExchange: (async () => {}) as Adapter['unbindExchange'],

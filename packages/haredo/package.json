@@ -17,15 +17,15 @@
     },
     "typesVersions": {
         "*": {
-            "assert": [
+            "types": [
                 "dist/types"
             ]
         }
     },
     "scripts": {
-        "build": "rimraf dist && npm run build:ts",
+        "build": "npm run build:ts",
         "lint": "eslint --ext .ts src",
-        "build:ts": "tsc",
+        "build:ts": "tsc -b",
         "watch:ts": "tsc -w",
         "test": "mocha 'src/**/*.test.ts'",
         "test:watch": "mocha --watch",

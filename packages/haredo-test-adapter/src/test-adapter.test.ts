@@ -2,17 +2,16 @@ import { expect } from 'hein';
 import { SinonStubbedInstance, spy } from 'sinon';
 import { TestAdapter, createTestAdapter } from './test-adapter';
 import { Haredo } from 'haredo';
+import type { HaredoInstance } from 'haredo/types';
 
 const url = 'amqp://localhost';
 
 describe('testAdapter', () => {
     let adapter: SinonStubbedInstance<TestAdapter>;
+    let haredo: HaredoInstance;
     beforeEach(() => {
         adapter = createTestAdapter();
-    });
-    it('should not smoke', () => {
-        createTestAdapter();
-        Haredo({ url, adapter: createTestAdapter() });
+        haredo = Haredo({ url, adapter });
     });
     describe('connect', () => {
         it('should have a connect stub', async () => {
@@ -73,7 +72,6 @@ describe('testAdapter', () => {
             expect(await adapter.createQueue('test')).to.equal('abcdefg');
         });
         it('should work as part of haredo', async () => {
-            const haredo = Haredo({ url, adapter });
             await haredo.queue('test', { durable: true }, { 'message-ttl': 1000 }).setup();
             expect(adapter.queues).to.have.lengthOf(1);
             expect(adapter.queues).to.eql([
@@ -127,7 +125,6 @@ describe('testAdapter', () => {
             ).to.reject();
         });
         it('should work as part of Haredo', async () => {
-            const haredo = Haredo({ url, adapter });
             await haredo.exchange('test', 'direct', { durable: true }, { 'alternate-exchange': 'test2' }).setup();
             expect(adapter.exchanges).to.have.lengthOf(1);
             expect(adapter.exchanges).to.eql([
@@ -142,14 +139,16 @@ describe('testAdapter', () => {
     });
     describe('subscribe', () => {
         it('should not smoke', async () => {
-            const haredo = Haredo({ url, adapter });
             await haredo.queue('test').subscribe(() => {});
         });
         it('should add subscriber to list', async () => {
-            const haredo = Haredo({ url, adapter });
-            const fn = spy();
-            await haredo.queue('test').subscribe(fn);
+            await haredo.queue('test').subscribe(() => {});
             expect(adapter.subscribers).to.have.lengthOf(1);
+        });
+        it('should remove subscriber on cancel', async () => {
+            const consumer = await haredo.queue('queue').subscribe(() => {});
+            await consumer.cancel();
+            expect(adapter.subscribers).to.be.empty();
         });
     });
 });
