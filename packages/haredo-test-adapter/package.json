@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "build": "tsc -b",
+    "lint": "eslint 'src/**/*.ts'",
     "test": "mocha 'src/**/*.test.ts'",
     "test:watch": "mocha --watch 'src/**/*.test.ts'"
   },

@@ -21,7 +21,12 @@
   },
   "scripts": {
     "build": "tsc -b .",
-    "lint": "eslint --ext .ts src",
+    "lint": "yarn lint:haredo && yarn lint:haredo-test-adapter",
+    "lint:haredo": "yarn workspace haredo run lint",
+    "lint:haredo-test-adapter": "yarn workspace haredo-test-adapter run lint",
+    "test": "yarn test:haredo && yarn test:haredo-test-adapter",
+    "test:haredo": "yarn workspace haredo run coverage",
+    "test:haredo-test-adapter": "yarn workspace haredo-test-adapter run test",
     "release:haredo:patch": "sh release.sh haredo patch",
     "release:haredo:minor": "sh release.sh haredo minor",
     "release:haredo:major": "sh release.sh haredo major",
