@@ -43,6 +43,7 @@ export interface SubscribeOptions {
     prefetch?: number;
     noAck?: boolean;
     exclusive?: boolean;
+    parseJson?: boolean;
     args?: SubscribeArguments;
 }
 export interface Consumer {
@@ -153,7 +154,7 @@ export const createAdapter = (
                 await c.connect();
                 return c;
             } catch (error) {
-                logger.setError(error).error('Error connecting to RabbitMQ, retrying in 5 seconds');
+                logger.setError(error as Error).error('Error connecting to RabbitMQ, retrying in 5 seconds');
                 await delay(typeof reconnectDelay === 'number' ? reconnectDelay : reconnectDelay(++attempt));
             }
         }
@@ -330,7 +331,11 @@ export const createAdapter = (
             }
             await channel.basicPublish(exchange, routingKey, message, options, mandatory, immediate);
         },
-        subscribe: async (name, { onClose, prefetch, args, noAck = false, exclusive = false }, callback) => {
+        subscribe: async (
+            name,
+            { onClose, prefetch, args, parseJson = true, noAck = false, exclusive = false },
+            callback
+        ) => {
             await waitForClient();
             const channel = await client!.channel();
             try {
@@ -340,7 +345,7 @@ export const createAdapter = (
                 const tracker = createTracker();
                 const consumer = await channel.basicConsume(name, { noAck, exclusive, args }, async (message) => {
                     tracker.inc();
-                    const wrappedMessage = makeHaredoMessage<unknown>(message, true, name);
+                    const wrappedMessage = makeHaredoMessage<unknown>(message, parseJson, name);
                     // TODO: handle possible error when acking a message where channel is closed
                     await callback(wrappedMessage);
                     tracker.dec();
@@ -370,7 +375,7 @@ export const createAdapter = (
                     });
                 return wrappedConsumer;
             } catch (error) {
-                logger.error('Error subscribing to queue:', error);
+                logger.setError(error as Error).error('Error subscribing to queue');
                 await channel.close();
                 throw error;
             }

@@ -1,11 +1,13 @@
 {
     "compilerOptions": {
-        "strict": true,
+        "strictNullChecks": true,
+        "noImplicitAny": true,
         "incremental": true,
         "composite": true,
         "declaration": true,
-        "declarationMap": true,
-        "sourceMap": true,
+        "declarationMap": false,
+        "inlineSourceMap": true,
+        "allowJs": true,
         "skipLibCheck": true
     },
 }

@@ -13,12 +13,16 @@
     "main": "dist/index.js",
     "exports": {
         ".": "./dist/index.js",
-        "./types": "./dist/types.js"
+        "./types": "./dist/types.js",
+        "./internals": "./dist/internals.js"
     },
     "typesVersions": {
         "*": {
             "types": [
                 "dist/types"
+            ],
+            "internals": [
+                "dist/internals"
             ]
         }
     },
@@ -41,8 +45,7 @@
         "url": "https://github.com/KristjanTammekivi/haredo.git"
     },
     "dependencies": {
-        "@cloudamqp/amqp-client": "^3.1.1",
-        "haredo-test-adapter": "*"
+        "@cloudamqp/amqp-client": "^3.1.1"
     },
     "devDependencies": {
         "@faker-js/faker": "^8.0.2",

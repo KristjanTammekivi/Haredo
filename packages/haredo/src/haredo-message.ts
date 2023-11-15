@@ -1,7 +1,7 @@
 import { AMQPMessage, Field } from '@cloudamqp/amqp-client';
 import { parseJSON } from './utils/parse-json';
 import { TypedEventEmitter } from './utils/typed-event-emitter';
-import { HaredoMessage, HaredoMessageEvents, messageSymbol } from './types';
+import { HaredoMessage, HaredoMessageEvents } from './types';
 
 export const makeHaredoMessage = <T = unknown>(
     raw: AMQPMessage,
@@ -15,7 +15,7 @@ export const makeHaredoMessage = <T = unknown>(
     };
 
     const dataString = raw.bodyString();
-    const data = parseJson ? parseJSON<T>(dataString) : (dataString as T);
+    const data = parseJson ? parseJSON<T>(dataString)! : (dataString as T);
 
     const deliveryCount = raw.properties.headers?.['x-delivery-count'];
 

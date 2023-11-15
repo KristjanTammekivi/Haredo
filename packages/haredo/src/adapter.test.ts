@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="./utils/test/hein-helper.ts" />
+
 import { AMQPChannel, AMQPClient, AMQPConsumer, AMQPError, AMQPQueue } from '@cloudamqp/amqp-client';
 import { expect } from 'hein';
 import { SinonStub, spy, stub } from 'sinon';
@@ -11,6 +14,8 @@ import { typedEventToPromise } from './utils/event-to-promise';
 export type Stubify<T> = {
     [P in keyof T]: SinonStub & Stubify<T[P]> & T[P];
 };
+
+const asyncNoop = async () => {};
 
 describe('adapter', () => {
     let mockAmqp: Stubify<AMQPClient>;
@@ -164,7 +169,7 @@ describe('adapter', () => {
         });
         it('should close consumers', async () => {
             await adapter.connect();
-            await adapter.subscribe('test', { onClose: stub() }, () => {});
+            await adapter.subscribe('test', { onClose: stub() }, asyncNoop);
             await adapter.close();
             expect(mockConsumer.cancel).to.have.been.calledOnce();
         });
@@ -182,20 +187,20 @@ describe('adapter', () => {
         });
         it('should close consumers channels', async () => {
             await adapter.connect();
-            await adapter.subscribe('test', { onClose: stub() }, () => {});
+            await adapter.subscribe('test', { onClose: stub() }, asyncNoop);
             await adapter.close();
             expect(mockChannel.close).to.have.been.calledOnce();
         });
         it('should not close consumers that have already been cancelled', async () => {
             await adapter.connect();
-            const consumer = await adapter.subscribe('test', { onClose: stub() }, () => {});
+            const consumer = await adapter.subscribe('test', { onClose: stub() }, asyncNoop);
             await consumer.cancel();
             await adapter.close();
             expect(mockConsumer.cancel).to.have.been.calledOnce();
         });
         it('should not call cancel twice on consumers', async () => {
             await adapter.connect();
-            const consumer = await adapter.subscribe('test', { onClose: stub() }, () => {});
+            const consumer = await adapter.subscribe('test', { onClose: stub() }, asyncNoop);
             await Promise.all([consumer.cancel(), consumer.cancel()]);
             expect(mockConsumer.cancel).to.have.been.calledOnce();
         });
@@ -440,23 +445,23 @@ describe('adapter', () => {
             const onClose = stub();
             const error = new AMQPError('Big sad', mockClient as any);
             mockConsumer.wait.rejects(error);
-            await adapter.subscribe('test', { onClose }, () => {});
+            await adapter.subscribe('test', { onClose }, asyncNoop);
             await delay(1);
             expect(onClose).to.have.been.calledOnce().and.to.have.been.calledWith(error);
         });
         it('should call onClose callback when consumer is closed gracefully', async () => {
             const onClose = stub();
             mockConsumer.wait.resolves();
-            await adapter.subscribe('test', { onClose }, () => {});
+            await adapter.subscribe('test', { onClose }, asyncNoop);
             await delay(1);
             expect(onClose).to.have.been.calledOnce().and.to.have.been.calledWith(null);
         });
         it('should set prefetch', async () => {
-            await adapter.subscribe('test', { onClose: stub(), prefetch: 1 }, () => {});
+            await adapter.subscribe('test', { onClose: stub(), prefetch: 1 }, asyncNoop);
             expect(mockChannel.prefetch).to.have.been.calledOnce().and.to.have.been.calledWith(1);
         });
         it('should await on callback', async () => {
-            let callbackEnd: Date;
+            let callbackEnd: Date | undefined;
             const callback = spy(async () => {
                 await delay(10);
                 callbackEnd = new Date();
@@ -469,22 +474,30 @@ describe('adapter', () => {
         });
         it('should throw if called while disconnected', async () => {
             await adapter.close();
-            await expect(adapter.subscribe('test', { onClose: stub() }, () => {})).to.reject(NotConnectedError);
+            await expect(adapter.subscribe('test', { onClose: stub() }, asyncNoop)).to.reject(NotConnectedError);
         });
         it('should send subscribe arguments to subscribe', async () => {
-            await adapter.subscribe('test', { onClose: stub(), args: { 'x-stream-offset': 'last' } }, () => {});
+            await adapter.subscribe('test', { onClose: stub(), args: { 'x-stream-offset': 'last' } }, asyncNoop);
             expect(mockChannel.basicConsume).to.have.been.calledOnce();
             expect(mockChannel.basicConsume.firstCall.args[1].args).to.partially.eql({ 'x-stream-offset': 'last' });
         });
         it('should close channel when cancelling consumer', async () => {
-            const consumer = await adapter.subscribe('test', { onClose: stub() }, () => {});
+            const consumer = await adapter.subscribe('test', { onClose: stub() }, asyncNoop);
             await consumer.cancel();
             expect(mockChannel.close).to.have.been.calledOnce();
         });
         it('should close channel if basicConsume throws', async () => {
             mockChannel.basicConsume.throws(new Error('big sad'));
-            await expect(adapter.subscribe('test', { onClose: stub() }, () => {})).to.reject();
+            await expect(adapter.subscribe('test', { onClose: stub() }, asyncNoop)).to.reject();
             expect(mockChannel.close).to.have.been.calledOnce();
+        });
+        it('should turn off json parsing based on options', async () => {
+            const cbSpy = spy();
+            await adapter.subscribe('test', { onClose: stub(), parseJson: false }, cbSpy);
+            const internalCallback = mockChannel.basicConsume.firstCall.lastArg;
+            internalCallback({ bodyString: () => '"Hello, world"', properties: {} });
+            expect(cbSpy).to.have.been.calledOnce();
+            expect(cbSpy.firstCall.firstArg.data).to.eq('"Hello, world"');
         });
     });
     describe('bindExchange', () => {

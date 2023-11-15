@@ -1,8 +1,7 @@
 import { config } from 'dotenv';
-import { TestAdapter, createTestAdapter } from 'haredo-test-adapter';
 import { expect } from 'hein';
 import { SinonStub, SinonStubbedInstance, match, spy, stub } from 'sinon';
-import { Consumer } from './adapter';
+import { Adapter, AdapterEvents, Consumer } from './adapter';
 import { FailureBackoff } from './backoffs';
 import { MissingQueueNameError } from './errors';
 import { Exchange } from './exchange';
@@ -10,6 +9,7 @@ import { Haredo } from './haredo';
 import { makeHaredoMessage } from './haredo-message';
 import { Queue } from './queue';
 import { HaredoConsumer } from './types';
+import { TypedEventEmitter } from './utils/typed-event-emitter';
 
 config();
 
@@ -29,10 +29,26 @@ const makeTestMessage = (content: string, { parse = false, queue = 'test' } = {}
 
 describe('haredo', () => {
     let haredo: ReturnType<typeof Haredo>;
-    let adapter: SinonStubbedInstance<TestAdapter>;
+    let adapter: SinonStubbedInstance<Adapter>;
     let consumerStub: Consumer;
     beforeEach(async () => {
-        adapter = createTestAdapter();
+        adapter = stub({
+            bindExchange: () => Promise.resolve(),
+            bindQueue: () => Promise.resolve(),
+            close: () => Promise.resolve(),
+            connect: () => Promise.resolve(),
+            createExchange: () => Promise.resolve(),
+            createQueue: () => Promise.resolve(),
+            deleteExchange: () => Promise.resolve(),
+            deleteQueue: () => Promise.resolve(),
+            publish: () => Promise.resolve(),
+            purgeQueue: () => Promise.resolve(),
+            sendToQueue: () => Promise.resolve(),
+            subscribe: () => Promise.resolve(),
+            unbindExchange: () => Promise.resolve(),
+            unbindQueue: () => Promise.resolve()
+        } as any);
+        adapter.emitter = new TypedEventEmitter<AdapterEvents>();
         haredo = Haredo({ url: rabbitURL + '/test', adapter });
         adapter.createQueue.resolves('test');
         consumerStub = stub({ cancel: () => Promise.resolve() });
@@ -526,6 +542,30 @@ describe('haredo', () => {
                 await adapter.subscribe.firstCall.lastArg(message);
                 expect(message.nack).to.have.been.calledOnce();
                 expect(message.nack).to.have.been.calledWith(true);
+            });
+            it('should call adapter with parseJson false if it is set to false', async () => {
+                await haredo
+                    .queue('test')
+                    .json(false)
+                    .subscribe(() => {});
+                expect(adapter.subscribe).to.have.been.calledOnce();
+                expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ parseJson: false });
+            });
+            it('should call adapter with noAck true if it is set to true', async () => {
+                await haredo
+                    .queue('test')
+                    .noAck()
+                    .subscribe(() => {});
+                expect(adapter.subscribe).to.have.been.calledOnce();
+                expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ noAck: true });
+            });
+            it('should call adapter with exclusive true if it is set to true', async () => {
+                await haredo
+                    .queue('test')
+                    .exclusive()
+                    .subscribe(() => {});
+                expect(adapter.subscribe).to.have.been.calledOnce();
+                expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ exclusive: true });
             });
         });
         describe('backoff', () => {
