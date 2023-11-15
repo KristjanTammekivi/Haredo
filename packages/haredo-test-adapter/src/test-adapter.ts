@@ -1,14 +1,16 @@
 import type { ExchangeParams, QueueParams } from '@cloudamqp/amqp-client';
 import {
-    TypedEventEmitter,
     type Adapter,
     type AdapterEvents,
     type ExchangeArguments,
     type ExchangeType,
     type QueueArguments
 } from 'haredo';
+import { SubscribeOptions, makeHaredoMessage, TypedEventEmitter } from 'haredo/internals';
 import { deepEqual } from 'node:assert';
 import { SinonStub, SinonStubbedInstance, stub } from 'sinon';
+import { HaredoTestAdapterError } from './errors';
+import { HaredoMessage } from 'haredo/types';
 
 interface Queue {
     name: string;
@@ -25,7 +27,7 @@ interface Exchange {
 
 interface Subscriber {
     queue: string;
-    options: any;
+    options: SubscribeOptions;
     callback: any;
 }
 
@@ -33,7 +35,10 @@ export interface TestAdapter extends Adapter {
     queues: Queue[];
     exchanges: Exchange[];
     subscribers: Subscriber[];
+    callSubscriber(queueName: string, message: string): Promise<SinonStubbedInstance<HaredoMessage>>;
 }
+
+export type HaredoTestAdapter = SinonStubbedInstance<TestAdapter>;
 
 export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
     const emitter = new TypedEventEmitter<AdapterEvents>();
@@ -105,13 +110,40 @@ export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
                     callback
                 });
                 return {
-                    cancel: async () => {}
+                    cancel: async () => {
+                        const index = subscribers.findIndex((s) => s.queue === name);
+                        if (index > -1) {
+                            subscribers.splice(index, 1);
+                        } else {
+                            throw new HaredoTestAdapterError(`Could not find subscriber with queue ${ name }`);
+                        }
+                    }
                 };
             },
             purgeQueue: (async () => {}) as Adapter['purgeQueue'],
             sendToQueue: (async () => {}) as Adapter['sendToQueue'],
             unbindExchange: (async () => {}) as Adapter['unbindExchange'],
-            unbindQueue: (async () => {}) as Adapter['unbindQueue']
+            unbindQueue: (async () => {}) as Adapter['unbindQueue'],
+            callSubscriber: async (queue: string, message: string) => {
+                const subscriber = subscribers.find((s) => s.queue === queue);
+                if (!subscriber) {
+                    throw new HaredoTestAdapterError(`Could not find subscriber with queue ${ queue }`);
+                }
+                const haredoMessage = stub(
+                    makeHaredoMessage(
+                        {
+                            bodyString: () => message,
+                            properties: {},
+                            ack: () => {},
+                            nack: () => {}
+                        } as any,
+                        subscriber.options.parseJson ?? true,
+                        queue
+                    )
+                );
+                await subscriber.callback(haredoMessage);
+                return haredoMessage;
+            }
         });
 
         for (const key of Object.keys(mockedAdapter)) {

@@ -2,7 +2,7 @@ import { expect } from 'hein';
 import { SinonStubbedInstance, spy } from 'sinon';
 import { TestAdapter, createTestAdapter } from './test-adapter';
 import { Haredo } from 'haredo';
-import type { HaredoInstance } from 'haredo/types';
+import type { HaredoInstance } from 'haredo';
 
 const url = 'amqp://localhost';
 
@@ -149,6 +149,25 @@ describe('testAdapter', () => {
             const consumer = await haredo.queue('queue').subscribe(() => {});
             await consumer.cancel();
             expect(adapter.subscribers).to.be.empty();
+        });
+        it('should throw when cancelling twice', async () => {
+            const consumer = await haredo.queue('queue').subscribe(() => {});
+            await consumer.cancel();
+            await expect(consumer.cancel()).to.reject();
+        });
+        it('should be possible to run the callback', async () => {
+            const cbSpy = spy();
+            await haredo.queue('queue').subscribe(cbSpy);
+            await adapter.callSubscriber('queue', '"test"');
+            expect(cbSpy).to.have.been.calledOnce();
+            expect(cbSpy).to.have.been.calledWith('test');
+        });
+        it('should return a stub of a message', async () => {
+            await haredo.queue('queue').subscribe(() => {
+                throw new Error('Fail');
+            });
+            const message = await adapter.callSubscriber('queue', '"test"');
+            expect(message.nack).to.have.been.calledOnce();
         });
     });
 });
