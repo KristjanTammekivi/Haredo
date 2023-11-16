@@ -2,8 +2,12 @@
   "name": "haredo-test-adapter",
   "version": "0.0.1",
   "main": "dist/index.js",
-  "author": "Kristjan Tammekivi <kristjantammekivi@gmail.com>",
+  "author": "Kristjan Tammekivi",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KristjanTammekivi/Haredo"
+  },
   "keywords": [
     "haredo"
   ],
