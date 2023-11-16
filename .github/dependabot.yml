@@ -5,3 +5,7 @@ updates:
   schedule:
     interval: daily
   open-pull-requests-limit: 10
+  commit-message:
+    include: scope
+    prefix: "chore(deps):"
+    prefix-development: "chore(deps-dev):"
