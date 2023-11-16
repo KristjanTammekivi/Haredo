@@ -278,7 +278,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
         );
     };
     const setPublishOption = (key: keyof AMQPProperties, value: AMQPProperties[keyof AMQPProperties]) => {
-        return queueChain(
+        return queueChain<T>(
             mergeState(state, { publishOptions: { ...state.publishOptions, [key]: value } }),
             logger,
             extensions
@@ -299,6 +299,12 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
     };
     return {
         setup,
+        noAck: (noAck = true) => {
+            return queueChain(mergeState(state, { noAck }), logger, extensions);
+        },
+        exclusive: (exclusive = true) => {
+            return queueChain(mergeState(state, { exclusive }), logger, extensions);
+        },
         setPublishArgument: setPublishOption,
         backoff: (backoff) => {
             return queueChain(mergeState(state, { backoff }), logger, extensions);
@@ -434,9 +440,9 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
                         },
                         prefetch: state.prefetch,
                         args: state.subscribeArguments,
-                        // TODO: make configurable
-                        noAck: false,
-                        exclusive: false
+                        parseJson: state.json,
+                        noAck: state.noAck ?? false,
+                        exclusive: state.exclusive ?? false
                     },
                     async (message: HaredoMessage<T>) => {
                         message.emitter.once('ack', () => {

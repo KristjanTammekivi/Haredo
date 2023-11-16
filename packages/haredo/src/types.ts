@@ -365,6 +365,18 @@ export interface QueueSubscribeChain<T> extends SharedChain {
      * published before the given timestamp.
      */
     streamOffset(offset: StreamOffset): QueueSubscribeChain<T>;
+    /**
+     * Set the noAck mode true or false. When noAck is true the broker won't
+     * expect an acknowledgement of messages delivered to this consumer.
+     * @param noAck
+     */
+    noAck(noAck?: boolean): QueueSubscribeChain<T>;
+    /**
+     * Set the exclusive mode true or false. When exclusive is true the broker
+     * won't let anyone else consume from this queue.
+     * @param exclusive
+     */
+    exclusive(exclusive?: boolean): QueueSubscribeChain<T>;
 }
 
 export interface ChainState {
@@ -385,6 +397,8 @@ export interface QueueChainState<T> extends ChainState {
     prefetch?: number;
     backoff?: FailureBackoff;
     subscribeArguments?: SubscribeArguments;
+    noAck?: boolean;
+    exclusive?: boolean;
 }
 
 export interface ExchangeChainState extends ChainState {
@@ -393,15 +407,13 @@ export interface ExchangeChainState extends ChainState {
 
 type Merge<T, U> = unknown extends T ? U : unknown extends U ? T : T | U;
 
-export const messageSymbol = Symbol('message');
-
 export interface HaredoMessageEvents {
     ack: null;
     nack: boolean;
 }
 
 export interface HaredoMessage<T = unknown> extends Methods {
-    [messageSymbol]: true;
+    _type: 'HaredoMessage';
     emitter: TypedEventEmitter<HaredoMessageEvents>;
 
     /**

@@ -543,6 +543,30 @@ describe('haredo', () => {
                 expect(message.nack).to.have.been.calledOnce();
                 expect(message.nack).to.have.been.calledWith(true);
             });
+            it('should call adapter with parseJson false if it is set to false', async () => {
+                await haredo
+                    .queue('test')
+                    .json(false)
+                    .subscribe(() => {});
+                expect(adapter.subscribe).to.have.been.calledOnce();
+                expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ parseJson: false });
+            });
+            it('should call adapter with noAck true if it is set to true', async () => {
+                await haredo
+                    .queue('test')
+                    .noAck()
+                    .subscribe(() => {});
+                expect(adapter.subscribe).to.have.been.calledOnce();
+                expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ noAck: true });
+            });
+            it('should call adapter with exclusive true if it is set to true', async () => {
+                await haredo
+                    .queue('test')
+                    .exclusive()
+                    .subscribe(() => {});
+                expect(adapter.subscribe).to.have.been.calledOnce();
+                expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ exclusive: true });
+            });
         });
         describe('backoff', () => {
             let backoff: SinonStubbedInstance<FailureBackoff>;

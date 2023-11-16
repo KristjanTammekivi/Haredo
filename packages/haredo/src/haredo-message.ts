@@ -1,7 +1,7 @@
 import { AMQPMessage, Field } from '@cloudamqp/amqp-client';
 import { parseJSON } from './utils/parse-json';
 import { TypedEventEmitter } from './utils/typed-event-emitter';
-import { HaredoMessage, HaredoMessageEvents, messageSymbol } from './types';
+import { HaredoMessage, HaredoMessageEvents } from './types';
 
 export const makeHaredoMessage = <T = unknown>(
     raw: AMQPMessage,
@@ -15,13 +15,14 @@ export const makeHaredoMessage = <T = unknown>(
     };
 
     const dataString = raw.bodyString();
-    const data = parseJson ? (parseJSON<T>(dataString) as T) : (dataString as T);
+    const data = parseJson ? parseJSON<T>(dataString)! : (dataString as T);
 
     const deliveryCount = raw.properties.headers?.['x-delivery-count'];
 
     const emitter = new TypedEventEmitter<HaredoMessageEvents>();
 
     return {
+        _type: 'HaredoMessage',
         raw,
         dataString,
         data,
@@ -68,16 +69,6 @@ export const makeHaredoMessage = <T = unknown>(
         type: raw.properties.type,
         userId: raw.properties.userId,
         deliveryCount: deliveryCount && !Number.isNaN(Number(deliveryCount)) ? Number(deliveryCount) : undefined,
-        streamOffset: raw.properties.headers?.['x-stream-offset'] as number,
-        [messageSymbol]: true
+        streamOffset: raw.properties.headers?.['x-stream-offset'] as number
     };
-};
-
-/**
- * Returns true if passed in object is a haredo message
- * @param {any} object Object to check
- * @returns {boolean} isMessage
- */
-export const isHaredoMessage = (object: any): object is HaredoMessage => {
-    return object?.[messageSymbol] || false;
 };

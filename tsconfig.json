@@ -1,21 +1,12 @@
 {
-    "compilerOptions": {
-        "noErrorTruncation": true,
-        "module": "commonjs",
-        "target": "es2018",
-        "noImplicitAny": true,
-        "inlineSourceMap": true,
-        "strictNullChecks": true,
-        "incremental": false,
-        "experimentalDecorators": false,
-        "declaration": true,
-        "outDir": "./dist",
-        "skipLibCheck": true,
-        "lib": [
-            "es2022"
-        ]
-    },
-    "include": [
-        "src/**/*"
-    ]
+    "extends": "./tsconfig.base.json",
+    "references": [
+        {
+            "path": "./packages/haredo"
+        },
+        {
+            "path": "./packages/haredo-test-adapter"
+        }
+    ],
+    "files": []
 }
