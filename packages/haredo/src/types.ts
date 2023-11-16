@@ -414,9 +414,6 @@ export interface HaredoMessage<T = unknown> extends Methods {
     _type: 'HaredoMessage';
     emitter: TypedEventEmitter<HaredoMessageEvents>;
 
-    /**
-     * Raw message from amqplib
-     */
     raw: AMQPMessage;
     /**
      * Message contents
