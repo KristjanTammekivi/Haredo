@@ -1,3 +1,6 @@
+set -x
+set -e
+
 cd "$(dirname "$0")"
 
 if [ -z "$1" ]; then
@@ -31,6 +34,7 @@ yarn exec -- auto-changelog \
   --append-git-log "packages/$1/" \
   --output packages/$1/CHANGELOG.md \
   --ignore-commit-pattern '(^chore|dependabot)' \
+  --starting-date 2023-11-16 \
   --commit-limit false
 git add packages/$1/CHANGELOG.md
 git commit --amend --no-edit
