@@ -29,14 +29,14 @@
     "scripts": {
         "build": "npm run build:ts",
         "lint": "eslint --ext .ts src",
-        "build:ts": "tsc -b",
+        "build:ts": "tsc",
         "watch:ts": "tsc -w",
         "test": "mocha 'src/**/*.test.ts'",
         "test:watch": "mocha --watch",
         "test:mocked:watch": "mocha 'src/**/*.test.ts' --ignore src/haredo.integration.test.ts --watch",
         "coverage": "nyc npm run test",
         "rabbitmq:start": "docker-compose -f docker/docker-compose.yml up",
-        "generate-docs": "typedoc --out docs src/index.ts"
+        "generate-docs": "typedoc --out docs src/index.ts src/types.ts"
     },
     "author": "Kristjan Tammekivi",
     "license": "MIT",
@@ -68,6 +68,7 @@
         "sinon": "^17.0.0",
         "source-map-support": "^0.5.6",
         "ts-node": "^10.8.0",
+        "typedoc": "^0.25.3",
         "typescript": "^5.1.6",
         "wtfnode": "^0.9.1"
     }

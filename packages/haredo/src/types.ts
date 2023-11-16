@@ -14,8 +14,6 @@ import {
     QueueDeleteOptions,
     SubscribeArguments
 } from './adapter';
-import { ExchangeArguments, ExchangeInterface, ExchangeType } from './exchange';
-import { QueueArguments, QueueInterface } from './queue';
 import { Middleware } from './utils/apply-middleware';
 import { FailureBackoff } from './backoffs';
 import { TypedEventEmitter } from './utils/typed-event-emitter';
@@ -539,4 +537,204 @@ export interface Methods {
      * the front of the queue
      */
     nack(requeue?: boolean): Promise<void>;
+}
+
+export type StandardExchangeType = 'direct' | 'fanout' | 'topic' | 'headers';
+
+export type ExchangeType = StandardExchangeType | 'x-delayed-message';
+
+interface KnownExchangeArguments {
+    'alternate-exchange'?: string;
+}
+
+export type ExchangeArguments = Omit<Record<string, string | number>, keyof KnownExchangeArguments> &
+    KnownExchangeArguments;
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export interface ExchangeInterface<T = unknown> {
+    name: string;
+    type: ExchangeType;
+    params: ExchangeParams;
+    args: ExchangeArguments;
+    /**
+     * Set the exchange as autoDelete.
+     * AutoDelete exchanges will be deleted when there are no queues bound to it.
+     */
+    autoDelete(autoDelete?: boolean): this;
+    /**
+     * Set the exchange as durable. Durable exchanges will survive broker restarts.
+     */
+    durable(durable?: boolean): this;
+    /**
+     * Set the exchange as passive. Passive exchanges will not be created by the broker.
+     */
+    passive(passive?: boolean): this;
+    /**
+     * Set the alternate exchange for this exchange.
+     * If a message cannot be routed to any queue
+     * in this exchange, it will be sent to the alternate exchange.
+     */
+    alternateExchange(alternate: string | ExchangeInterface): this;
+    /**
+     * Set the exchange as delayed exchange
+     */
+    delayed(): this;
+}
+
+type XOverflow = 'drop-head' | 'reject-publish' | 'reject-publish-dlx';
+
+interface KnownQueueArguments {
+    /**
+     * Maximum TTL for messages in the queue.
+     */
+    'message-ttl'?: number;
+    /**
+     * In case of messages being rejected or dead, they will be sent to the
+     * specified exchange.
+     */
+    'x-dead-letter-exchange'?: string;
+    /**
+     * When paired with x-dead-letter-exchange this will be the routing key
+     * for dead letter messages.
+     */
+    'x-dead-letter-routing-key'?: string;
+    /**
+     * The type of the queue.
+     */
+    'x-queue-type'?: 'classic' | 'quorum' | 'stream';
+    /**
+     * Maximum length of the queue. Overflow behavior is set with x-overflow.
+     */
+    'x-max-length'?: number;
+    /**
+     * Maximum length of the queue in bytes. Overflow behavior is set with x-overflow.
+     */
+    'x-max-length-bytes'?: number;
+    /**
+     * Overflow behavior for x-max-length and x-max-length-bytes.
+     * @default 'drop-head'
+     */
+    'x-overflow'?: XOverflow;
+    /**
+     * Delete the queue after the given time in milliseconds of disuse.
+     */
+    'x-expires'?: number;
+    /**
+     * Maximum priority of the messages in the queue.
+     * Larger numbers indicate higher priority.
+     */
+    'x-max-priority'?: number;
+    /**
+     * Maximum number of times a message in the queue will be delivered.
+     * Only applicable to quorum queues.
+     */
+    'x-delivery-limit'?: number;
+    /**
+     * Set the queue to have a single active consumer.
+     * See https://www.rabbitmq.com/consumers.html#single-active-consumer
+     */
+    'x-single-active-consumer'?: boolean;
+    /**
+     * Maximum age of the messages in the stream. Retention is only evaluated when
+     * a new segment is added to the stream
+     */
+    'x-max-age'?: Retention;
+    /**
+     * A stream is divided up into fixed size segment files on disk. This setting controls the size of these. Default: (500000000 bytes).
+     */
+    'x-stream-max-segment-size-bytes'?: number;
+}
+
+export type QueueArguments = Omit<Record<string, string | number | boolean>, keyof KnownQueueArguments> &
+    KnownQueueArguments;
+
+export interface QueueInterface<TMESSAGE = unknown> {
+    name: string | undefined;
+    params: QueueParams;
+    args: QueueArguments;
+    setArgument(
+        key: keyof QueueArguments,
+        value: QueueArguments[keyof QueueArguments] | undefined
+    ): QueueInterface<TMESSAGE>;
+    /**
+     * Set the queue type to quorum.
+     * See https://www.rabbitmq.com/quorum-queues.html
+     */
+    quorum(): QueueInterface<TMESSAGE>;
+    /**
+     * Set the queue type to stream.
+     * See https://www.rabbitmq.com/streams.html
+     */
+    stream(): QueueInterface<TMESSAGE>;
+    /**
+     * Set the queue to auto delete when the last consumer disconnects.
+     * Not allowed for quorum queues or streams
+     */
+    autoDelete(autoDelete?: boolean): QueueInterface<TMESSAGE>;
+    /**
+     * Set the queue to be exclusive.
+     * Exclusive queues can only be used by one connection
+     * and will be deleted when the connection closes.
+     */
+    exclusive(exclusive?: boolean): QueueInterface<TMESSAGE>;
+    /**
+     * Set the queue to be durable.
+     * Durable queues will survive a broker restart.
+     */
+    durable(durable?: boolean): QueueInterface<TMESSAGE>;
+    /**
+     * Set the queue to be passive.
+     * Passive queues will not be created by the broker.
+     */
+    passive(passive?: boolean): QueueInterface<TMESSAGE>;
+    /**
+     * Set the dead letter exchange.
+     */
+    dead(deadLetterExchange: string | ExchangeInterface, rountingKey?: string): QueueInterface<TMESSAGE>;
+    /**
+     * Set message TTL. Messages in the queue will be expired after the TTL.
+     * If dead letter exchange is set, expired messages will be sent to the
+     * dead letter exchange.
+     */
+    messageTtl(ttl: number): QueueInterface<TMESSAGE>;
+    /**
+     * Set the max length of the queue.
+     */
+    maxLength(maxLength: number, overflowBehavior?: XOverflow): QueueInterface<TMESSAGE>;
+    /**
+     * Set the max length of the queue in bytes.
+     */
+    maxLengthBytes(maxLengthBytes: number, overflowBehavior?: XOverflow): QueueInterface<TMESSAGE>;
+    /**
+     * Delete the queue after the given time in milliseconds of disuse.
+     */
+    expires(ms: number): QueueInterface<TMESSAGE>;
+    /**
+     * Set maximum priority of the messages in the queue.
+     * Larger numbers indicate higher priority.
+     */
+    maxPriority(priority: number): QueueInterface<TMESSAGE>;
+    /**
+     * Set the delivery limit of the queue.
+     * Only applicable to quorum queues.
+     */
+    deliveryLimit(limit: number): QueueInterface<TMESSAGE>;
+    /**
+     * Set the queue to have a single active consumer.
+     * See https://www.rabbitmq.com/consumers.html#single-active-consumer
+     */
+    singleActiveConsumer(): QueueInterface<TMESSAGE>;
+    /**
+     * Set the max age of the messages in the stream.
+     * Retention is only evaluated when a new segment is added to the stream.
+     * Valid units are: Y, M, D, h, m, s
+     */
+    maxAge(maxAge: Retention): QueueInterface<TMESSAGE>;
+    /**
+     * Set the max segment size of the stream.
+     * A stream is divided up into fixed size segment files on disk.
+     * This setting controls the size of these.
+     * Default: (500_000_000 bytes).
+     */
+    streamMaxSegmentSize(bytes: number): QueueInterface<TMESSAGE>;
 }

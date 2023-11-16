@@ -1,10 +1,9 @@
 import type { ExchangeParams, QueueParams } from '@cloudamqp/amqp-client';
-import { type ExchangeArguments, type ExchangeType, type QueueArguments } from 'haredo';
 import { SubscribeOptions, makeHaredoMessage, TypedEventEmitter, Adapter, AdapterEvents } from 'haredo/internals';
 import { deepEqual } from 'node:assert';
 import { SinonStub, SinonStubbedInstance, stub } from 'sinon';
 import { HaredoTestAdapterError } from './errors';
-import { HaredoMessage } from 'haredo/types';
+import type { HaredoMessage, ExchangeArguments, ExchangeType, QueueArguments } from 'haredo/types';
 
 export interface Queue {
     name: string;

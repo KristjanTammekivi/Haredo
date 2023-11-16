@@ -2,7 +2,7 @@ import { expect } from 'hein';
 import { SinonStubbedInstance, spy } from 'sinon';
 import { TestAdapter, createTestAdapter } from './test-adapter';
 import { Haredo } from 'haredo';
-import type { HaredoInstance } from 'haredo';
+import type { HaredoInstance } from 'haredo/types';
 
 const url = 'amqp://localhost';
 

@@ -35,6 +35,7 @@ RabbitMQ client for Node.js with a focus on simplicity and type safety.
  - Graceful closing
  - Automatic setup of queues and exchanges
  - Automatic acking / nacking based on the promise returned from the subscriber
+ - [Test Adapter to record behavior and call subscribers](https://www.npmjs.com/package/haredo-test-adapter)
 
 ## Usage
 
