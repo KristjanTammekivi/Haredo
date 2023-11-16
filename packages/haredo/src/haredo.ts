@@ -464,11 +464,23 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
                         } catch (error) {
                             subscribeLogger.setError(error).setMessage(message).error('Error thrown in subscribe');
                             state.emitter.emit('message:error', [error, message]);
-                            await message.nack(true);
                             state.backoff?.fail?.(error);
+                            try {
+                                await message.nack(true);
+                            } catch (nackingError) {
+                                subscribeLogger
+                                    .setError(nackingError)
+                                    .setMessage(message)
+                                    .error('Error nacking message');
+                            }
                             return;
                         }
-                        await message.ack();
+                        try {
+                            await message.ack();
+                        } catch (error) {
+                            subscribeLogger.setError(error).setMessage(message).error('Error acking message');
+                            return;
+                        }
                         state.backoff?.pass?.();
                     }
                 );

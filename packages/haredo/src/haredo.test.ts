@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 import { expect } from 'hein';
-import { SinonStub, SinonStubbedInstance, match, spy, stub } from 'sinon';
+import { SinonSpy, SinonStub, SinonStubbedInstance, match, spy, stub } from 'sinon';
 import { FailureBackoff } from './backoffs';
 import { MissingQueueNameError } from './errors';
 import { Exchange } from './exchange';
@@ -9,13 +9,14 @@ import { makeHaredoMessage } from './haredo-message';
 import { Queue } from './queue';
 import { HaredoConsumer, Adapter, AdapterEvents, Consumer } from './types';
 import { TypedEventEmitter } from './utils/typed-event-emitter';
+import { AMQPError } from '@cloudamqp/amqp-client';
 
 config();
 
 const rabbitURL = process.env.RABBIT_URL || 'amqp://localhost:5672';
 
-const makeTestMessage = (content: string, { parse = false, queue = 'test' } = {}) =>
-    makeHaredoMessage(
+const makeTestMessage = (content: string, { parse = false, queue = 'test' } = {}) => {
+    return makeHaredoMessage(
         {
             bodyString: () => content,
             properties: {},
@@ -25,12 +26,15 @@ const makeTestMessage = (content: string, { parse = false, queue = 'test' } = {}
         parse,
         queue
     );
+};
 
 describe('haredo', () => {
     let haredo: ReturnType<typeof Haredo>;
     let adapter: SinonStubbedInstance<Adapter>;
     let consumerStub: Consumer;
+    let logSpy: SinonSpy;
     beforeEach(async () => {
+        logSpy = spy();
         adapter = stub({
             bindExchange: () => Promise.resolve(),
             bindQueue: () => Promise.resolve(),
@@ -48,7 +52,7 @@ describe('haredo', () => {
             unbindQueue: () => Promise.resolve()
         } as any);
         adapter.emitter = new TypedEventEmitter<AdapterEvents>();
-        haredo = Haredo({ url: rabbitURL + '/test', adapter });
+        haredo = Haredo({ url: rabbitURL + '/test', adapter, log: logSpy });
         adapter.createQueue.resolves('test');
         consumerStub = stub({ cancel: () => Promise.resolve() });
         adapter.subscribe.resolves(consumerStub);
@@ -565,6 +569,36 @@ describe('haredo', () => {
                     .subscribe(() => {});
                 expect(adapter.subscribe).to.have.been.calledOnce();
                 expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ exclusive: true });
+            });
+            it('should log an error when automatic acking throws an error', async () => {
+                await haredo.queue('test').subscribe(() => {});
+                const message = stub(makeTestMessage('some message'));
+                const error = new AMQPError('Channel is closed', {} as any);
+                message.ack.rejects(error);
+                logSpy.resetHistory();
+                await adapter.subscribe.firstCall.lastArg(message);
+                expect(logSpy).to.have.been.calledOnce();
+                expect(logSpy.firstCall.firstArg).to.partially.eql({
+                    level: 'error',
+                    message: 'Error acking message',
+                    error
+                });
+            });
+            it('should log an error when automatic nacking throws an error', async () => {
+                await haredo.queue('test').subscribe(async () => {
+                    throw new Error('Fail');
+                });
+                const message = stub(makeTestMessage('some message'));
+                const error = new AMQPError('Channel is closed', {} as any);
+                message.nack.rejects(error);
+                logSpy.resetHistory();
+                await adapter.subscribe.firstCall.lastArg(message);
+                expect(logSpy).to.have.been.calledTwice();
+                expect(logSpy.secondCall.firstArg).to.partially.eql({
+                    level: 'error',
+                    message: 'Error nacking message',
+                    error
+                });
             });
         });
         describe('backoff', () => {
