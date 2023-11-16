@@ -1,10 +1,9 @@
 import { HaredoMessage } from '../types';
 import { omitKeysByValue } from './omit-keys-by-value';
 
-/* eslint-disable unicorn/no-array-callback-reference */
-type LogLevel = 'debug' | 'info' | 'warning' | 'error';
+export type LogLevel = 'debug' | 'info' | 'warning' | 'error';
 
-interface LogMessage {
+export interface LogMessage {
     level: LogLevel;
     message: string;
     component?: string;
@@ -42,6 +41,7 @@ export const createLogger = (logFn: LogFunction, state: LoggerState = {}): Logge
         logFn(omitKeysByValue({ level: 'error', message: messages.join(' '), ...state }));
     },
     component: (subComponent) =>
+        // eslint-disable-next-line unicorn/no-array-callback-reference
         createLogger(logFn, { ...state, component: [state.component, subComponent].filter(rejectUndefined).join(':') }),
     setError: (newError) => createLogger(logFn, { ...state, error: newError }),
     setMessage: (haredoMessage) => createLogger(logFn, { ...state, haredoMessage })

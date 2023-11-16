@@ -2,7 +2,7 @@
 .nyc_output
 .vscode
 coverage
-dist/**/*.test.js
+dist/**/*.test.*
 dist/examples
 docker
 docs
@@ -18,3 +18,4 @@ test
 tsconfig.json
 yarn.lock
 yarn-error.log
+dist/.tsbuildinfo

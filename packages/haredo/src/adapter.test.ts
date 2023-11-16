@@ -4,11 +4,12 @@
 import { AMQPChannel, AMQPClient, AMQPConsumer, AMQPError, AMQPQueue } from '@cloudamqp/amqp-client';
 import { expect } from 'hein';
 import { SinonStub, spy, stub } from 'sinon';
-import { Adapter, createAdapter } from './adapter';
+import { createAdapter } from './adapter';
 import { delay } from './utils/delay';
 import { NotConnectedError } from './errors';
 import { Logger, createLogger } from './utils/logger';
 import { typedEventToPromise } from './utils/event-to-promise';
+import { Adapter } from './types';
 
 // eslint-disable-next-line mocha/no-exports
 export type Stubify<T> = {

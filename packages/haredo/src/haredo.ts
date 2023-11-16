@@ -1,8 +1,8 @@
 import { AMQPClient, AMQPProperties, AMQPQueue, ExchangeParams, QueueParams } from '@cloudamqp/amqp-client';
-import { BindingArguments, Consumer, SubscribeArguments, createAdapter } from './adapter';
+import { createAdapter } from './adapter';
 import { MissingQueueNameError } from './errors';
 import { InternalExchange } from './exchange';
-import { HaredoMessage } from './types';
+import { HaredoMessage, BindingArguments, Consumer, SubscribeArguments } from './types';
 import { Queue } from './queue';
 import type {
     ExchangeArguments,

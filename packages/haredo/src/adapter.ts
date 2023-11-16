@@ -1,120 +1,12 @@
-import {
-    AMQPChannel,
-    AMQPClient,
-    AMQPProperties,
-    AMQPQueue,
-    ExchangeParams,
-    QueueParams,
-    AMQPTlsOptions
-} from '@cloudamqp/amqp-client';
+import { AMQPChannel, AMQPClient, AMQPQueue } from '@cloudamqp/amqp-client';
+import { NotConnectedError } from './errors';
 import { makeHaredoMessage } from './haredo-message';
-import { ExchangeArguments, HaredoMessage, QueueArguments, RabbitUrl, StreamOffset } from './types';
+import { Adapter, AdapterEvents, AdapterOptions, Consumer } from './types';
+import { delay } from './utils/delay';
+import { Logger } from './utils/logger';
 import { normalizeUrl } from './utils/normalize-url';
 import { createTracker } from './utils/tracker';
-import { NotConnectedError } from './errors';
-import { Logger } from './utils/logger';
-import { delay } from './utils/delay';
 import { TypedEventEmitter } from './utils/typed-event-emitter';
-
-// arguments passed to consumer
-export interface SubscribeArguments {
-    /**
-     * The priority of the consumer.
-     * Higher priority consumers get messages in preference to
-     * lower priority consumers.
-     */
-    'x-priority'?: number;
-    /**
-     * x-stream-offset is used to specify the offset from which
-     * the consumer should start reading from the stream.
-     * The value can be a positive integer or a negative integer.
-     * A positive integer specifies the offset from the beginning
-     * of the stream. A negative integer specifies the offset from
-     * the end of the stream.
-     * @see https://www.rabbitmq.com/streams.html#consuming
-     */
-    'x-stream-offset'?: StreamOffset;
-}
-
-export interface SubscribeOptions {
-    onClose: (reason: Error | null) => void;
-    prefetch?: number;
-    noAck?: boolean;
-    exclusive?: boolean;
-    parseJson?: boolean;
-    args?: SubscribeArguments;
-}
-export interface Consumer {
-    cancel(): Promise<void>;
-}
-
-export interface PublishOptions extends AMQPProperties {
-    mandatory?: boolean;
-    immediate?: boolean;
-    confirm?: boolean;
-}
-
-interface KnownBindingArguments {
-    'x-match'?: 'all' | 'any';
-}
-
-export type BindingArguments = Omit<Record<string, string | number>, keyof KnownBindingArguments> &
-    KnownBindingArguments;
-
-export interface QueueDeleteOptions {
-    /**
-     * Only delete if the queue doesn't have any consumers
-     */
-    ifUnused?: boolean;
-    /**
-     * Only delete if the queue is empty
-     */
-    ifEmpty?: boolean;
-}
-
-export interface ExchangeDeleteOptions {
-    /**
-     * Only delete if the exchange doesn't have any bindings
-     */
-    ifUnused?: boolean;
-}
-
-export interface AdapterEvents {
-    connected: null;
-    disconnected: null;
-}
-
-export interface Adapter {
-    emitter: TypedEventEmitter<AdapterEvents>;
-    connect(): Promise<void>;
-    close(force?: boolean): Promise<void>;
-    createQueue(name: string | undefined, options?: QueueParams, args?: QueueArguments): Promise<string>;
-    deleteQueue(name: string, options?: QueueDeleteOptions): Promise<void>;
-    createExchange(name: string, type: string, options?: ExchangeParams, args?: ExchangeArguments): Promise<void>;
-    deleteExchange(name: string, options?: ExchangeDeleteOptions): Promise<void>;
-    bindQueue(queueName: string, exchangeName: string, routingKey?: string, args?: BindingArguments): Promise<void>;
-    unbindQueue(queueName: string, exchangeName: string, routingKey?: string, args?: BindingArguments): Promise<void>;
-    bindExchange(destination: string, source: string, routingKey?: string, args?: BindingArguments): Promise<void>;
-    unbindExchange(destination: string, source: string, routingKey?: string, args?: BindingArguments): Promise<void>;
-    sendToQueue(name: string, message: string, options: PublishOptions): Promise<void>;
-    purgeQueue(name: string): Promise<void>;
-    publish(exchange: string, routingKey: string, message: string, options: PublishOptions): Promise<void>;
-    subscribe(
-        name: string,
-        options: SubscribeOptions,
-        callback: (message: HaredoMessage<unknown>) => Promise<void>
-    ): Promise<Consumer>;
-}
-
-export interface AdapterOptions {
-    url: string | RabbitUrl;
-    tlsOptions?: AMQPTlsOptions;
-    /**
-     * Add a delay between connection attempts.
-     * @default 500
-     */
-    reconnectDelay?: number | ((attempt: number) => number);
-}
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'closing' | 'closed';
 

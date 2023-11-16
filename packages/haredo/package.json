@@ -1,6 +1,6 @@
 {
     "name": "haredo",
-    "version": "3.0.0",
+    "version": "3.0.0-alpha.4",
     "description": "A type-safe client library for rabbitmq/amqp",
     "homepage": "https://haredo.io",
     "keywords": [
@@ -36,7 +36,7 @@
         "test:mocked:watch": "mocha 'src/**/*.test.ts' --ignore src/haredo.integration.test.ts --watch",
         "coverage": "nyc npm run test",
         "rabbitmq:start": "docker-compose -f docker/docker-compose.yml up",
-        "generate-docs": "typedoc --out docs src/index.ts src/types.ts"
+        "generate-docs": "typedoc --out docs src/index.ts src/types.ts src/internals.ts"
     },
     "author": "Kristjan Tammekivi",
     "license": "MIT",

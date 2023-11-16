@@ -1,14 +1,13 @@
 import { config } from 'dotenv';
 import { expect } from 'hein';
 import { SinonStub, SinonStubbedInstance, match, spy, stub } from 'sinon';
-import { Adapter, AdapterEvents, Consumer } from './adapter';
 import { FailureBackoff } from './backoffs';
 import { MissingQueueNameError } from './errors';
 import { Exchange } from './exchange';
 import { Haredo } from './haredo';
 import { makeHaredoMessage } from './haredo-message';
 import { Queue } from './queue';
-import { HaredoConsumer } from './types';
+import { HaredoConsumer, Adapter, AdapterEvents, Consumer } from './types';
 import { TypedEventEmitter } from './utils/typed-event-emitter';
 
 config();

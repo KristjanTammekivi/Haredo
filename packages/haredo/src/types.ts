@@ -6,18 +6,11 @@ import {
     AMQPMessage,
     Field
 } from '@cloudamqp/amqp-client';
-import {
-    Adapter,
-    BindingArguments,
-    ExchangeDeleteOptions,
-    PublishOptions,
-    QueueDeleteOptions,
-    SubscribeArguments
-} from './adapter';
 import { Middleware } from './utils/apply-middleware';
 import { FailureBackoff } from './backoffs';
 import { TypedEventEmitter } from './utils/typed-event-emitter';
 import { LogFunction } from './utils/logger';
+export { Logger } from './utils/logger';
 
 export interface HaredoEvents {
     connected: null;
@@ -284,7 +277,7 @@ export interface HaredoConsumer {
     cancel(): Promise<void>;
 }
 
-type RetentionUnit = 'Y' | 'M' | 'D' | 'h' | 'm' | 's';
+export type RetentionUnit = 'Y' | 'M' | 'D' | 'h' | 'm' | 's';
 export type Retention = `${ number }${ RetentionUnit }`;
 
 export type StreamOffset = 'first' | 'last' | 'next' | number | Retention | Date;
@@ -403,7 +396,7 @@ export interface ExchangeChainState extends ChainState {
     exchange: ExchangeInterface;
 }
 
-type Merge<T, U> = unknown extends T ? U : unknown extends U ? T : T | U;
+export type Merge<T, U> = unknown extends T ? U : unknown extends U ? T : T | U;
 
 export interface HaredoMessageEvents {
     ack: null;
@@ -540,7 +533,7 @@ export type StandardExchangeType = 'direct' | 'fanout' | 'topic' | 'headers';
 
 export type ExchangeType = StandardExchangeType | 'x-delayed-message';
 
-interface KnownExchangeArguments {
+export interface KnownExchangeArguments {
     'alternate-exchange'?: string;
 }
 
@@ -578,9 +571,9 @@ export interface ExchangeInterface<T = unknown> {
     delayed(): this;
 }
 
-type XOverflow = 'drop-head' | 'reject-publish' | 'reject-publish-dlx';
+export type XOverflow = 'drop-head' | 'reject-publish' | 'reject-publish-dlx';
 
-interface KnownQueueArguments {
+export interface KnownQueueArguments {
     /**
      * Maximum TTL for messages in the queue.
      */
@@ -734,4 +727,103 @@ export interface QueueInterface<TMESSAGE = unknown> {
      * Default: (500_000_000 bytes).
      */
     streamMaxSegmentSize(bytes: number): QueueInterface<TMESSAGE>;
+}
+
+export interface SubscribeArguments {
+    /**
+     * The priority of the consumer.
+     * Higher priority consumers get messages in preference to
+     * lower priority consumers.
+     */
+    'x-priority'?: number;
+    /**
+     * x-stream-offset is used to specify the offset from which
+     * the consumer should start reading from the stream.
+     * The value can be a positive integer or a negative integer.
+     * A positive integer specifies the offset from the beginning
+     * of the stream. A negative integer specifies the offset from
+     * the end of the stream.
+     * @see https://www.rabbitmq.com/streams.html#consuming
+     */
+    'x-stream-offset'?: StreamOffset;
+}
+
+export interface SubscribeOptions {
+    onClose: (reason: Error | null) => void;
+    prefetch?: number;
+    noAck?: boolean;
+    exclusive?: boolean;
+    parseJson?: boolean;
+    args?: SubscribeArguments;
+}
+export interface Consumer {
+    cancel(): Promise<void>;
+}
+
+export interface PublishOptions extends AMQPProperties {
+    mandatory?: boolean;
+    immediate?: boolean;
+    confirm?: boolean;
+}
+
+export interface KnownBindingArguments {
+    'x-match'?: 'all' | 'any';
+}
+
+export type BindingArguments = Omit<Record<string, string | number>, keyof KnownBindingArguments> &
+    KnownBindingArguments;
+
+export interface QueueDeleteOptions {
+    /**
+     * Only delete if the queue doesn't have any consumers
+     */
+    ifUnused?: boolean;
+    /**
+     * Only delete if the queue is empty
+     */
+    ifEmpty?: boolean;
+}
+
+export interface ExchangeDeleteOptions {
+    /**
+     * Only delete if the exchange doesn't have any bindings
+     */
+    ifUnused?: boolean;
+}
+
+export interface AdapterEvents {
+    connected: null;
+    disconnected: null;
+}
+
+export interface Adapter {
+    emitter: TypedEventEmitter<AdapterEvents>;
+    connect(): Promise<void>;
+    close(force?: boolean): Promise<void>;
+    createQueue(name: string | undefined, options?: QueueParams, args?: QueueArguments): Promise<string>;
+    deleteQueue(name: string, options?: QueueDeleteOptions): Promise<void>;
+    createExchange(name: string, type: string, options?: ExchangeParams, args?: ExchangeArguments): Promise<void>;
+    deleteExchange(name: string, options?: ExchangeDeleteOptions): Promise<void>;
+    bindQueue(queueName: string, exchangeName: string, routingKey?: string, args?: BindingArguments): Promise<void>;
+    unbindQueue(queueName: string, exchangeName: string, routingKey?: string, args?: BindingArguments): Promise<void>;
+    bindExchange(destination: string, source: string, routingKey?: string, args?: BindingArguments): Promise<void>;
+    unbindExchange(destination: string, source: string, routingKey?: string, args?: BindingArguments): Promise<void>;
+    sendToQueue(name: string, message: string, options: PublishOptions): Promise<void>;
+    purgeQueue(name: string): Promise<void>;
+    publish(exchange: string, routingKey: string, message: string, options: PublishOptions): Promise<void>;
+    subscribe(
+        name: string,
+        options: SubscribeOptions,
+        callback: (message: HaredoMessage<unknown>) => Promise<void>
+    ): Promise<Consumer>;
+}
+
+export interface AdapterOptions {
+    url: string | RabbitUrl;
+    tlsOptions?: AMQPTlsOptions;
+    /**
+     * Add a delay between connection attempts.
+     * @default 500
+     */
+    reconnectDelay?: number | ((attempt: number) => number);
 }

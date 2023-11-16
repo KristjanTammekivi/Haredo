@@ -1,5 +1,5 @@
 import { SinonStubbedInstance, stub } from 'sinon';
-import { Adapter, Consumer } from './adapter';
+import { Adapter, Consumer } from './types';
 import { Haredo } from './haredo';
 import { expect } from 'hein';
 import { Exchange } from './exchange';

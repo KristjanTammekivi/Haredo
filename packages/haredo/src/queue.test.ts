@@ -1,10 +1,10 @@
 import { Queue } from './queue';
 import { SinonStubbedInstance, stub } from 'sinon';
-import { Adapter, Consumer } from './adapter';
 import { Haredo } from './haredo';
 import { expect } from 'hein';
 import { Exchange } from './exchange';
 import { TypedEventEmitter } from './utils/typed-event-emitter';
+import { Adapter, Consumer } from './types';
 
 const rabbitURL = process.env.RABBIT_URL || 'amqp://localhost:5672';
 
