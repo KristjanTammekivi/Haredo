@@ -1,7 +1,7 @@
 {
   "name": "haredo-test-adapter",
   "version": "0.0.1",
-  "main": "dist/test-adapter.js",
+  "main": "dist/index.js",
   "author": "Kristjan Tammekivi <kristjantammekivi@gmail.com>",
   "license": "MIT",
   "keywords": [
