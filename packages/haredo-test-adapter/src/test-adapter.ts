@@ -6,26 +6,27 @@ import { SinonStub, SinonStubbedInstance, stub } from 'sinon';
 import { HaredoTestAdapterError } from './errors';
 import { HaredoMessage } from 'haredo/types';
 
-interface Queue {
+export interface Queue {
     name: string;
     params: QueueParams;
     arguments: QueueArguments;
 }
 
-interface Exchange {
+export interface Exchange {
     name: string;
     type: ExchangeType;
     params: ExchangeParams;
     arguments: ExchangeArguments;
 }
 
-interface Subscriber {
+export interface Subscriber {
     queue: string;
     options: SubscribeOptions;
     callback: any;
 }
 
 export interface TestAdapter extends Adapter {
+    reset: () => void;
     queues: Queue[];
     exchanges: Exchange[];
     subscribers: Subscriber[];
@@ -48,6 +49,9 @@ export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
         exchanges = [];
         subscribers = [];
         mockedAdapter = stub({
+            reset: () => {
+                createSpies();
+            },
             queues,
             exchanges,
             subscribers,
@@ -57,6 +61,7 @@ export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
             },
             close: async () => {
                 emitter.emit('disconnected', null);
+                subscribers.length = 0;
             },
             createQueue: (async (name, params = {}, args = {}) => {
                 name = name || `testqueue-${ Math.random() }`;

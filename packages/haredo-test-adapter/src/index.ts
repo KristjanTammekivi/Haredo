@@ -1,2 +1,2 @@
 export * from './errors';
-export { HaredoTestAdapter, createTestAdapter } from './test-adapter';
+export { HaredoTestAdapter, createTestAdapter, Exchange, Queue, Subscriber } from './test-adapter';

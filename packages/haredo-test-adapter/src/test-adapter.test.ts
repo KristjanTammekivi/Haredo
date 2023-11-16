@@ -36,6 +36,11 @@ describe('testAdapter', () => {
             await adapter.close();
             expect(eventspy).to.have.been.calledOnce();
         });
+        it('should remove all subscribers', async () => {
+            await haredo.queue('test').subscribe(() => {});
+            await adapter.close();
+            expect(adapter.subscribers).to.be.empty();
+        });
     });
     describe('createQueue', () => {
         it('should have a createQueue stub', async () => {
@@ -168,6 +173,13 @@ describe('testAdapter', () => {
             });
             const message = await adapter.callSubscriber('queue', '"test"');
             expect(message.nack).to.have.been.calledOnce();
+        });
+    });
+    describe('reset', () => {
+        it('should clear subscriber array', async () => {
+            await haredo.queue('test').subscribe(() => {});
+            adapter.reset();
+            expect(adapter.subscribers).to.be.empty();
         });
     });
 });
