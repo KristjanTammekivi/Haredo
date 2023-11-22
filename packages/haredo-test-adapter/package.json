@@ -33,7 +33,7 @@
     "haredo": "^3.0.0"
   },
   "dependencies": {
-    "@types/sinon": "^17.0.1",
+    "@types/sinon": "^17.0.2",
     "sinon": "^17.0.1"
   }
 }
