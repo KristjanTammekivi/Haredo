@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@cloudamqp/amqp-client": "^3.1.1",
-    "@types/mocha": "^10.0.4",
+    "@types/mocha": "^10.0.5",
     "eslint": "^8.54.0",
     "eslint-config-hein": "^1.0.4",
     "haredo": "^3.0.0-alpha.4",
