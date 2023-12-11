@@ -59,7 +59,7 @@
         "dotenv": "^16.0.0",
         "eslint": "^8.55.0",
         "eslint-config-hein": "^1.0.4",
-        "hein": "^1.4.1",
+        "hein": "^1.4.2",
         "hein-plugin-sinon": "^1.1.1",
         "mocha": "^10.2.0",
         "nyc": "^15.1.0",
