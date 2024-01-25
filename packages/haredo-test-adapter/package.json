@@ -19,21 +19,21 @@
   },
   "devDependencies": {
     "@cloudamqp/amqp-client": "^3.1.1",
-    "@types/mocha": "^10.0.4",
-    "eslint": "^8.53.0",
+    "@types/mocha": "^10.0.6",
+    "eslint": "^8.56.0",
     "eslint-config-hein": "^1.0.4",
     "haredo": "^3.0.0-alpha.4",
-    "hein": "^1.4.1",
+    "hein": "^1.4.2",
     "hein-plugin-sinon": "^1.1.1",
     "mocha": "^10.2.0",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   },
   "peerDependencies": {
     "haredo": "^3.0.0"
   },
   "dependencies": {
-    "@types/sinon": "^17.0.1",
+    "@types/sinon": "^17.0.3",
     "sinon": "^17.0.1"
   }
 }
