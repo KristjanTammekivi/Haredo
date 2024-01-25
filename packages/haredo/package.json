@@ -48,7 +48,7 @@
         "@cloudamqp/amqp-client": "^3.1.1"
     },
     "devDependencies": {
-        "@faker-js/faker": "^8.0.2",
+        "@faker-js/faker": "^8.4.0",
         "@types/dotenv": "^8.2.0",
         "@types/mocha": "^10.0.6",
         "@types/node": "^20.11.6",
