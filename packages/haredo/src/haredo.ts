@@ -50,10 +50,10 @@ export const Haredo = ({
     return {
         emitter,
         connect: async () => {
-            await adapter!.connect();
+            await adapter.connect();
         },
         close: async (force) => {
-            await adapter!.close(force);
+            await adapter.close(force);
         },
         exchange: <T = unknown>(
             exchange: string | ExchangeInterface<T>,
@@ -64,11 +64,7 @@ export const Haredo = ({
             if (typeof exchange === 'string') {
                 exchange = InternalExchange(exchange, type!, params, args);
             }
-            return exchangeChain<T>(
-                { emitter, adapter: adapter!, exchange, appId: defaults.appId },
-                logger,
-                extensions
-            );
+            return exchangeChain<T>({ emitter, adapter, exchange, appId: defaults.appId }, logger, extensions);
         },
         queue: <T = unknown>(
             queue: string | QueueInterface<T>,
@@ -81,7 +77,7 @@ export const Haredo = ({
             return queueChain<T>(
                 {
                     emitter,
-                    adapter: adapter!,
+                    adapter,
                     queue,
                     middleware: [...globalMiddleware],
                     appId: defaults.appId,
