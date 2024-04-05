@@ -27,7 +27,7 @@
     "hein-plugin-sinon": "^1.1.1",
     "mocha": "^10.4.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.3"
+    "typescript": "^5.4.4"
   },
   "peerDependencies": {
     "haredo": "^3.0.0"
