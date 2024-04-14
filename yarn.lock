@@ -4426,10 +4426,10 @@ write-file-atomic@^3.0.0:
     signal-exit "^3.0.2"
     typedarray-to-buffer "^3.1.5"
 
-wtfnode@^0.9.1:
-  version "0.9.1"
-  resolved "https://registry.yarnpkg.com/wtfnode/-/wtfnode-0.9.1.tgz#c385679d2df6fb4d64d734eeeaab767fcee3e0d3"
-  integrity sha512-Ip6C2KeQPl/F3aP1EfOnPoQk14Udd9lffpoqWDNH3Xt78svxPbv53ngtmtfI0q2Te3oTq79XKTnRNXVIn/GsPA==
+wtfnode@^0.9.2:
+  version "0.9.2"
+  resolved "https://registry.yarnpkg.com/wtfnode/-/wtfnode-0.9.2.tgz#50ac55d83c9dc50253a4b959f4098c97aac86538"
+  integrity sha512-AzGy/MOGmzufyHDKHwuZeuqaqslGIPuwxDAhdmUUJ91Ak22Ynxry8quXNR/cZZIaSs5T+C+LNS3W9AcMzJXhMw==
 
 y18n@^4.0.0:
   version "4.0.3"
