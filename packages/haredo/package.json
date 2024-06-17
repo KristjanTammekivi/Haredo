@@ -51,7 +51,7 @@
         "@faker-js/faker": "^8.4.1",
         "@types/dotenv": "^8.2.0",
         "@types/mocha": "^10.0.6",
-        "@types/node": "^20.14.2",
+        "@types/node": "^20.14.3",
         "@types/sinon": "^17.0.3",
         "@types/wtfnode": "^0.7.0",
         "@typescript-eslint/eslint-plugin": "^7.13.0",
