@@ -68,7 +68,7 @@
         "sinon": "^18.0.0",
         "source-map-support": "^0.5.6",
         "ts-node": "^10.9.2",
-        "typedoc": "^0.25.13",
+        "typedoc": "^0.26.2",
         "typescript": "^5.4.5",
         "wtfnode": "^0.9.2"
     }
