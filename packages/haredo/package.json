@@ -50,7 +50,7 @@
     "devDependencies": {
         "@faker-js/faker": "^8.4.1",
         "@types/dotenv": "^8.2.0",
-        "@types/mocha": "^10.0.6",
+        "@types/mocha": "^10.0.7",
         "@types/node": "^20.14.8",
         "@types/sinon": "^17.0.3",
         "@types/wtfnode": "^0.7.0",
@@ -61,7 +61,7 @@
         "eslint-config-hein": "^1.0.4",
         "hein": "^1.4.2",
         "hein-plugin-sinon": "^1.1.1",
-        "mocha": "^10.4.0",
+        "mocha": "^10.5.1",
         "nyc": "^17.0.0",
         "rabbitmq-admin": "^1.2.3",
         "rimraf": "^5.0.7",
