@@ -70,6 +70,6 @@
         "ts-node": "^10.9.2",
         "typedoc": "^0.26.3",
         "typescript": "^5.5.3",
-        "wtfnode": "^0.9.2"
+        "wtfnode": "^0.9.3"
     }
 }
