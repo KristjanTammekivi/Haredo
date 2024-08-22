@@ -8,15 +8,18 @@ import { delay } from './utils/delay';
 const RABBIT_URL = 'amqp://localhost:5672/test';
 describe('haredo integration', () => {
     let haredo: HaredoInstance;
+
     beforeEach(async () => {
         await rabbitAdmin.createVhost('test');
         haredo = Haredo({ url: RABBIT_URL, log: () => {} });
         await haredo.connect();
     });
+
     afterEach(async () => {
         await haredo.close();
         await rabbitAdmin.deleteVhost('test');
     });
+
     it('should setup exchange', async () => {
         await haredo.exchange(Exchange('testExchange', 'topic')).setup();
         const exchange = await rabbitAdmin.getExchange('test', 'testExchange');
@@ -24,6 +27,7 @@ describe('haredo integration', () => {
             name: 'testExchange'
         });
     });
+
     it('should publish message', async () => {
         await haredo.exchange(Exchange('testExchange', 'topic')).setup();
         await rabbitAdmin.createQueue('test', 'testQueue', { auto_delete: false });
@@ -48,6 +52,7 @@ describe('haredo integration', () => {
             }
         ]);
     });
+
     it('should setup queue', async () => {
         await haredo.queue('testQueue').setup();
         const queue = await rabbitAdmin.getQueue('test', 'testQueue');
@@ -55,6 +60,7 @@ describe('haredo integration', () => {
             name: 'testQueue'
         });
     });
+
     it('should publish to queue', async () => {
         await haredo.queue('testQueue').publish('test message');
         const messages = await rabbitAdmin.getMessages('test', 'testQueue', {
@@ -69,6 +75,7 @@ describe('haredo integration', () => {
             }
         ]);
     });
+
     it('should not resolve cancel promise before all in flight messages are handled', async () => {
         let messageHandledAt: Date | undefined;
         const consumer = await haredo.queue('testQueue').subscribe(async () => {

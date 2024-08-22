@@ -20,8 +20,10 @@
   "devDependencies": {
     "@cloudamqp/amqp-client": "^3.1.1",
     "@types/mocha": "^10.0.7",
+    "@typescript-eslint/eslint-plugin": "^8.2.0",
+    "@typescript-eslint/parser": "^8.2.0",
     "eslint": "^8.57.0",
-    "eslint-config-hein": "^1.0.4",
+    "eslint-config-hein": "^1.0.6",
     "haredo": "^3.0.0-alpha.4",
     "hein": "^1.4.2",
     "hein-plugin-sinon": "^1.1.1",
@@ -35,5 +37,8 @@
   "dependencies": {
     "@types/sinon": "^17.0.3",
     "sinon": "^18.0.0"
+  },
+  "resolutions": {
+    "**/prettier": "npm:@staycool/prettier@^3.0.1"
   }
 }

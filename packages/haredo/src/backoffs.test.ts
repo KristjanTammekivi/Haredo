@@ -8,6 +8,7 @@ describe('backoffs', () => {
             const backoff = standardBackoff();
             await backoff.take();
         });
+
         it('should halt after failThreshold', async () => {
             const backoff = standardBackoff({ failThreshold: 3, failTimeout: 20 });
             backoff.nack(true);
@@ -20,6 +21,7 @@ describe('backoffs', () => {
             await delay(10);
             expect(isTaken).to.be.false();
         });
+
         it('should not halt when requeue is false', async () => {
             const backoff = standardBackoff({ failThreshold: 3, failTimeout: 20 });
             backoff.nack(false);

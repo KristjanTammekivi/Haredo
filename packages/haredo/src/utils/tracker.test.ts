@@ -9,6 +9,7 @@ describe('tracker', () => {
         await tracker.wait();
         expect(Date.now() - startTime).to.be.lessThan(2);
     });
+
     it('should resolve wait immediately when all messages are handled', async () => {
         const tracker = createTracker();
         tracker.inc();
@@ -17,6 +18,7 @@ describe('tracker', () => {
         await tracker.wait();
         expect(Date.now() - startTime).to.be.lessThan(2);
     });
+
     it('should wait for messages to be handled', async () => {
         const tracker = createTracker();
         tracker.inc();

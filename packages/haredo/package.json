@@ -54,11 +54,11 @@
         "@types/node": "^22.5.0",
         "@types/sinon": "^17.0.3",
         "@types/wtfnode": "^0.7.0",
-        "@typescript-eslint/eslint-plugin": "^7.18.0",
-        "@typescript-eslint/parser": "^7.18.0",
+        "@typescript-eslint/eslint-plugin": "^8.2.0",
+        "@typescript-eslint/parser": "^8.2.0",
         "dotenv": "^16.4.5",
         "eslint": "^8.57.0",
-        "eslint-config-hein": "^1.0.4",
+        "eslint-config-hein": "^1.0.6",
         "hein": "^1.4.2",
         "hein-plugin-sinon": "^1.1.1",
         "mocha": "^10.7.3",
@@ -71,5 +71,8 @@
         "typedoc": "^0.26.6",
         "typescript": "^5.5.4",
         "wtfnode": "^0.9.3"
+    },
+    "resolutions": {
+        "**/prettier": "npm:@staycool/prettier@^3.0.1"
     }
 }

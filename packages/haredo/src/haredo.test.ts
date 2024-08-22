@@ -33,6 +33,7 @@ describe('haredo', () => {
     let adapter: SinonStubbedInstance<Adapter>;
     let consumerStub: Consumer;
     let logSpy: SinonSpy;
+
     beforeEach(async () => {
         logSpy = spy();
         adapter = stub({
@@ -57,20 +58,24 @@ describe('haredo', () => {
         consumerStub = stub({ cancel: () => Promise.resolve() });
         adapter.subscribe.resolves(consumerStub);
     });
+
     it('should connect', async () => {
         await haredo.connect();
         expect(adapter.connect).to.have.been.calledOnce();
     });
+
     it('should disconnect', async () => {
         await haredo.close();
         expect(adapter.close).to.have.been.calledOnce();
     });
+
     describe('exchange', () => {
         it('should publish to exchange', async () => {
             await haredo.exchange('test', 'direct').publish('some message', 'message.new');
             expect(adapter.publish).to.have.been.calledOnce();
             expect(adapter.publish).to.have.been.calledWith('test', 'message.new', '"some message"');
         });
+
         it('should publish to confirm channel', async () => {
             await haredo.exchange('test', 'direct').confirm().publish('some message', 'message.new');
             expect(adapter.publish).to.have.been.calledOnce();
@@ -79,16 +84,19 @@ describe('haredo', () => {
                 confirm: true
             });
         });
+
         it('should assert exchange', async () => {
             await haredo.exchange('test', 'direct').publish('some message', 'message.new');
             expect(adapter.createExchange).to.have.been.calledOnce().and.to.have.been.calledWith('test');
         });
+
         it('should accept an exchange object', async () => {
             await haredo.connect();
             await haredo.exchange(Exchange('test', 'topic')).publish('some message', 'message.new');
             expect(adapter.publish).to.have.been.calledOnce();
             expect(adapter.publish).to.have.been.calledWith('test', 'message.new', '"some message"');
         });
+
         it('should stringify objects', async () => {
             await haredo.exchange('test', 'direct').publish({ id: '123' }, 'message.new');
             expect(adapter.publish).to.have.been.calledOnce();
@@ -97,27 +105,32 @@ describe('haredo', () => {
                 confirm: false
             });
         });
+
         it('should accept typed exchanges', async () => {
             await haredo.connect();
             await haredo.exchange(Exchange<{ id: string }>('test', 'direct')).publish({ id: '5' }, 'message.new');
             // @ts-expect-error - should be string
             await haredo.exchange(Exchange<{ id: string }>('test', 'direct')).publish({ id: 5 }, 'message.new');
         });
+
         it('should create the exchange with required type when providing a string', async () => {
             await haredo.exchange('test', 'fanout').setup();
             expect(adapter.createExchange).to.have.been.calledOnce();
             expect(adapter.createExchange).to.have.been.calledWith('test', 'fanout');
         });
+
         it('should not setup if skipSetup is called', async () => {
             await haredo.exchange('test', 'fanout').skipSetup().publish('test', '#');
             expect(adapter.createExchange).to.not.have.been.called();
         });
+
         it('should not stringify message if .json(false) is called', async () => {
             await haredo.exchange('test', 'fanout').json(false).publish('hello, world', 'message.new');
             expect(adapter.publish)
                 .to.have.been.calledOnce()
                 .and.to.have.been.calledWith('test', 'message.new', 'hello, world');
         });
+
         it('should publish with a delay header when .delay is called', async () => {
             await haredo.exchange('someExchange', 'topic').delay(1234).publish('some message', 'rk');
             expect(adapter.publish).to.have.been.calledWith('someExchange', 'rk', '"some message"', {
@@ -128,10 +141,12 @@ describe('haredo', () => {
                 }
             });
         });
+
         it('should be possible to set parameters when creating exchange via string', async () => {
             await haredo.exchange('someExchange', 'topic', { passive: true }).publish('some message', 'rk');
             expect(adapter.createExchange).to.have.been.calledWith('someExchange', 'topic', { passive: true });
         });
+
         it('should be possible to set arguments when creating exchange via string', async () => {
             await haredo
                 .exchange('someExchange', 'x-delayed-message', {}, { 'x-delayed-type': 'topic' })
@@ -143,6 +158,7 @@ describe('haredo', () => {
                 { 'x-delayed-type': 'topic' }
             );
         });
+
         it('should be possible to set an argument', async () => {
             await haredo
                 .exchange('someExchange', 'topic')
@@ -155,6 +171,7 @@ describe('haredo', () => {
                 contentType: 'application/json'
             });
         });
+
         it('should be possible to set multiple arguments', async () => {
             await haredo
                 .exchange('someExchange', 'topic')
@@ -169,6 +186,7 @@ describe('haredo', () => {
                 contentType: 'application/json'
             });
         });
+
         it('should be possible to set message type', async () => {
             await haredo.exchange('someExchange', 'topic').type('testmessagetype').publish('some message', 'rk');
             expect(adapter.publish).to.have.been.calledOnce();
@@ -178,6 +196,7 @@ describe('haredo', () => {
                 contentType: 'application/json'
             });
         });
+
         it('should use appId when set', async () => {
             const rabbit = Haredo({ url: rabbitURL + '/test', adapter, defaults: { appId: 'myApp' } });
             await rabbit.exchange('someExchange', 'topic').publish('some message', 'rk');
@@ -188,6 +207,7 @@ describe('haredo', () => {
                 contentType: 'application/json'
             });
         });
+
         it('should set up E2E bindings', async () => {
             await haredo
                 .exchange('someExchange', 'topic')
@@ -199,6 +219,7 @@ describe('haredo', () => {
             expect(adapter.bindExchange).to.have.been.calledOnce();
             expect(adapter.bindExchange).to.have.been.calledWith('someExchange', 'someOtherExchange', 'rk');
         });
+
         it('should create the exchange when skipSetup is called with { skipCreate: false }', async () => {
             await haredo
                 .exchange('someExchange', 'topic')
@@ -208,6 +229,7 @@ describe('haredo', () => {
             expect(adapter.createExchange).to.have.been.calledOnce();
             expect(adapter.createExchange).to.have.been.calledWith('someExchange');
         });
+
         it('should create the bound exchange when skipSetup is called with { skipBoundExchanges: false }', async () => {
             await haredo
                 .exchange('someExchange', 'topic')
@@ -217,6 +239,7 @@ describe('haredo', () => {
             expect(adapter.createExchange).to.have.been.calledOnce();
             expect(adapter.createExchange).to.have.been.calledWith('someOtherExchange');
         });
+
         it('should create the bindings when skipSetup is called with { skipBindings: false }', async () => {
             await haredo
                 .exchange('someExchange', 'topic')
@@ -226,6 +249,7 @@ describe('haredo', () => {
             expect(adapter.bindExchange).to.have.been.calledOnce();
             expect(adapter.bindExchange).to.have.been.calledWith('someExchange', 'someOtherExchange', 'rk');
         });
+
         it('should be possible to bind an exchange object', async () => {
             await haredo
                 .exchange('someExchange', 'topic')
@@ -234,6 +258,7 @@ describe('haredo', () => {
             expect(adapter.bindExchange).to.have.been.calledOnce();
             expect(adapter.bindExchange).to.have.been.calledWith('someExchange', 'someOtherExchange', 'rk');
         });
+
         it('should set a default concurrency', async () => {
             haredo = Haredo({ url: rabbitURL + '/test', adapter, defaults: { concurrency: 5 } });
             await haredo.connect();
@@ -242,6 +267,7 @@ describe('haredo', () => {
             expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ prefetch: 5 });
         });
     });
+
     describe('queue', () => {
         describe('publish', () => {
             it('should publish to queue', async () => {
@@ -250,16 +276,19 @@ describe('haredo', () => {
                 expect(adapter.sendToQueue).to.have.been.calledOnce();
                 expect(adapter.sendToQueue).to.have.been.calledWith('test', '"some message"');
             });
+
             it('should accept a queue object', async () => {
                 await haredo.connect();
                 await haredo.queue(Queue('test')).publish('some message');
                 expect(adapter.sendToQueue).to.have.been.calledOnce();
                 expect(adapter.sendToQueue).to.have.been.calledWith('test', '"some message"');
             });
+
             it('should reject when publishing to an anonymous queue with skipSetup', async () => {
                 await haredo.connect();
                 await expect(haredo.queue(Queue()).skipSetup().publish('hello')).to.reject(MissingQueueNameError);
             });
+
             it('should stringify objects', async () => {
                 await haredo.connect();
                 await haredo.queue('test').publish({ id: '123' });
@@ -269,30 +298,35 @@ describe('haredo', () => {
                     confirm: false
                 });
             });
+
             it('should setup queue when publishing', async () => {
                 await haredo.connect();
                 await haredo.queue('test').publish('some message');
                 expect(adapter.createQueue).to.have.been.calledOnce();
                 expect(adapter.createQueue).to.have.been.calledWith('test');
             });
+
             it('should setup queue params without an object', async () => {
                 await haredo.connect();
                 await haredo.queue('test', { autoDelete: true }).publish('some message');
                 expect(adapter.createQueue).to.have.been.calledOnce();
                 expect(adapter.createQueue).to.have.been.calledWith('test', { autoDelete: true });
             });
+
             it('should setup queue arguments without an object', async () => {
                 await haredo.connect();
                 await haredo.queue('test', {}, { 'x-dead-letter-exchange': 'dlx' }).publish('some message');
                 expect(adapter.createQueue).to.have.been.calledOnce();
                 expect(adapter.createQueue).to.have.been.calledWith('test', {}, { 'x-dead-letter-exchange': 'dlx' });
             });
+
             it('should accept typed queues', async () => {
                 const queue = Queue<{ id: string }>('test');
                 await haredo.queue(queue).publish({ id: '123' });
                 // @ts-expect-error - should not accept wrong type
                 await haredo.queue(queue).publish({ id: 123 });
             });
+
             it('should accept typed exchanges', async () => {
                 const exchange = Exchange<{ id: string }>('test', 'direct');
                 await haredo
@@ -307,17 +341,20 @@ describe('haredo', () => {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     .subscribe(async ({ kd }) => {});
             });
+
             it('should use confirm channels if .confirm is called', async () => {
                 await haredo.queue('test').confirm().publish('some message');
                 expect(adapter.sendToQueue.firstCall.args[2]).to.partially.eql({
                     confirm: true
                 });
             });
+
             it('should not stringify if .json(false) is called', async () => {
                 await haredo.queue('test').json(false).publish('testmessage');
                 expect(adapter.sendToQueue).to.have.been.calledOnce();
                 expect(adapter.sendToQueue).to.have.been.calledWith('test', 'testmessage');
             });
+
             it('should be possible to set an argument', async () => {
                 await haredo.queue('test').setPublishArgument('expiration', '1000').publish('testmessage');
                 expect(adapter.sendToQueue).to.have.been.calledOnce();
@@ -327,6 +364,7 @@ describe('haredo', () => {
                     contentType: 'application/json'
                 });
             });
+
             it('should be possible to set multiple arguments', async () => {
                 await haredo
                     .queue('test')
@@ -341,6 +379,7 @@ describe('haredo', () => {
                     contentType: 'application/json'
                 });
             });
+
             it('should set message type', async () => {
                 await haredo.queue('test').type('testmessagetype').publish('testmessage');
                 expect(adapter.sendToQueue).to.have.been.calledOnce();
@@ -350,6 +389,7 @@ describe('haredo', () => {
                     contentType: 'application/json'
                 });
             });
+
             it('should send appId when set', async () => {
                 const rabbit = Haredo({ url: rabbitURL + '/test', adapter, defaults: { appId: 'myApp' } });
                 await rabbit.queue('test').publish('testmessage');
@@ -361,15 +401,18 @@ describe('haredo', () => {
                 });
             });
         });
+
         describe('subscribe', () => {
             beforeEach(async () => {
                 await haredo.connect();
             });
+
             it('should setup queue when subscribing', async () => {
                 await haredo.queue('test').subscribe(() => {});
                 expect(adapter.createQueue).to.have.been.calledOnce();
                 expect(adapter.createQueue).to.have.been.calledWith('test');
             });
+
             it('should setup exchange when binding and subscribing', async () => {
                 await haredo
                     .queue('test')
@@ -380,6 +423,7 @@ describe('haredo', () => {
                 expect(adapter.bindQueue).to.have.been.calledOnce();
                 expect(adapter.bindQueue).to.have.been.calledWith('test', 'testexchange', '#');
             });
+
             it('should setup exchange when it is passed as an object', async () => {
                 await haredo
                     .queue('test')
@@ -406,6 +450,7 @@ describe('haredo', () => {
                     }
                 );
             });
+
             it('should not attempt to create an exchange twice when passing in an array of two patterns for binding', async () => {
                 await haredo
                     .queue('test')
@@ -413,6 +458,7 @@ describe('haredo', () => {
                     .subscribe(async () => {});
                 expect(adapter.createExchange).to.have.been.calledOnce();
             });
+
             it('should throw when subscribing with an anonymous queue and skipSetup is not called', async () => {
                 await expect(
                     haredo
@@ -421,6 +467,7 @@ describe('haredo', () => {
                         .subscribe(() => {})
                 ).to.reject(MissingQueueNameError);
             });
+
             it('should call callback on message', async () => {
                 const callback = stub();
                 await haredo.queue('test').subscribe(callback);
@@ -429,17 +476,20 @@ describe('haredo', () => {
                 expect(callback).to.have.been.calledOnce();
                 expect(callback).to.have.been.calledWith(message.data, message);
             });
+
             it('should resubscribe on connection error', async () => {
                 await haredo.queue('test').subscribe(() => {});
                 const { onClose } = adapter.subscribe.firstCall.args[1];
                 onClose(new Error('test'));
                 expect(adapter.subscribe).to.have.been.calledTwice();
             });
+
             it('should call cancel on consumer', async () => {
                 const consumer = await haredo.queue('test').subscribe(() => {});
                 await consumer.cancel();
                 expect(consumerStub.cancel).to.have.been.calledOnce();
             });
+
             it('should not resubscribe when consumer is cancelled', async () => {
                 const consumer = await haredo.queue('test').subscribe(() => {});
                 await consumer.cancel();
@@ -447,11 +497,13 @@ describe('haredo', () => {
                 onClose(new Error('test'));
                 expect(adapter.subscribe).to.have.been.calledOnce();
             });
+
             it('should not resubscribe when connection is closed', async () => {
                 await haredo.queue('test').subscribe(() => {});
                 adapter.subscribe.firstCall.args[1].onClose(null);
                 expect(adapter.subscribe).to.have.been.calledOnce();
             });
+
             it('should set prefetch', async () => {
                 await haredo
                     .queue('test')
@@ -465,6 +517,7 @@ describe('haredo', () => {
                 expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ prefetch: 5 });
                 expect(adapter.subscribe.secondCall.args[1]).to.partially.eql({ prefetch: 4 });
             });
+
             it('should not setup if skipSetup is called', async () => {
                 await haredo
                     .queue('test')
@@ -472,6 +525,7 @@ describe('haredo', () => {
                     .subscribe(() => {});
                 expect(adapter.createQueue).to.not.have.been.called();
             });
+
             it('should create the queue when skipSetup is called with { skipCreate: false }', async () => {
                 await haredo
                     .queue('test')
@@ -480,6 +534,7 @@ describe('haredo', () => {
                     .subscribe(() => {});
                 expect(adapter.createQueue).to.have.been.calledOnce();
             });
+
             it('should create the bound exchange when skipSetup is called with { skipBoundExchanges: false }', async () => {
                 await haredo
                     .queue('test')
@@ -488,6 +543,7 @@ describe('haredo', () => {
                     .subscribe(() => {});
                 expect(adapter.createExchange).to.have.been.calledOnce();
             });
+
             it('should create the bindings when skipSetup is called with { skipBindings: false }', async () => {
                 await haredo
                     .queue('test')
@@ -496,6 +552,7 @@ describe('haredo', () => {
                     .subscribe(() => {});
                 expect(adapter.bindQueue).to.have.been.calledOnce();
             });
+
             it('should not create the the bound exchange when skipSetup is called with { skipCreate: false }', async () => {
                 await haredo
                     .queue('test')
@@ -504,6 +561,7 @@ describe('haredo', () => {
                     .subscribe(() => {});
                 expect(adapter.createExchange).to.not.have.been.called();
             });
+
             it('should call middleware with the message', async () => {
                 const middleware = stub().resolves();
                 await haredo
@@ -515,6 +573,7 @@ describe('haredo', () => {
                 expect(middleware).to.have.been.calledOnce();
                 expect(middleware).to.have.been.calledWith(message, match.func);
             });
+
             it('should add multiple middleware in order', async () => {
                 const middleware1 = stub().resolves();
                 const middleware2 = stub().resolves();
@@ -531,6 +590,7 @@ describe('haredo', () => {
                 expect(middleware2).to.have.been.calledWith(message, match.func);
                 expect(middleware1).to.have.been.calledBefore(middleware2);
             });
+
             it(`should call ack when callback passes`, async () => {
                 const callback = stub();
                 await haredo.queue('test').subscribe(callback);
@@ -538,6 +598,7 @@ describe('haredo', () => {
                 await adapter.subscribe.firstCall.lastArg(message);
                 expect(message.ack).to.have.been.calledOnce();
             });
+
             it(`should call nack when callback throws`, async () => {
                 const callback = stub().throws(new Error('fail'));
                 await haredo.queue('test').subscribe(callback);
@@ -546,6 +607,7 @@ describe('haredo', () => {
                 expect(message.nack).to.have.been.calledOnce();
                 expect(message.nack).to.have.been.calledWith(true);
             });
+
             it('should call adapter with parseJson false if it is set to false', async () => {
                 await haredo
                     .queue('test')
@@ -554,6 +616,7 @@ describe('haredo', () => {
                 expect(adapter.subscribe).to.have.been.calledOnce();
                 expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ parseJson: false });
             });
+
             it('should call adapter with noAck true if it is set to true', async () => {
                 await haredo
                     .queue('test')
@@ -562,6 +625,7 @@ describe('haredo', () => {
                 expect(adapter.subscribe).to.have.been.calledOnce();
                 expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ noAck: true });
             });
+
             it('should call adapter with exclusive true if it is set to true', async () => {
                 await haredo
                     .queue('test')
@@ -570,6 +634,7 @@ describe('haredo', () => {
                 expect(adapter.subscribe).to.have.been.calledOnce();
                 expect(adapter.subscribe.firstCall.args[1]).to.partially.eql({ exclusive: true });
             });
+
             it('should log an error when automatic acking throws an error', async () => {
                 await haredo.queue('test').subscribe(() => {});
                 const message = stub(makeTestMessage('some message'));
@@ -584,6 +649,7 @@ describe('haredo', () => {
                     error
                 });
             });
+
             it('should log an error when automatic nacking throws an error', async () => {
                 await haredo.queue('test').subscribe(async () => {
                     throw new Error('Fail');
@@ -601,10 +667,12 @@ describe('haredo', () => {
                 });
             });
         });
+
         describe('backoff', () => {
             let backoff: SinonStubbedInstance<FailureBackoff>;
             let chain: HaredoConsumer;
             let subscribeCallback: SinonStub;
+
             beforeEach(async () => {
                 backoff = stub({
                     take: () => Promise.resolve(),
@@ -616,22 +684,27 @@ describe('haredo', () => {
                 subscribeCallback = stub();
                 chain = await haredo.queue('test').backoff(backoff).subscribe(subscribeCallback);
             });
+
             afterEach(async () => {
                 await chain.cancel();
             });
+
             it('should take from backoff', async () => {
                 await adapter.subscribe.firstCall.lastArg(makeTestMessage('test'));
                 expect(backoff.take).to.have.been.calledOnce();
             });
+
             it('should call pass on backoff when callback resolves', async () => {
                 await adapter.subscribe.firstCall.lastArg(makeTestMessage('test'));
                 expect(backoff.pass).to.have.been.calledOnce();
             });
+
             it('should call fail on backoff when callback throws', async () => {
                 subscribeCallback.throws(new Error('fail'));
                 await adapter.subscribe.firstCall.lastArg(makeTestMessage('test'));
                 expect(backoff.fail).to.have.been.calledOnce();
             });
+
             it('should call ack on backoff when a message is acked', async () => {
                 await haredo
                     .queue('test')
@@ -642,6 +715,7 @@ describe('haredo', () => {
                 await adapter.subscribe.secondCall.lastArg(makeTestMessage('test'));
                 expect(backoff.ack).to.have.been.calledOnce();
             });
+
             it('should call nack on backoff when a message is nacked', async () => {
                 await haredo
                     .queue('test')
@@ -654,6 +728,7 @@ describe('haredo', () => {
                 expect(backoff.nack).to.have.been.calledWith(false);
             });
         });
+
         describe('stream', () => {
             it('should set streamOffset', async () => {
                 await haredo
@@ -667,6 +742,7 @@ describe('haredo', () => {
                     }
                 });
             });
+
             it('should set streamOffset to timestamp when Date is passed', async () => {
                 const date = new Date();
                 await haredo
@@ -682,6 +758,7 @@ describe('haredo', () => {
             });
         });
     });
+
     describe('extend', () => {
         it('should be possible to extend haredo queue chain', async () => {
             const extendedHaredo = Haredo({
@@ -713,6 +790,7 @@ describe('haredo', () => {
                 }
             });
         });
+
         it('should be possible to extend haredo exchange chain', async () => {
             const extendedHaredo = Haredo({
                 url: 'amqp://localhost:5672',
@@ -744,6 +822,7 @@ describe('haredo', () => {
             });
         });
     });
+
     describe('globalMiddleware', () => {
         it('should add global middleware', async () => {
             const middleware = stub().resolves();
@@ -759,6 +838,7 @@ describe('haredo', () => {
             expect(middleware).to.have.been.calledOnce();
         });
     });
+
     describe('priority', () => {
         it('should set message priority on queue chain', async () => {
             await haredo.queue('test').priority(1).publish('test');
@@ -769,6 +849,7 @@ describe('haredo', () => {
                 priority: 1
             });
         });
+
         it('should set message priority on exchange chain', async () => {
             await haredo.exchange('test', 'topic').priority(1).publish('test', 'rk');
             expect(adapter.publish).to.have.been.calledOnce();
@@ -779,6 +860,7 @@ describe('haredo', () => {
             });
         });
     });
+
     describe('setHeader', () => {
         it('should set header for queue chain', async () => {
             await haredo.queue('test').setHeader('test', 'value').publish('test');
@@ -791,6 +873,7 @@ describe('haredo', () => {
                 }
             });
         });
+
         it('should set header for exchange chain', async () => {
             await haredo.exchange('test', 'topic').setHeader('test', 'value').publish('test', 'rk');
             expect(adapter.publish).to.have.been.calledOnce();
@@ -803,6 +886,7 @@ describe('haredo', () => {
             });
         });
     });
+
     describe('expiration', () => {
         it('should set message ttl on queue chain', async () => {
             await haredo.queue('test').expiration(1000).publish('test');
@@ -813,6 +897,7 @@ describe('haredo', () => {
                 expiration: '1000'
             });
         });
+
         it('should set message ttl on exchange chain', async () => {
             await haredo.exchange('test', 'topic').expiration(1000).publish('test', 'rk');
             expect(adapter.publish).to.have.been.calledOnce();
@@ -823,6 +908,7 @@ describe('haredo', () => {
             });
         });
     });
+
     describe('bindExchange', () => {
         it('should forward binding arguments to adapter when binding to a queue', async () => {
             await haredo
@@ -832,6 +918,7 @@ describe('haredo', () => {
             expect(adapter.bindQueue).to.have.been.calledOnce();
             expect(adapter.bindQueue).to.have.been.calledWith('test', 'testexchange', 'rk', { 'x-match': 'any' });
         });
+
         it('should forward binding arguments to adapter when binding to an exchange', async () => {
             await haredo
                 .exchange('testexchange', 'topic')
@@ -842,6 +929,7 @@ describe('haredo', () => {
                 'x-match': 'any'
             });
         });
+
         it('should forward binding arguments to adapter when binding an exchange to an exchange object', async () => {
             const exchange = Exchange('testexchange2', 'topic');
             await haredo.exchange('testexchange', 'topic').bindExchange(exchange, 'rk', { 'x-match': 'any' }).setup();
@@ -850,6 +938,7 @@ describe('haredo', () => {
                 'x-match': 'any'
             });
         });
+
         it('should forward binding arguments to adapter when binding a queue to an exchange object', async () => {
             const exchange = Exchange('testexchange2', 'topic');
             await haredo.queue('test').bindExchange(exchange, 'rk', { 'x-match': 'any' }).setup();
@@ -859,41 +948,49 @@ describe('haredo', () => {
             });
         });
     });
+
     describe('delete', () => {
         it('should delete queue', async () => {
             await haredo.queue('test').delete();
             expect(adapter.deleteQueue).to.have.been.calledOnce();
             expect(adapter.deleteQueue).to.have.been.calledWith('test');
         });
+
         it('should throw on anonymous queues', async () => {
             await expect(haredo.queue(Queue()).delete()).to.reject(MissingQueueNameError);
         });
+
         it('should forward delete arguments to adapter', async () => {
             await haredo.queue('test').delete({ ifEmpty: true, ifUnused: true });
             expect(adapter.deleteQueue).to.have.been.calledOnce();
             expect(adapter.deleteQueue).to.have.been.calledWith('test', { ifEmpty: true, ifUnused: true });
         });
+
         it('should delete exchange', async () => {
             await haredo.exchange('test', 'topic').delete();
             expect(adapter.deleteExchange).to.have.been.calledOnce();
             expect(adapter.deleteExchange).to.have.been.calledWith('test');
         });
+
         it('should forward delete arguments to adapter on delete exchange', async () => {
             await haredo.exchange('test', 'topic').delete({ ifUnused: true });
             expect(adapter.deleteExchange).to.have.been.calledOnce();
             expect(adapter.deleteExchange).to.have.been.calledWith('test', { ifUnused: true });
         });
     });
+
     describe('purge', () => {
         it('should purge queue', async () => {
             await haredo.queue('test').purge();
             expect(adapter.purgeQueue).to.have.been.calledOnce();
             expect(adapter.purgeQueue).to.have.been.calledWith('test');
         });
+
         it('should throw on anonymous queues', async () => {
             await expect(haredo.queue(Queue()).purge()).to.reject(MissingQueueNameError);
         });
     });
+
     describe('unbindExchange', () => {
         it('should unbind a queue', async () => {
             await haredo.queue('test').unbindExchange('testexchange', '', { 'x-match': 'any' });
@@ -902,11 +999,13 @@ describe('haredo', () => {
                 'x-match': 'any'
             });
         });
+
         it('should throw error on anonymous queues', async () => {
             await expect(haredo.queue(Queue()).unbindExchange('testexchange', '', { 'x-match': 'any' })).to.reject(
                 MissingQueueNameError
             );
         });
+
         it('should unbind an exchange', async () => {
             await haredo.exchange('testexchange', 'topic').unbindExchange('testexchange2', '', { 'x-match': 'any' });
             expect(adapter.unbindExchange).to.have.been.calledOnce();
@@ -914,6 +1013,7 @@ describe('haredo', () => {
                 'x-match': 'any'
             });
         });
+
         it('should unbind a queue from an exchange object', async () => {
             const exchange = Exchange('testexchange', 'topic');
             await haredo.queue('test').unbindExchange(exchange, '', { 'x-match': 'any' });
@@ -922,6 +1022,7 @@ describe('haredo', () => {
                 'x-match': 'any'
             });
         });
+
         it('should unbind an exchange from an exchange object', async () => {
             const exchange = Exchange('testexchange', 'topic');
             await haredo.exchange('testexchange2', 'topic').unbindExchange(exchange, '', { 'x-match': 'any' });
@@ -931,6 +1032,7 @@ describe('haredo', () => {
             });
         });
     });
+
     describe('events', () => {
         it('should emit connected event when adapter emits connected event', async () => {
             const eventSpy = spy();
@@ -938,12 +1040,14 @@ describe('haredo', () => {
             adapter.emitter.emit('connected', null);
             expect(eventSpy).to.have.been.calledOnce();
         });
+
         it('should emit disconnected event when adapter emits disconnected event', async () => {
             const eventSpy = spy();
             haredo.emitter.on('disconnected', eventSpy);
             adapter.emitter.emit('disconnected', null);
             expect(eventSpy).to.have.been.calledOnce();
         });
+
         it('should emit message:error when a subscribe callback throws', async () => {
             const error = new Error('test');
             const eventSpy = spy();
@@ -956,6 +1060,7 @@ describe('haredo', () => {
             expect(eventSpy).to.have.been.calledOnce();
             expect(eventSpy.firstCall.firstArg).to.eql([error, message]);
         });
+
         it('should emit message:ack when a message is acked', async () => {
             const eventSpy = spy();
             await haredo.queue('test').subscribe(async (message, info) => {
@@ -967,6 +1072,7 @@ describe('haredo', () => {
             expect(eventSpy).to.have.been.calledOnce();
             expect(eventSpy.firstCall.firstArg).to.eql(message);
         });
+
         it('should emit message:nack when a message is nacked', async () => {
             const eventSpy = spy();
             await haredo.queue('test').subscribe(async (message, info) => {
@@ -978,6 +1084,7 @@ describe('haredo', () => {
             expect(eventSpy).to.have.been.calledOnce();
             expect(eventSpy.firstCall.firstArg).to.eql([true, message]);
         });
+
         it('should emit message:nack with requeue false when a message is nacked with requeue false', async () => {
             const eventSpy = spy();
             await haredo.queue('test').subscribe(async (message, info) => {

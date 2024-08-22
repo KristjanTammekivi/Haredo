@@ -13,6 +13,7 @@ describe('mergeState', () => {
             ).middleware
         ).to.eql([f1, f2]);
     });
+
     it('should work with new array', async () => {
         const f1 = async () => {};
         const f2 = async () => {};
