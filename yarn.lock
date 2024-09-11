@@ -902,15 +902,16 @@ asynckit@^0.4.0:
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
   integrity sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==
 
-auto-changelog@^2.4.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/auto-changelog/-/auto-changelog-2.4.0.tgz#a2d57d49b70ada7ca2e7c6a20a71572561d19cd9"
-  integrity sha512-vh17hko1c0ItsEcw6m7qPRf3m45u+XK5QyCrrBFViElZ8jnKrPC1roSznrd1fIB/0vR/zawdECCRJtTuqIXaJw==
+auto-changelog@^2.5.0:
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/auto-changelog/-/auto-changelog-2.5.0.tgz#c7a3a203a99b54c3c7286b247911966581103c10"
+  integrity sha512-UTnLjT7I9U2U/xkCUH5buDlp8C7g0SGChfib+iDrJkamcj5kaMqNKHNfbKJw1kthJUq8sUo3i3q2S6FzO/l/wA==
   dependencies:
     commander "^7.2.0"
     handlebars "^4.7.7"
+    import-cwd "^3.0.0"
     node-fetch "^2.6.1"
-    parse-github-url "^1.0.2"
+    parse-github-url "^1.0.3"
     semver "^7.3.5"
 
 available-typed-arrays@^1.0.5:
@@ -2187,6 +2188,13 @@ ignore@^5.0.5, ignore@^5.2.0, ignore@^5.3.1:
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-5.3.2.tgz#3cd40e729f3643fd87cb04e50bf0eb722bc596f5"
   integrity sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==
 
+import-cwd@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/import-cwd/-/import-cwd-3.0.0.tgz#20845547718015126ea9b3676b7592fb8bd4cf92"
+  integrity sha512-4pnzH16plW+hgvRECbDWpQl3cqtvSofHWh44met7ESfZ8UZOWWddm8hEyDTqREJ9RbYHY8gi8DqmaelApoOGMg==
+  dependencies:
+    import-from "^3.0.0"
+
 import-fresh@^3.2.1:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/import-fresh/-/import-fresh-3.3.0.tgz#37162c25fcb9ebaa2e6e53d5b4d88ce17d9e0c2b"
@@ -2194,6 +2202,13 @@ import-fresh@^3.2.1:
   dependencies:
     parent-module "^1.0.0"
     resolve-from "^4.0.0"
+
+import-from@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/import-from/-/import-from-3.0.0.tgz#055cfec38cd5a27d8057ca51376d7d3bf0891966"
+  integrity sha512-CiuXOFFSzkU5x/CR0+z7T91Iht4CXgfCxVOFRhh2Zyhg5wOpWvvDLQUsWl+gcN+QscYBjez8hDCt85O7RLDttQ==
+  dependencies:
+    resolve-from "^5.0.0"
 
 imurmurhash@^0.1.4:
   version "0.1.4"
@@ -2635,13 +2650,6 @@ lru-cache@^5.1.1:
   dependencies:
     yallist "^3.0.2"
 
-lru-cache@^6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-6.0.0.tgz#6d6fe6570ebd96aaf90fcad1dafa3b2566db3a94"
-  integrity sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==
-  dependencies:
-    yallist "^4.0.0"
-
 "lru-cache@^9.1.1 || ^10.0.0":
   version "10.0.1"
   resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-10.0.1.tgz#0a3be479df549cca0e5d693ac402ff19537a6b7a"
@@ -3026,10 +3034,10 @@ parent-module@^1.0.0:
   dependencies:
     callsites "^3.0.0"
 
-parse-github-url@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/parse-github-url/-/parse-github-url-1.0.2.tgz#242d3b65cbcdda14bb50439e3242acf6971db395"
-  integrity sha512-kgBf6avCbO3Cn6+RnzRGLkUsv4ZVqv/VfAYkRsyBcgkshNvVBkRn1FEZcW0Jb+npXQWm2vHPnnOqFteZxRRGNw==
+parse-github-url@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/parse-github-url/-/parse-github-url-1.0.3.tgz#2ab55642c8685b63fbe2a196f5abe4ae9bd68abc"
+  integrity sha512-tfalY5/4SqGaV/GIGzWyHnFjlpTPTNpENR9Ea2lLldSJ8EWXMsvacWucqY3m3I4YPtas15IxTLQVQ5NSYXPrww==
 
 parse-imports@^2.1.1:
   version "2.1.1"
@@ -3340,14 +3348,7 @@ semver@^6.0.0, semver@^6.3.0, semver@^6.3.1:
   resolved "https://registry.yarnpkg.com/semver/-/semver-6.3.1.tgz#556d2ef8689146e46dcea4bfdd095f3434dffcb4"
   integrity sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==
 
-semver@^7.3.5, semver@^7.5.3, semver@^7.5.4:
-  version "7.6.0"
-  resolved "https://registry.yarnpkg.com/semver/-/semver-7.6.0.tgz#1a46a4db4bffcccd97b743b5005c8325f23d4e2d"
-  integrity sha512-EnwXhrlwXMk9gKu5/flx5sv/an57AkRplG3hTK68W7FRDN+k+OWBj65M7719OkA82XLBxrcX0KSHj+X5COhOVg==
-  dependencies:
-    lru-cache "^6.0.0"
-
-semver@^7.6.0, semver@^7.6.1, semver@^7.6.3:
+semver@^7.3.5, semver@^7.5.3, semver@^7.5.4, semver@^7.6.0, semver@^7.6.1, semver@^7.6.3:
   version "7.6.3"
   resolved "https://registry.yarnpkg.com/semver/-/semver-7.6.3.tgz#980f7b5550bc175fb4dc09403085627f9eb33143"
   integrity sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A==
@@ -4026,11 +4027,6 @@ yallist@^3.0.2:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-3.1.1.tgz#dbb7daf9bfd8bac9ab45ebf602b8cbad0d5d08fd"
   integrity sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==
-
-yallist@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/yallist/-/yallist-4.0.0.tgz#9bb92790d9c0effec63be73519e11a35019a3a72"
-  integrity sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==
 
 yaml@^2.5.1:
   version "2.5.1"
