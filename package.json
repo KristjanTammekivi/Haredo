@@ -44,6 +44,6 @@
     "**/prettier": "npm:@staycool/prettier@^3.0.1"
   },
   "devDependencies": {
-    "auto-changelog": "^2.4.0"
+    "auto-changelog": "^2.5.0"
   }
 }
