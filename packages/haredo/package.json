@@ -62,7 +62,7 @@
         "hein": "^1.4.2",
         "hein-plugin-sinon": "^1.1.1",
         "mocha": "^10.7.3",
-        "nyc": "^17.0.0",
+        "nyc": "^17.1.0",
         "rabbitmq-admin": "^1.2.3",
         "rimraf": "^5.0.7",
         "sinon": "^18.0.1",
