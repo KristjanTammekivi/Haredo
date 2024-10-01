@@ -2163,10 +2163,10 @@ hein-plugin-sinon@^1.1.1:
     "@types/sinon" "^10.0.13"
     hein-assertion-utils "^1.0.4"
 
-hein@^1.4.2:
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/hein/-/hein-1.4.2.tgz#798a58cd142c1146ad2a2afb8a7ce3ddc7c804f9"
-  integrity sha512-jDwV1p01uQkZukVvrypDI72Nf0qtRgFPCtzjz3lOgHzgxb+q7Elt5v4H1prYWsN6S7O/9R8aZlv3pkLZ6B8Hsg==
+hein@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/hein/-/hein-1.5.0.tgz#596adf089e094c344b8b9e905f7d3168a20545e5"
+  integrity sha512-+Xgv0MXXKr+lBYkkKFDHEGFAKo70jpxIgrKf9XZIsI6LyIm/upgEO9VXjFWMpfP40GjRL/R2I4U8N6ci5W/tlQ==
   dependencies:
     hein-assertion-utils "^1.0.4"
     lodash "^4.17.21"
