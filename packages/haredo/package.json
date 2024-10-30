@@ -57,7 +57,7 @@
         "@typescript-eslint/eslint-plugin": "^8.12.2",
         "@typescript-eslint/parser": "^8.12.2",
         "dotenv": "^16.4.5",
-        "eslint": "^8.57.0",
+        "eslint": "^9.13.0",
         "eslint-config-hein": "^1.0.6",
         "hein": "^1.5.0",
         "hein-plugin-sinon": "^1.1.1",
