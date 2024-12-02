@@ -61,7 +61,7 @@
         "eslint-config-hein": "^1.0.6",
         "hein": "^1.5.0",
         "hein-plugin-sinon": "^1.1.1",
-        "mocha": "^10.7.3",
+        "mocha": "^11.0.1",
         "nyc": "^17.1.0",
         "rabbitmq-admin": "^1.2.3",
         "rimraf": "^5.0.7",
