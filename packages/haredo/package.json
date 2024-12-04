@@ -56,7 +56,7 @@
         "@types/wtfnode": "^0.7.0",
         "@typescript-eslint/eslint-plugin": "^8.17.0",
         "@typescript-eslint/parser": "^8.17.0",
-        "dotenv": "^16.4.5",
+        "dotenv": "^16.4.7",
         "eslint": "^8.57.0",
         "eslint-config-hein": "^1.0.6",
         "hein": "^1.5.0",
