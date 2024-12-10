@@ -1,3 +1,9 @@
+### 2.12.0 (2024-12-10)
+
+##### New Features
+
+*  expose connection events from connection-manager ([c20f3d34](https://github.com/KristjanTammekivi/haredo/commit/c20f3d34919a64ccff198ac879cf51c99314bcbd))
+
 #### 2.11.1 (2023-04-30)
 
 ##### Other Changes
