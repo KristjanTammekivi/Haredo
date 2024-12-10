@@ -9,6 +9,8 @@ import { Loggers } from './state';
 import { makePublisher, Publisher } from './publisher';
 
 export interface Events {
+    connecting: never;
+    connectionfail: Error;
     connected: Connection;
     error: Error;
     connectionclose: never;
@@ -131,6 +133,7 @@ export const makeConnectionManager = (connectionOpts: string | ConnectionOptions
                 throw new HaredoClosingError();
             }
             try {
+                emitter.emit('connecting');
                 connection = await connect(connectionOpts, socketOpts);
                 connection.on('error', /* istanbul ignore next */(error) => {
                     log.error({ component: 'ConnectionManager', msg: 'connection error', error });
@@ -149,6 +152,7 @@ export const makeConnectionManager = (connectionOpts: string | ConnectionOptions
                 log.info({ component: 'ConnectionManager', msg: 'connected' });
                 return connection;
             } catch (error) /* istanbul ignore next */ {
+                emitter.emit('connectionfail', error);
                 log.error({ component: 'ConnectionManager', msg: 'error while connecting', error });
                 await delay(walker());
             }

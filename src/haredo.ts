@@ -10,6 +10,7 @@ import { generateCorrelationId } from './rpc';
 import { defaultState, HaredoChainState, Logger, Loggers, Middleware } from './state';
 import { merge, MergeTypes, omitUndefined, promiseMap } from './utils';
 import { InvalidOptionsError } from './errors';
+import { makeEmitter, TypedEventEmitter } from './events';
 
 // TODO: make this file smaller
 // TODO: add a configuration option for max connection attempts
@@ -39,6 +40,7 @@ export enum LogLevel {
 }
 
 export interface Haredo extends InitialChain<unknown, unknown> {
+    emitter: TypedEventEmitter<HaredoEvents>;
     /**
      * Cancel all consumers, wait for them to finish processing their messages
      * and then close the connection to the broker
@@ -54,6 +56,13 @@ const makeLogger = (level: LogLevel, logger: (log: LogItem) => void): Logger =>
     ({ component, msg, message, rawMessage, error }) =>
         logger(omitUndefined({ component, msg, message, rawMessage, error, level, timestamp: new Date() }));
 
+export interface HaredoEvents {
+    connecting: never;
+    connectionfail: Error;
+    connectionclose: never;
+    connected: never;
+}
+
 export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOptions): Haredo => {
     validateConnectionOptions(connection);
     const log: Loggers = {
@@ -63,7 +72,22 @@ export const haredo = ({ connection, socketOpts, logger = () => {} }: HaredoOpti
         error: makeLogger(LogLevel.ERROR, logger)
     };
     const connectionManager = makeConnectionManager(connection, socketOpts, log);
+
+    const emitter = makeEmitter<HaredoEvents>();
+    connectionManager.emitter.on('connecting', () => {
+        emitter.emit('connecting');
+    });
+    connectionManager.emitter.on('connectionfail', (error) => {
+        emitter.emit('connectionfail', error);
+    });
+    connectionManager.emitter.on('connectionclose', () => {
+        emitter.emit('connectionclose');
+    });
+    connectionManager.emitter.on('connected', () => {
+        emitter.emit('connected');
+    });
     return {
+        emitter,
         ...initialChain(merge(defaultState<unknown, unknown>(), { connectionManager, log })),
         close: async () => {
             await connectionManager.close();
