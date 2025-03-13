@@ -685,11 +685,6 @@
   resolved "https://registry.yarnpkg.com/@types/unist/-/unist-3.0.3.tgz#acaab0f919ce69cce629c2d4ed2eb4adc1b6c20c"
   integrity sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==
 
-"@types/wtfnode@^0.7.0":
-  version "0.7.3"
-  resolved "https://registry.yarnpkg.com/@types/wtfnode/-/wtfnode-0.7.3.tgz#92b57816ee241e5c40c0650fc506a08c54d78bee"
-  integrity sha512-UMkHpx+o2xRWLJ7PmT3bBzvIA9/0oFw80oPtY/xO4jfdq+Gznn4wP7K9B/JjMxyxy+wF+5oRPIykxeBbEDjwRg==
-
 "@typescript-eslint/eslint-plugin@^8.2.0", "@typescript-eslint/eslint-plugin@^8.26.0":
   version "8.26.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-8.26.0.tgz#7e880faf91f89471c30c141951e15f0eb3a0599e"
@@ -4059,11 +4054,6 @@ write-file-atomic@^3.0.0:
     is-typedarray "^1.0.0"
     signal-exit "^3.0.2"
     typedarray-to-buffer "^3.1.5"
-
-wtfnode@^0.9.4:
-  version "0.9.4"
-  resolved "https://registry.yarnpkg.com/wtfnode/-/wtfnode-0.9.4.tgz#3e82f7ec682d6d00d8445672a5a9a7e36e1ad40b"
-  integrity sha512-5xgeLjIxZ8DVHU4ty3kOdd9QfHDxf89tmSy0+yN8n59S3wx6LBJh8XhEg61OPOGE65jEYGAtLq0GMzLKrsjfPQ==
 
 y18n@^4.0.0:
   version "4.0.3"

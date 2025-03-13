@@ -53,7 +53,6 @@
         "@types/mocha": "^10.0.8",
         "@types/node": "^22.13.9",
         "@types/sinon": "^17.0.4",
-        "@types/wtfnode": "^0.7.0",
         "@typescript-eslint/eslint-plugin": "^8.26.0",
         "@typescript-eslint/parser": "^8.26.0",
         "dotenv": "^16.4.7",
@@ -69,8 +68,7 @@
         "source-map-support": "^0.5.6",
         "ts-node": "^10.9.2",
         "typedoc": "^0.27.9",
-        "typescript": "^5.7.3",
-        "wtfnode": "^0.9.4"
+        "typescript": "^5.7.3"
     },
     "resolutions": {
         "**/prettier": "npm:@staycool/prettier@^3.0.1"
