@@ -45,7 +45,7 @@
         "url": "https://github.com/KristjanTammekivi/Haredo"
     },
     "dependencies": {
-        "@cloudamqp/amqp-client": "^3.1.1"
+        "@cloudamqp/amqp-client": "^3.2.0"
     },
     "devDependencies": {
         "@faker-js/faker": "^9.3.0",

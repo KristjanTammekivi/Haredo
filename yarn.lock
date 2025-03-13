@@ -224,6 +224,11 @@
   resolved "https://registry.yarnpkg.com/@cloudamqp/amqp-client/-/amqp-client-3.1.1.tgz#1962dd4e907cbed6b3f9b52ff5a8f1ec096135a5"
   integrity sha512-bYPOH7jJ9eE9bHNyZqlgTyT4uh5L1KSndskK38b1PIePTKxNUTU1FibLQgcJm1+yGahTZwwQl3thgcRoiqIV5Q==
 
+"@cloudamqp/amqp-client@^3.2.0":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/@cloudamqp/amqp-client/-/amqp-client-3.2.0.tgz#e67237fc4a95f9afff45e8eac19d401371669a88"
+  integrity sha512-YFLAttVF+Rmm2SGo4S3rbEhTnt3oqsxX8LuAl+XxcUdBxW9mz8G2mZw5jJFjHLqhy+9IjtFdRA3Qbkut6ix+UQ==
+
 "@cspotcode/source-map-support@^0.8.0":
   version "0.8.1"
   resolved "https://registry.yarnpkg.com/@cspotcode/source-map-support/-/source-map-support-0.8.1.tgz#00629c35a688e05a88b1cda684fb9d5e73f000a1"
