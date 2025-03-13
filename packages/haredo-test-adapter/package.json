@@ -35,7 +35,7 @@
     "haredo": "^3.0.0"
   },
   "dependencies": {
-    "@types/sinon": "^17.0.3",
+    "@types/sinon": "^17.0.4",
     "sinon": "^19.0.2"
   },
   "resolutions": {
