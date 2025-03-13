@@ -20,34 +20,40 @@ export interface HaredoEvents {
     'message:nack': [requeue: boolean, message: HaredoMessage];
 }
 
-export interface HaredoTypeExtend {
+export interface ExtensionInterface {
     queue?: Record<string, <T>(...args: any[]) => QueueChain<T>>;
     exchange?: Record<string, <T>(...args: any[]) => ExchangeChain<T>>;
 }
 
-export type IterateExtension<T extends HaredoTypeExtend['queue'] | HaredoTypeExtend['exchange']> = {
-    [K in keyof T]: T[K];
+type AnyFunction = (...args: any) => any;
+
+type ReplaceReturnType<T extends (...args: any) => any, NEW_RETURN> = (...args: Parameters<T>) => NEW_RETURN;
+
+export type IterateExtension<T extends ExtensionInterface['queue'] | ExtensionInterface['exchange'], U> = {
+    [K in keyof T]: ReplaceReturnType<T[K] & AnyFunction, U>;
 };
 
-export interface HaredoInstance<E extends HaredoTypeExtend = object> {
+export interface HaredoInstance<E extends ExtensionInterface = object> {
     /**
      * Connect to the broker
      */
     connect(): Promise<void>;
-    exchange<T = unknown>(exchange: ExchangeInterface<T>): ExchangeChain<T> & IterateExtension<E['exchange']>;
+    exchange<T = unknown>(
+        exchange: ExchangeInterface<T>
+    ): ExchangeChain<T> & IterateExtension<E['exchange'], ExchangeChain<T>>;
 
     exchange<T = unknown>(
         exchange: string,
         type: ExchangeType,
         parameters?: ExchangeParams,
         args?: ExchangeArguments
-    ): ExchangeChain<T> & IterateExtension<E['exchange']>;
-    queue<T = unknown>(queue: QueueInterface<T>): QueueChain<T> & IterateExtension<E['queue']>;
+    ): ExchangeChain<T> & IterateExtension<E['exchange'], ExchangeChain<T>>;
+    queue<T = unknown>(queue: QueueInterface<T>): QueueChain<T> & IterateExtension<E['queue'], QueueChain<T>>;
     queue<T = unknown>(
         queue: string,
         params?: QueueParams,
         args?: QueueArguments
-    ): QueueChain<T> & IterateExtension<E['queue']>;
+    ): QueueChain<T> & IterateExtension<E['queue'], QueueChain<T>>;
     /**
      * Cancel all consumers, wait for callbacks
      * to finish and close the connection to the broker.

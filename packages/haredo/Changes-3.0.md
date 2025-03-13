@@ -6,8 +6,10 @@ Amqplib has served the community well but after all this time it still doesn't
 ship types with it, it has a very large codebase, the API is full of quirks I
 needed to work around etc.
 
-By instead using [@cloudamqp/amqp-client](https://github.com/cloudamqp/amqp-client.js) I can remove a lot of code on haredo
-side, such as the handling of when it's ok to fulfill the promise when publishing.
+By instead using [@cloudamqp/amqp-client](https://github.com/cloudamqp/amqp-client.js)
+I can remove a lot of code on haredo side, such as the handling of when it's ok to
+fulfill the promise when publishing. Another benefit to @cloudamqp/amqp-client is
+that it has 0 dependencies
 
 # Subscribe callback signature change
 

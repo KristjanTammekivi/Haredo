@@ -1,17 +1,20 @@
 import { Haredo } from '../haredo';
+import { ExchangeChain, QueueChain } from '../types';
 import { delay } from '../utils/delay';
 
-// declare module '../types' {
-//     interface HaredoMessage<T> {
-//         cid: string;
-//     }
-//     interface QueueChain<T> {
-//         cid(cid: string): this;
-//     }
-// }
+interface Extension {
+    queue: {
+        /** Add a cid header to publishing */
+        cid<T>(cid: string): QueueChain<T>;
+    };
+    exchange: {
+        /** Add a cid header to publishing */
+        cid<T>(cid: string): ExchangeChain<T>;
+    };
+}
 
 const start = async () => {
-    const haredo = Haredo({
+    const haredo = Haredo<Extension>({
         url: process.env.RABBIT_URL || 'amqp://localhost',
         globalMiddleware: [
             (message) => {
@@ -22,6 +25,15 @@ const start = async () => {
             {
                 name: 'cid',
                 queue: (state) => {
+                    return (cid: string) => ({
+                        ...state,
+                        headers: {
+                            ...state.headers,
+                            'x-cid': cid
+                        }
+                    });
+                },
+                exchange: (state) => {
                     return (cid: string) => ({
                         ...state,
                         headers: {
@@ -42,9 +54,7 @@ const start = async () => {
     let iteration = 1;
     while (true) {
         iteration++;
-        await (haredo.queue<{ id: number }>('testQueue') as any)
-            .cid(`message_${ iteration }`)
-            .publish({ id: iteration });
+        await haredo.queue<{ id: number }>('testQueue').cid(`message_${ iteration }`).publish({ id: iteration });
         await delay(1000);
     }
 };

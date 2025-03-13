@@ -8,7 +8,7 @@ interface Message {
 
 const log = (...messages: any[]) => console.log(new Date(), ...messages);
 
-const metrics: Middleware<Message> = async (message, next) => {
+const metrics: Middleware<Message> = async (_message, next) => {
     const start = Date.now();
     await next();
     log('Message processed in', Date.now() - start, 'ms');

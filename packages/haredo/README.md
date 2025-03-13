@@ -190,19 +190,21 @@ await haredo.queue('my-queue')
 
 ### Extending Haredo
 
-Add new methods to the Haredo instance
+Add new methods to the Haredo instance. Only available for publish chains. Allows you to modify
+the state, requires returning the modified state.
 
 _[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/extensions.ts)_
 
 ```typescript
 
-declare module 'haredo/types' {
-    interface QueueChain<T> {
-        cid(cid: string): this;
-    }
+interface Extension {
+    queue: {
+        /** Add a cid header to publishing */
+        cid<T>(cid: string): QueueChain<T>;
+    };
 }
 
-const haredo = Haredo({
+const haredo = Haredo<Extension>({
     url: 'amqp://localhost:5672/'
     extensions: [
         {
