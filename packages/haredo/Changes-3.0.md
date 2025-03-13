@@ -3,11 +3,11 @@
 # Bye amqplib
 
 Amqplib has served the community well but after all this time it still doesn't
-ship types with it, it has a very large code, the API is full of quirks I needed
-to work around etc.
+ship types with it, it has a very large codebase, the API is full of quirks I
+needed to work around etc.
 
-By instead using @cloudamqp/amqp-client I can remove a lot of code on haredo
-side, like the handling of when it's ok to fulfill the promise when publishing.
+By instead using [@cloudamqp/amqp-client](https://github.com/cloudamqp/amqp-client.js) I can remove a lot of code on haredo
+side, such as the handling of when it's ok to fulfill the promise when publishing.
 
 # Subscribe callback signature change
 
@@ -72,7 +72,8 @@ haredo.queue('test')
     .skipSetup(true)
 ```
 
-In v3 instead of a boolean you can pass in an object for finer control of what is skipped
+In v3 instead of a boolean you can pass in an object for finer control of what is
+done and what is not during setup.
 
 ```ts
 haredo.queue('test')
@@ -93,7 +94,9 @@ These are new methods
 ```ts
 await haredo.queue('testqueue').delete();
 await haredo.exchange('testexchange').delete();
+
 await haredo.queue('testqueue').unbindExchange('testexchange', '#');
 await haredo.exchange('testexchange').unbindExchange('secondexchange', '#');
+
 await haredo.queue('testqueue').purge();
 ```

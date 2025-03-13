@@ -7,7 +7,7 @@ import { Exchange } from './exchange';
 import { Haredo } from './haredo';
 import { makeHaredoMessage } from './haredo-message';
 import { Queue } from './queue';
-import { HaredoConsumer, Adapter, AdapterEvents, Consumer } from './types';
+import { HaredoConsumer, Adapter, AdapterEvents, Consumer, QueueChain, ExchangeChain } from './types';
 import { TypedEventEmitter } from './utils/typed-event-emitter';
 import { AMQPError } from '@cloudamqp/amqp-client';
 
@@ -451,6 +451,14 @@ describe('haredo', () => {
                 );
             });
 
+            it('should create multiple bindings when passed an array of patterns', async () => {
+                await haredo
+                    .queue('test')
+                    .bindExchange(Exchange('testexchange', 'topic'), ['message.created', 'message.updated'])
+                    .subscribe(async () => {});
+                expect(adapter.bindQueue).to.have.been.calledTwice();
+            });
+
             it('should not attempt to create an exchange twice when passing in an array of two patterns for binding', async () => {
                 await haredo
                     .queue('test')
@@ -760,8 +768,19 @@ describe('haredo', () => {
     });
 
     describe('extend', () => {
+        interface Extension {
+            queue: {
+                /** Add cid to publishing */
+                cid<T>(cid: string): QueueChain<T>;
+            };
+            exchange: {
+                /** Add cid to publishing */
+                cid<T>(cid: string): ExchangeChain<T>;
+            };
+        }
+
         it('should be possible to extend haredo queue chain', async () => {
-            const extendedHaredo = Haredo({
+            const extendedHaredo = Haredo<Extension>({
                 url: 'amqp://localhost:5672',
                 extensions: [
                     {
@@ -780,7 +799,7 @@ describe('haredo', () => {
                 adapter
             });
             await extendedHaredo.connect();
-            await (extendedHaredo.queue('test') as any).cid('123').publish('test');
+            await extendedHaredo.queue('test').cid('123').publish('test');
             expect(adapter.sendToQueue).to.have.been.calledOnce();
             expect(adapter.sendToQueue).to.have.been.calledWith('test', '"test"', {
                 confirm: false,
@@ -792,7 +811,7 @@ describe('haredo', () => {
         });
 
         it('should be possible to extend haredo exchange chain', async () => {
-            const extendedHaredo = Haredo({
+            const extendedHaredo = Haredo<Extension>({
                 url: 'amqp://localhost:5672',
                 extensions: [
                     {
@@ -811,7 +830,7 @@ describe('haredo', () => {
                 adapter
             });
             await extendedHaredo.connect();
-            await (extendedHaredo.exchange('test', 'topic') as any).cid('123').publish('test', 'rk');
+            await extendedHaredo.exchange('test', 'topic').cid('123').publish('test', 'rk');
             expect(adapter.publish).to.have.been.calledOnce();
             expect(adapter.publish).to.have.been.calledWith('test', 'rk', '"test"', {
                 confirm: false,
@@ -1098,12 +1117,3 @@ describe('haredo', () => {
         });
     });
 });
-
-// declare module './types' {
-//     interface QueueChain<T = unknown> {
-//         cid(cid: string): this;
-//     }
-//     interface ExchangeChain<T = unknown> {
-//         cid(cid: string): this;
-//     }
-// }

@@ -14,6 +14,8 @@ import type {
     HaredoEvents,
     HaredoInstance,
     HaredoOptions,
+    HaredoTypeExtend,
+    IterateExtension,
     QueueArguments,
     QueueChain,
     QueueChainState,
@@ -26,7 +28,7 @@ import { mergeState } from './utils/merge-state';
 import { Logger, createLogger } from './utils/logger';
 import { TypedEventEmitter } from './utils/typed-event-emitter';
 
-export const Haredo = ({
+export const Haredo = <E extends HaredoTypeExtend = object>({
     url,
     tlsOptions,
     reconnectDelay,
@@ -35,7 +37,7 @@ export const Haredo = ({
     globalMiddleware = [],
     log = () => {},
     adapter
-}: HaredoOptions): HaredoInstance => {
+}: HaredoOptions): HaredoInstance<E> => {
     const logger = createLogger(log).component('haredo');
     adapter =
         adapter ??
@@ -64,7 +66,11 @@ export const Haredo = ({
             if (typeof exchange === 'string') {
                 exchange = InternalExchange(exchange, type!, params, args);
             }
-            return exchangeChain<T>({ emitter, adapter, exchange, appId: defaults.appId }, logger, extensions);
+            return exchangeChain<T>(
+                { emitter, adapter, exchange, appId: defaults.appId },
+                logger,
+                extensions
+            ) as ExchangeChain<T> & IterateExtension<E['exchange']>;
         },
         queue: <T = unknown>(
             queue: string | QueueInterface<T>,
@@ -85,7 +91,7 @@ export const Haredo = ({
                 },
                 logger,
                 extensions
-            );
+            ) as QueueChain<T> & IterateExtension<E['queue']>;
         }
     };
 };
