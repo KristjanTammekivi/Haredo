@@ -54,7 +54,7 @@ describe('haredo', () => {
         } as any);
         adapter.emitter = new TypedEventEmitter<AdapterEvents>();
         haredo = Haredo({ url: rabbitURL + '/test', adapter, log: logSpy });
-        adapter.createQueue.resolves('test');
+        adapter.createQueue.callsFake(async (x) => x || 'amq.test');
         consumerStub = stub({ cancel: () => Promise.resolve() });
         adapter.subscribe.resolves(consumerStub);
     });
@@ -964,6 +964,17 @@ describe('haredo', () => {
             expect(adapter.bindQueue).to.have.been.calledOnce();
             expect(adapter.bindQueue).to.have.been.calledWith('test', 'testexchange2', 'rk', {
                 'x-match': 'any'
+            });
+        });
+
+        it('should forward binding arguments to adapter when binding a queue to a headers exchange with an empty array', async () => {
+            await haredo
+                .queue('testqueue')
+                .bindExchange('testexchange', [], 'headers', {}, {}, { 'x-match': 'all' })
+                .setup();
+            expect(adapter.bindQueue).to.have.been.calledOnce();
+            expect(adapter.bindQueue).to.have.been.calledWith('testqueue', 'testexchange', '#', {
+                'x-match': 'all'
             });
         });
     });

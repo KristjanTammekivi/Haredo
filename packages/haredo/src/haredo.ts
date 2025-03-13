@@ -405,17 +405,18 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
             bindingArguments?: BindingArguments
         ) => {
             bindingArguments = typeof type === 'object' ? type : bindingArguments;
+            const exchangeObject =
+                typeof exchange === 'string'
+                    ? InternalExchange(
+                          exchange,
+                          type as ExchangeType,
+                          exchangeParams as ExchangeParams,
+                          exchangeArguments
+                      )
+                    : exchange;
             const binding = {
-                exchange:
-                    typeof exchange === 'string'
-                        ? InternalExchange(
-                              exchange,
-                              type as ExchangeType,
-                              exchangeParams as ExchangeParams,
-                              exchangeArguments
-                          )
-                        : exchange,
-                patterns: castArray(patterns),
+                exchange: exchangeObject,
+                patterns: exchangeObject.type === 'headers' ? ['#'] : castArray(patterns),
                 bindingArguments
             };
             return queueChain(

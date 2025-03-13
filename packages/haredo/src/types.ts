@@ -103,6 +103,7 @@ export interface HaredoOptions {
     reconnectDelay?: number | ((attempt: number) => number);
     /**
      * Adapter to use for commands to the broker. Useful for testing.
+     * @see https://www.npmjs.com/package/haredo-test-adapter
      */
     adapter?: Adapter;
     defaults?: {
