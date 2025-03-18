@@ -4,6 +4,7 @@ import { rabbitAdmin } from './utils/test/rabbit-admin';
 import { Exchange } from './exchange';
 import { HaredoInstance } from './types';
 import { delay } from './utils/delay';
+import { Queue } from './queue';
 
 const RABBIT_URL = 'amqp://localhost:5672/test';
 describe('haredo integration', () => {
@@ -86,5 +87,23 @@ describe('haredo integration', () => {
         await delay(100);
         await consumer.cancel();
         expect(messageHandledAt).to.not.be.undefined();
+    });
+
+    it('should declare a queue passively', async () => {
+        await expect(haredo.queue('testQueue', { passive: true }).setup()).to.reject(
+            /no queue 'testQueue' in vhost 'test'/
+        );
+        await expect(haredo.queue(Queue('testQueue').passive()).setup()).to.reject(
+            /no queue 'testQueue' in vhost 'test'/
+        );
+    });
+
+    it('should declare an exchange passively', async () => {
+        await expect(haredo.exchange('testExchange', 'topic', { passive: true }).setup()).to.reject(
+            /no exchange 'testExchange' in vhost 'test'/
+        );
+        await expect(haredo.exchange(Exchange('testExchange', 'topic', { passive: true })).setup()).to.reject(
+            /no exchange 'testExchange' in vhost 'test'/
+        );
     });
 });
