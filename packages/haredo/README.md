@@ -23,10 +23,10 @@ RabbitMQ client for Node.js with a focus on simplicity and type safety.
 - [Message throttling](#message-throttling)
 - [Dead letter](#dead-letter)
 - [Middleware](#middleware)
+- [Global middleware](#global-middleware)
 - [Graceful shutdown](#graceful-shutdown)
 - [Automatic setup](#automatic-setup)
 - [Extending Haredo](#extending-haredo)
-- [Global middleware](#global-middleware)
 
 ## Features
 
@@ -163,6 +163,28 @@ await haredo.queue('my-queue')
     });
 ```
 
+### Global middleware
+
+Add a middleware that will be called for every message in every subscriber
+
+_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/extensions.ts)_
+
+```typescript
+declare module 'haredo/types' {
+    interface HaredoMessage<T> {
+        cid?: string;
+    }
+}
+const haredo = Haredo({
+    url: 'amqp://localhost:5672/'
+    globalMiddleware: [
+        (message) => {
+            message.cid = message.headers?.['x-cid'] as string;
+        }
+    ]
+});
+```
+
 ### Graceful shutdown
 
 Calling consumer.close() will send cancel to channel and wait for existing messages to be handled before resolving the returned promise.
@@ -171,8 +193,8 @@ Calling haredoInstance.close() will gracefully close all of it's consumers
 
 ### Automatic setup
 
-By default Haredo will automatically assert the queus and exchanges and bind them
-to each other. This can be disabled by calling .skipSetup()
+By default Haredo will automatically assert the queues and exchanges and bind them
+to each other each time publish/subscribe is called. This can be disabled by calling .skipSetup()
 
 ```typescript
 await haredo.queue('my-queue')
@@ -225,26 +247,4 @@ const haredo = Haredo<Extension>({
 await haredo.queue('my-queue')
     .cid('123')
     .publish({ id: 5, status: 'inactive' });
-```
-
-### Global middleware
-
-Add a middleware that will be called for every message in every subscriber
-
-_[example on GitHub](https://github.com/KristjanTammekivi/Haredo/blob/master/src/examples/extensions.ts)_
-
-```typescript
-declare module 'haredo/types' {
-    interface HaredoMessage<T> {
-        cid?: string;
-    }
-}
-const haredo = Haredo({
-    url: 'amqp://localhost:5672/'
-    globalMiddleware: [
-        (message) => {
-            message.cid = message.headers?.['x-cid'] as string;
-        }
-    ]
-});
 ```

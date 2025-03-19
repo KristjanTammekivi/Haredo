@@ -106,4 +106,56 @@ describe('haredo integration', () => {
             /no exchange 'testExchange' in vhost 'test'/
         );
     });
+
+    it('should delete queue', async () => {
+        await haredo.queue('testQueue').setup();
+        await haredo.queue('testQueue').delete();
+        await expect(rabbitAdmin.getQueue('test', 'testQueue')).to.reject(/Resource not found/);
+    });
+
+    it('should delete exchange', async () => {
+        await haredo.exchange(Exchange('testExchange', 'topic')).setup();
+        await haredo.exchange(Exchange('testExchange', 'topic')).delete();
+        await expect(rabbitAdmin.getExchange('test', 'testExchange')).to.reject(/Resource not found/);
+    });
+
+    it('should unbind queue', async () => {
+        await haredo.queue('testQueue').bindExchange('testExchange', '#', 'topic').setup();
+        await haredo.queue('testQueue').unbindExchange('testExchange', '#');
+        expect(
+            await rabbitAdmin.getBindings({
+                source: 'testExchange',
+                destination: 'testQueue',
+                type: 'queue',
+                vhost: 'test'
+            })
+        ).to.have.lengthOf(0);
+    });
+
+    it('should unbind exchange', async () => {
+        await haredo
+            .exchange(Exchange('destinationExchange', 'topic'))
+            .bindExchange('sourceExchange', '#', 'topic')
+            .setup();
+        await haredo.exchange(Exchange('destinationExchange', 'topic')).unbindExchange('sourceExchange', '#');
+        expect(
+            await rabbitAdmin.getBindings({
+                source: 'sourceExchange',
+                destination: 'destinationExchange',
+                type: 'exchange',
+                vhost: 'test'
+            })
+        ).to.have.lengthOf(0);
+    });
+
+    it('should purge queue', async () => {
+        await haredo.queue('testQueue').publish('test message');
+        await haredo.queue('testQueue').purge();
+        const messages = await rabbitAdmin.getMessages('test', 'testQueue', {
+            ackmode: 'ack_requeue_false',
+            count: '1',
+            encoding: 'auto'
+        });
+        expect(messages).to.have.lengthOf(0);
+    });
 });
