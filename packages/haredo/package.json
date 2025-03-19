@@ -1,6 +1,6 @@
 {
     "name": "haredo",
-    "version": "3.0.0-alpha.4",
+    "version": "3.0.0",
     "description": "A type-safe client library for rabbitmq/amqp",
     "homepage": "https://haredo.io",
     "keywords": [
