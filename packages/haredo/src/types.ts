@@ -1,4 +1,4 @@
-import {
+import type {
     AMQPTlsOptions,
     ExchangeParams,
     AMQPProperties,
@@ -6,11 +6,12 @@ import {
     AMQPMessage,
     Field
 } from '@cloudamqp/amqp-client';
-import { Middleware } from './utils/apply-middleware';
-import { FailureBackoff } from './backoffs';
-import { TypedEventEmitter } from './utils/typed-event-emitter';
-import { LogFunction } from './utils/logger';
-export { Logger } from './utils/logger';
+import type { Middleware } from './utils/apply-middleware';
+import type { FailureBackoff } from './backoffs';
+import type { TypedEventEmitter } from './utils/typed-event-emitter';
+import type { LogFunction } from './utils/logger';
+export type { LogFunction, LogMessage, LogLevel } from './utils/logger';
+export type { Middleware } from './utils/apply-middleware';
 
 export interface HaredoEvents {
     connecting: { attempt: number };
