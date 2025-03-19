@@ -49,6 +49,12 @@ export const Haredo = <E extends ExtensionInterface = object>({
     adapter.emitter.on('disconnected', () => {
         emitter.emit('disconnected', null);
     });
+    adapter.emitter.on('connecting', (data) => {
+        emitter.emit('connecting', data);
+    });
+    adapter.emitter.on('connectingFailed', (info) => {
+        emitter.emit('connectingFailed', info);
+    });
     return {
         emitter,
         connect: async () => {

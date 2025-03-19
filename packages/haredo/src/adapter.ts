@@ -40,10 +40,12 @@ export const createAdapter = (
                     warn: AMQPClientLogger.warning,
                     error: AMQPClientLogger.error
                 };
+                emitter.emit('connecting', { attempt: attempt + 1 });
                 logger.info('Connecting');
                 await c.connect();
                 return c;
             } catch (error) {
+                emitter.emit('connectingFailed', { attempt: attempt + 1, error });
                 logger.setError(error as Error).error('Error connecting to RabbitMQ, retrying in 5 seconds');
                 await delay(typeof reconnectDelay === 'number' ? reconnectDelay : reconnectDelay(++attempt));
             }

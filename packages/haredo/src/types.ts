@@ -13,6 +13,8 @@ import { LogFunction } from './utils/logger';
 export { Logger } from './utils/logger';
 
 export interface HaredoEvents {
+    connecting: { attempt: number };
+    connectingFailed: { attempt: number; error: Error };
     connected: null;
     disconnected: null;
     'message:error': [error: Error, message: HaredoMessage];
@@ -812,6 +814,8 @@ export interface ExchangeDeleteOptions {
 }
 
 export interface AdapterEvents {
+    connecting: { attempt: number };
+    connectingFailed: { attempt: number; error: Error };
     connected: null;
     disconnected: null;
 }

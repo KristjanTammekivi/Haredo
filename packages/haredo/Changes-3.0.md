@@ -102,3 +102,7 @@ await haredo.exchange('testexchange').unbindExchange('secondexchange', '#');
 
 await haredo.queue('testqueue').purge();
 ```
+
+# Logger changes
+
+The different log levels are now lowercase. Also the signature for the log function has changed.
