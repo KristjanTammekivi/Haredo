@@ -1078,6 +1078,20 @@ describe('haredo', () => {
             expect(eventSpy).to.have.been.calledOnce();
         });
 
+        it('should forward connecting event from adapter', async () => {
+            const eventSpy = spy();
+            haredo.emitter.on('connecting', eventSpy);
+            adapter.emitter.emit('connecting', { attempt: 1 });
+            expect(eventSpy).to.have.been.calledOnce();
+        });
+
+        it('should forward connectingFailed event from adapter', async () => {
+            const eventSpy = spy();
+            haredo.emitter.on('connectingFailed', eventSpy);
+            adapter.emitter.emit('connectingFailed', { attempt: 1, error: new Error() });
+            expect(eventSpy).to.have.been.calledOnce();
+        });
+
         it('should emit message:error when a subscribe callback throws', async () => {
             const error = new Error('test');
             const eventSpy = spy();
