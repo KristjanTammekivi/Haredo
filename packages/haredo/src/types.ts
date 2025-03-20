@@ -843,6 +843,8 @@ export interface Adapter {
     ): Promise<Consumer>;
 }
 
+export type ReconnectDelayFunction = (attempt: number) => number;
+
 export interface AdapterOptions {
     url: string | RabbitUrl;
     tlsOptions?: AMQPTlsOptions;
@@ -850,5 +852,5 @@ export interface AdapterOptions {
      * Add a delay between connection attempts.
      * @default 500
      */
-    reconnectDelay?: number | ((attempt: number) => number);
+    reconnectDelay?: number | ReconnectDelayFunction;
 }
