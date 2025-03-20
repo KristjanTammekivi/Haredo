@@ -8,7 +8,8 @@
         "rabbitmq",
         "amqp",
         "client",
-        "typescript"
+        "typescript",
+        "haredo"
     ],
     "main": "dist/index.js",
     "exports": {
