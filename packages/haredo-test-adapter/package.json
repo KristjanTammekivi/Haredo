@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@types/sinon": "^17.0.4",
-    "sinon": "^19.0.4"
+    "sinon": "^20.0.0"
   },
   "resolutions": {
     "**/prettier": "npm:@staycool/prettier@^3.0.1"
