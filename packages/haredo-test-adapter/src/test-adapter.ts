@@ -3,7 +3,7 @@ import { SubscribeOptions, makeHaredoMessage, TypedEventEmitter, Adapter, Adapte
 import { deepEqual } from 'node:assert';
 import { SinonStub, SinonStubbedInstance, stub } from 'sinon';
 import { HaredoTestAdapterError } from './errors';
-import type { HaredoMessage, ExchangeArguments, ExchangeType, QueueArguments } from 'haredo/types';
+import type { HaredoMessage, ExchangeArguments, ExchangeType, QueueArguments, PublishOptions } from 'haredo/types';
 
 export interface Queue {
     name: string;
@@ -29,10 +29,19 @@ export interface TestAdapter extends Adapter {
     queues: Queue[];
     exchanges: Exchange[];
     subscribers: Subscriber[];
+    publishedMessages: PublishedMessage[];
     callSubscriber(queueName: string, message: string): Promise<SinonStubbedInstance<HaredoMessage>>;
 }
 
 export type HaredoTestAdapter = SinonStubbedInstance<TestAdapter>;
+export interface PublishedMessage {
+    type: 'queue' | 'exchange';
+    destination: string;
+    routingKey?: string;
+    raw: string;
+    parsed: any;
+    options: PublishOptions;
+}
 
 export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
     const emitter = new TypedEventEmitter<AdapterEvents>();
@@ -43,10 +52,13 @@ export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
     let exchanges: Exchange[] = [];
     let subscribers: Subscriber[] = [];
 
+    let publishedMessages: PublishedMessage[] = [];
+
     const createSpies = () => {
         queues = [];
         exchanges = [];
         subscribers = [];
+        publishedMessages = [];
         mockedAdapter = stub({
             reset: () => {
                 createSpies();
@@ -54,6 +66,7 @@ export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
             queues,
             exchanges,
             subscribers,
+            publishedMessages,
             emitter,
             connect: async () => {
                 emitter.emit('connected', null);
@@ -100,7 +113,16 @@ export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
             bindQueue: (async () => {}) as Adapter['bindQueue'],
             deleteExchange: (async () => {}) as Adapter['deleteExchange'],
             deleteQueue: (async () => {}) as Adapter['deleteQueue'],
-            publish: (async () => {}) as Adapter['publish'],
+            publish: (async (destination, routingKey, message, options) => {
+                publishedMessages.push({
+                    type: 'exchange',
+                    destination,
+                    raw: message,
+                    parsed: tryParse(message),
+                    routingKey,
+                    options
+                });
+            }) as Adapter['publish'],
             subscribe: async (name: string, options: any, callback: any) => {
                 subscribers.push({
                     queue: name,
@@ -119,7 +141,15 @@ export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
                 };
             },
             purgeQueue: (async () => {}) as Adapter['purgeQueue'],
-            sendToQueue: (async () => {}) as Adapter['sendToQueue'],
+            sendToQueue: (async (destination, message, options) => {
+                publishedMessages.push({
+                    type: 'queue',
+                    destination,
+                    raw: message,
+                    parsed: tryParse(message),
+                    options
+                });
+            }) as Adapter['sendToQueue'],
             unbindExchange: (async () => {}) as Adapter['unbindExchange'],
             unbindQueue: (async () => {}) as Adapter['unbindQueue'],
             callSubscriber: async (queue: string, message: string) => {
@@ -165,4 +195,10 @@ export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
             return mockedAdapter[key as keyof TestAdapter];
         }
     });
+};
+
+const tryParse = (message: string) => {
+    try {
+        return JSON.parse(message);
+    } catch {}
 };

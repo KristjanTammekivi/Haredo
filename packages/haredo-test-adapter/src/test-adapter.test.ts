@@ -202,11 +202,119 @@ describe('testAdapter', () => {
         });
     });
 
+    describe('sendToQueue', () => {
+        it('should add a message to published messages array', async () => {
+            await haredo.queue('queue').publish('test');
+            expect(adapter.publishedMessages).to.have.lengthOf(1);
+            expect(adapter.publishedMessages).to.partially.eql([
+                {
+                    destination: 'queue',
+                    raw: '"test"',
+                    parsed: 'test',
+                    options: {},
+                    type: 'queue'
+                }
+            ]);
+        });
+
+        it('should not fail when publishing a non-JSON message', async () => {
+            await haredo.queue('queue').json(false).publish('test');
+            expect(adapter.publishedMessages).to.have.lengthOf(1);
+            expect(adapter.publishedMessages).to.partially.eql([
+                {
+                    destination: 'queue',
+                    raw: 'test',
+                    parsed: undefined,
+                    options: {},
+                    type: 'queue'
+                }
+            ]);
+        });
+
+        it('should add headers to options', async () => {
+            await haredo.queue('queue').setHeader('test', 'value').publish('test');
+            expect(adapter.publishedMessages).to.have.lengthOf(1);
+            expect(adapter.publishedMessages).to.partially.eql([
+                {
+                    destination: 'queue',
+                    raw: '"test"',
+                    parsed: 'test',
+                    options: { headers: { test: 'value' } },
+                    type: 'queue'
+                }
+            ]);
+        });
+    });
+
+    describe('publish', () => {
+        it('should add a message to published messages array', async () => {
+            await haredo.exchange('exchange', 'topic').publish('test', 'rk');
+            expect(adapter.publishedMessages).to.have.lengthOf(1);
+            expect(adapter.publishedMessages).to.partially.eql([
+                {
+                    destination: 'exchange',
+                    raw: '"test"',
+                    parsed: 'test',
+                    options: {},
+                    type: 'exchange'
+                }
+            ]);
+        });
+
+        it('should not fail when publishing a non-JSON message', async () => {
+            await haredo.exchange('exchange', 'topic').json(false).publish('test', 'rk');
+            expect(adapter.publishedMessages).to.have.lengthOf(1);
+            expect(adapter.publishedMessages).to.partially.eql([
+                {
+                    destination: 'exchange',
+                    raw: 'test',
+                    parsed: undefined,
+                    options: {},
+                    type: 'exchange'
+                }
+            ]);
+        });
+
+        it('should add headers to options', async () => {
+            await haredo.exchange('exchange', 'topic').setHeader('test', 'value').publish('test', 'rk');
+            expect(adapter.publishedMessages).to.have.lengthOf(1);
+            expect(adapter.publishedMessages).to.partially.eql([
+                {
+                    destination: 'exchange',
+                    raw: '"test"',
+                    parsed: 'test',
+                    options: { headers: { test: 'value' } },
+                    type: 'exchange'
+                }
+            ]);
+        });
+
+        it('should add routing key', async () => {
+            await haredo.exchange('exchange', 'topic').publish('test', 'rk');
+            expect(adapter.publishedMessages).to.have.lengthOf(1);
+            expect(adapter.publishedMessages).to.partially.eql([
+                {
+                    destination: 'exchange',
+                    raw: '"test"',
+                    parsed: 'test',
+                    routingKey: 'rk',
+                    type: 'exchange'
+                }
+            ]);
+        });
+    });
+
     describe('reset', () => {
         it('should clear subscriber array', async () => {
             await haredo.queue('test').subscribe(() => {});
             adapter.reset();
             expect(adapter.subscribers).to.be.empty();
+        });
+
+        it('should clear publishedMessages array', async () => {
+            await haredo.queue('queue').publish('test');
+            adapter.reset();
+            expect(adapter.publishedMessages).to.be.empty();
         });
     });
 });
