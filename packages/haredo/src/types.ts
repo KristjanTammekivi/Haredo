@@ -130,6 +130,12 @@ export interface HaredoOptions {
      */
     globalMiddleware?: Middleware[];
     log?: LogFunction;
+    /**
+     * If true then the connection will be made automatically.
+     * Otherwise .connect() should be called before attempting to do any operations.
+     * @default false
+     */
+    autoConnect?: boolean;
 }
 
 export interface RabbitUrl {

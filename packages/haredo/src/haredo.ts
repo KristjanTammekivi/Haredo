@@ -36,7 +36,8 @@ export const Haredo = <E extends ExtensionInterface = object>({
     extensions = [],
     globalMiddleware = [],
     log = () => {},
-    adapter
+    adapter,
+    autoConnect = false
 }: HaredoOptions): HaredoInstance<E> => {
     const logger = createLogger(log).component('haredo');
     adapter =
@@ -55,6 +56,9 @@ export const Haredo = <E extends ExtensionInterface = object>({
     adapter.emitter.on('connectingFailed', (info) => {
         emitter.emit('connectingFailed', info);
     });
+    if (autoConnect) {
+        void adapter.connect();
+    }
     return {
         emitter,
         connect: async () => {

@@ -64,6 +64,12 @@ describe('haredo', () => {
         expect(adapter.connect).to.have.been.calledOnce();
     });
 
+    it('should autoconnect if flag is set', () => {
+        adapter.connect.resetHistory();
+        haredo = Haredo({ url: rabbitURL + '/test', adapter, autoConnect: true, log: logSpy });
+        expect(adapter.connect).to.have.been.calledOnce();
+    });
+
     it('should disconnect', async () => {
         await haredo.close();
         expect(adapter.close).to.have.been.calledOnce();

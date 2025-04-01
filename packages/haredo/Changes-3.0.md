@@ -112,3 +112,5 @@ The different log levels are now lowercase. Also the signature for the log funct
 Haredo no longer connects automatically. Instead .connect has to be called. You don't need
 to await for the returned promise, but You can use it to make sure everything is up and running
 before proceeding
+
+Edit 3.1.0: Added an option autoConnect to connect automatically.
