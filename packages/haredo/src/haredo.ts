@@ -508,6 +508,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
                 );
             };
             await subscribe();
+            subscribeLogger.info('Subscribed to queue', state.queue.name);
             return {
                 cancel: async () => {
                     isCancelled = true;
