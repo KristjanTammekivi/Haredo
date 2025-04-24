@@ -97,7 +97,8 @@ export const Haredo = <E extends ExtensionInterface = object>({
                     queue,
                     middleware: [...globalMiddleware],
                     appId: defaults.appId,
-                    prefetch: defaults.concurrency
+                    prefetch: defaults.concurrency,
+                    reestablish: true
                 },
                 logger,
                 extensions
@@ -316,6 +317,9 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
     };
     return {
         setup,
+        reestablish: (reestablish = true) => {
+            return queueChain(mergeState(state, { reestablish }), logger, extensions);
+        },
         noAck: (noAck = true) => {
             return queueChain(mergeState(state, { noAck }), logger, extensions);
         },
@@ -452,6 +456,11 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
                     {
                         onClose: async (reason: Error | null) => {
                             if (isCancelled || reason === null) {
+                                return;
+                            }
+                            if (!state.reestablish) {
+                                subscribeLogger.setError(reason).info('Connection closed, not reestablishing');
+                                isCancelled = true;
                                 return;
                             }
                             await subscribe();

@@ -313,6 +313,11 @@ export type StreamOffset = 'first' | 'last' | 'next' | number | Retention | Date
 
 export interface QueueSubscribeChain<T> extends SharedChain {
     /**
+     * Controls whether or not to reestablish the consumer when connection is lost and reestablished
+     * @default true
+     */
+    reestablish(reestablish?: boolean): QueueSubscribeChain<T>;
+    /**
      * Subscribe to the queue. When .skipSetup has not been called this will
      * also set up the queue and any bound exchanges that may be present.
      */
@@ -414,6 +419,7 @@ export interface ChainState {
 export interface QueueChainState<T> extends ChainState {
     queue: QueueInterface;
     middleware: Middleware<T>[];
+    reestablish: boolean;
     prefetch?: number;
     backoff?: FailureBackoff;
     subscribeArguments?: SubscribeArguments;

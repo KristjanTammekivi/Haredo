@@ -7,7 +7,7 @@ import { Exchange } from './exchange';
 import { Haredo } from './haredo';
 import { makeHaredoMessage } from './haredo-message';
 import { Queue } from './queue';
-import { HaredoConsumer, Adapter, AdapterEvents, Consumer, QueueChain, ExchangeChain } from './types';
+import { HaredoConsumer, Adapter, AdapterEvents, Consumer, QueueChain, ExchangeChain, HaredoInstance } from './types';
 import { TypedEventEmitter } from './utils/typed-event-emitter';
 import { AMQPError } from '@cloudamqp/amqp-client';
 
@@ -29,7 +29,7 @@ const makeTestMessage = (content: string, { parse = false, queue = 'test' } = {}
 };
 
 describe('haredo', () => {
-    let haredo: ReturnType<typeof Haredo>;
+    let haredo: HaredoInstance;
     let adapter: SinonStubbedInstance<Adapter>;
     let consumerStub: Consumer;
     let logSpy: SinonSpy;
@@ -679,6 +679,16 @@ describe('haredo', () => {
                     message: 'Error nacking message',
                     error
                 });
+            });
+
+            it('should not resubscribe if reestablish is set to false', async () => {
+                await haredo
+                    .queue('test')
+                    .reestablish(false)
+                    .subscribe(() => {});
+                const { onClose } = adapter.subscribe.firstCall.args[1];
+                onClose(new Error('test'));
+                expect(adapter.subscribe).to.have.been.calledOnce();
             });
         });
 
