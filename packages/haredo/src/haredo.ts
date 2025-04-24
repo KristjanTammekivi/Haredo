@@ -317,7 +317,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
     };
     return {
         setup,
-        reestablish: (reestablish = true) => {
+        reestablish: (reestablish) => {
             return queueChain(mergeState(state, { reestablish }), logger, extensions);
         },
         noAck: (noAck = true) => {

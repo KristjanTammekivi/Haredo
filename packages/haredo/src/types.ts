@@ -316,7 +316,7 @@ export interface QueueSubscribeChain<T> extends SharedChain {
      * Controls whether or not to reestablish the consumer when connection is lost and reestablished
      * @default true
      */
-    reestablish(reestablish?: boolean): QueueSubscribeChain<T>;
+    reestablish(reestablish: boolean): QueueSubscribeChain<T>;
     /**
      * Subscribe to the queue. When .skipSetup has not been called this will
      * also set up the queue and any bound exchanges that may be present.
