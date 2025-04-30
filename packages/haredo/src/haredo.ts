@@ -20,7 +20,8 @@ import type {
     QueueChain,
     QueueChainState,
     QueueInterface,
-    SkipSetupOptions
+    SkipSetupOptions,
+    ConsumerEmitter
 } from './types';
 import { applyMiddleware } from './utils/apply-middleware';
 import { castArray } from './utils/cast-array';
@@ -447,6 +448,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
             await setup();
             let isCancelled = false;
             let consumer: Consumer;
+            const emitter: ConsumerEmitter = new TypedEventEmitter();
             const subscribe = async () => {
                 if (!state.queue.name) {
                     throw new MissingQueueNameError();
@@ -461,6 +463,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
                             if (!state.reestablish) {
                                 subscribeLogger.setError(reason).info('Connection closed, not reestablishing');
                                 isCancelled = true;
+                                emitter.emit('finish', reason);
                                 return;
                             }
                             await subscribe();
@@ -510,9 +513,11 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
             await subscribe();
             subscribeLogger.info('Subscribed to queue', state.queue.name);
             return {
+                emitter,
                 cancel: async () => {
                     isCancelled = true;
                     await consumer.cancel();
+                    emitter.emit('finish', null);
                 }
             };
         },

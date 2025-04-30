@@ -297,6 +297,11 @@ export interface QueuePublishChain<T> extends SharedChain {
     purge(): Promise<void>;
 }
 
+export type ConsumerEmitter = TypedEventEmitter<{
+    /** Emitted if the consumer is cancelled or the connection is closed and reestablish is set to false. */
+    finish: Error | null;
+}>;
+
 export interface HaredoConsumer {
     /**
      * Cancel the consumer. This will stop the consumer from receiving any
@@ -304,6 +309,7 @@ export interface HaredoConsumer {
      * resolve.
      */
     cancel(): Promise<void>;
+    emitter: ConsumerEmitter;
 }
 
 export type RetentionUnit = 'Y' | 'M' | 'D' | 'h' | 'm' | 's';
@@ -791,6 +797,7 @@ export interface SubscribeOptions {
     parseJson?: boolean;
     args?: SubscribeArguments;
 }
+
 export interface Consumer {
     cancel(): Promise<void>;
 }

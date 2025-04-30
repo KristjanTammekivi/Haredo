@@ -690,6 +690,40 @@ describe('haredo', () => {
                 onClose(new Error('test'));
                 expect(adapter.subscribe).to.have.been.calledOnce();
             });
+
+            it('should emit finish event to the emitter when not reestablishing and connection closes', async () => {
+                const consumer = await haredo
+                    .queue('test')
+                    .reestablish(false)
+                    .subscribe(() => {});
+                const { onClose } = adapter.subscribe.firstCall.args[1];
+                const error = new Error('test');
+                const closeSpy = stub();
+                consumer.emitter.on('finish', closeSpy);
+                onClose(error);
+                expect(closeSpy).to.have.been.calledOnce();
+                expect(closeSpy).to.have.been.calledWith(error);
+            });
+
+            it('should not emit finish event to the emitter when reestablishing and connection closes', async () => {
+                const consumer = await haredo
+                    .queue('test')
+                    .reestablish(true)
+                    .subscribe(() => {});
+                const { onClose } = adapter.subscribe.firstCall.args[1];
+                const closeSpy = stub();
+                consumer.emitter.on('finish', closeSpy);
+                onClose(new Error('test'));
+                expect(closeSpy).to.not.have.been.called();
+            });
+
+            it('should emit finish event to the emitter when consumer is cancelled', async () => {
+                const consumer = await haredo.queue('test').subscribe(() => {});
+                const closeSpy = stub();
+                consumer.emitter.on('finish', closeSpy);
+                await consumer.cancel();
+                expect(closeSpy).to.have.been.calledOnce();
+            });
         });
 
         describe('backoff', () => {
