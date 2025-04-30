@@ -5,6 +5,7 @@ import { Exchange } from './exchange';
 import { HaredoInstance } from './types';
 import { delay } from './utils/delay';
 import { Queue } from './queue';
+import { stub } from 'sinon';
 
 const RABBIT_URL = 'amqp://localhost:5672/test';
 describe('haredo integration', () => {
@@ -157,5 +158,14 @@ describe('haredo integration', () => {
             encoding: 'auto'
         });
         expect(messages).to.have.lengthOf(0);
+    });
+
+    it('should subscribe with anonymous queue', async () => {
+        const exchange = Exchange('testExchange', 'topic');
+        const subscribeStub = stub();
+        await haredo.queue('').bindExchange('testExchange', '#', 'topic').subscribe(subscribeStub);
+        await haredo.exchange(exchange).publish('test message', 'test');
+        await delay(50);
+        expect(subscribeStub).to.have.been.calledOnce();
     });
 });

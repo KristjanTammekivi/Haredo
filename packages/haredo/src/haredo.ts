@@ -274,6 +274,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
         if (!state.skipSetup?.skipCreate) {
             setupLogger.debug('Asserting queue', state.queue.name);
             queueName = await state.adapter.createQueue(state.queue.name, state.queue.params, state.queue.args);
+            state.queue.name = queueName;
         }
         if (!state.bindings) {
             return;
