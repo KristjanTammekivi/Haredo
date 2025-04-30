@@ -187,7 +187,7 @@ const haredo = Haredo({
 
 ### Graceful shutdown
 
-Calling consumer.close() will send cancel to channel and wait for existing messages to be handled before resolving the returned promise.
+Calling consumer.cancel() will send cancel to channel and wait for existing messages to be handled before resolving the returned promise.
 
 Calling haredoInstance.close() will gracefully close all of it's consumers
 
@@ -208,6 +208,23 @@ await haredo.queue('my-queue')
     .bindExchange('testExchange', '#', 'topic', { durable: false })
     .skipSetup({ skipBoundExchanges: true, skipBindings: true, skipCreate: false });
 
+```
+
+### Reestablish
+
+By default Haredo attempts to restart the consumer when losing connection.
+This behavior can be disabled by calling .reestablish(false)
+
+```typescript
+const consumer = await haredo.queue('my-queue')
+    .reestablish(false)
+    .subscribe(() => {});
+
+
+consumer.emitter.on('finish', () => {
+    // This event will fire when consumer is cancelled or the underlying connection closes when reestablishment is disabled
+    console.log('Consumer has exited');
+});
 ```
 
 ### Extending Haredo
