@@ -8,7 +8,13 @@ describe('mergeState', () => {
         const f2 = async () => {};
         expect(
             mergeState(
-                { emitter: new TypedEventEmitter(), adapter: {} as any, queue: {} as any, middleware: [f1] },
+                {
+                    emitter: new TypedEventEmitter(),
+                    adapter: {} as any,
+                    queue: {} as any,
+                    middleware: [f1],
+                    reestablish: true
+                },
                 { middleware: [f2] }
             ).middleware
         ).to.eql([f1, f2]);
