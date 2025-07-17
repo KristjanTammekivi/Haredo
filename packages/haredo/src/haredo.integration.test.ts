@@ -8,6 +8,7 @@ import { Queue } from './queue';
 import { stub } from 'sinon';
 
 const RABBIT_URL = 'amqp://localhost:5672/test';
+
 describe('haredo integration', () => {
     let haredo: HaredoInstance;
 

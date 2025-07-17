@@ -398,8 +398,6 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
             if (!state.queue.name) {
                 throw new MissingQueueNameError();
             }
-            if (state.json === false) {
-            }
             return state.adapter.sendToQueue(
                 state.queue.name,
                 state.json === false ? (message as string) : JSON.stringify(message),

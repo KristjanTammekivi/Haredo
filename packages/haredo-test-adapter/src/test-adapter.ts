@@ -132,11 +132,10 @@ export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
                 return {
                     cancel: async () => {
                         const index = subscribers.findIndex((s) => s.queue === name);
-                        if (index > -1) {
-                            subscribers.splice(index, 1);
-                        } else {
+                        if (index === -1) {
                             throw new HaredoTestAdapterError(`Could not find subscriber with queue ${ name }`);
                         }
+                        subscribers.splice(index, 1);
                     }
                 };
             },
@@ -200,5 +199,7 @@ export const createTestAdapter = (): SinonStubbedInstance<TestAdapter> => {
 const tryParse = (message: string) => {
     try {
         return JSON.parse(message);
-    } catch {}
+    } catch {
+        return;
+    }
 };
