@@ -241,10 +241,10 @@
     "@babel/helper-string-parser" "^7.25.9"
     "@babel/helper-validator-identifier" "^7.25.9"
 
-"@cloudamqp/amqp-client@^3.2.1":
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/@cloudamqp/amqp-client/-/amqp-client-3.2.1.tgz#8d8c97f6f2cdf9faed2f7e528f50faad4763fe75"
-  integrity sha512-42XNjtcJTg7mKtMVNx3mdvF/RiPKAkKBRGRy+NvjZnbbkqomiWSF1mT2nwDrmIt8MUralFjlOxG4XPoWtlk2Wg==
+"@cloudamqp/amqp-client@^3.3.2":
+  version "3.3.2"
+  resolved "https://registry.yarnpkg.com/@cloudamqp/amqp-client/-/amqp-client-3.3.2.tgz#00fa7f6820600b18a04f582fba35ed71e4008d74"
+  integrity sha512-fNCrPCGXc2m1XWaLAaFIn+utWXc02NImEC8lxp5qfqLLqX1gV1kgS0oBVhLl+NA6sTR1SkM1ye0LJWGoczOayw==
 
 "@cspotcode/source-map-support@^0.8.0":
   version "0.8.1"
