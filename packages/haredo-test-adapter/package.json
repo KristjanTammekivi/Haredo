@@ -35,8 +35,8 @@
     "haredo": "^3.0.0"
   },
   "dependencies": {
-    "@types/sinon": "^17.0.4",
-    "sinon": "^21.0.0"
+    "@types/sinon": "^21.0.0",
+    "sinon": "^21.0.1"
   },
   "resolutions": {
     "**/prettier": "npm:@staycool/prettier@^3.0.1"
