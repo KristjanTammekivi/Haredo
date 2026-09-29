@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 import { expect } from 'hein';
 import { SinonSpy, SinonStub, SinonStubbedInstance, match, spy, stub } from 'sinon';
 import { FailureBackoff } from './backoffs';
-import { MissingQueueNameError } from './errors';
+import { MissingQueueNameError, NotConnectedError } from './errors';
 import { Exchange } from './exchange';
 import { Haredo } from './haredo';
 import { makeHaredoMessage } from './haredo-message';
@@ -494,8 +494,45 @@ describe('haredo', () => {
             it('should resubscribe on connection error', async () => {
                 await haredo.queue('test').subscribe(() => {});
                 const { onClose } = adapter.subscribe.firstCall.args[1];
-                onClose(new Error('test'));
+                await onClose(new Error('test'));
                 expect(adapter.subscribe).to.have.been.calledTwice();
+            });
+
+            it('should declare a new anonymous queue when reestablishing', async () => {
+                let queueCount = 0;
+                adapter.createQueue.callsFake(async (x) => x || `amq.gen-${ ++queueCount }`);
+                await haredo
+                    .queue('')
+                    .bindExchange('testexchange', '#', 'topic')
+                    .subscribe(() => {});
+                const { onClose } = adapter.subscribe.firstCall.args[1];
+                await onClose(new Error('test'));
+                expect(adapter.createQueue.secondCall.args[0]).to.eq('');
+                expect(adapter.bindQueue.secondCall.args[0]).to.eq('amq.gen-2');
+                expect(adapter.subscribe.secondCall.args[0]).to.eq('amq.gen-2');
+            });
+
+            it('should retry reestablishing with reconnectDelay when it fails', async () => {
+                const reconnectDelay = stub().returns(1);
+                haredo = Haredo({ url: rabbitURL + '/test', adapter, log: logSpy, reconnectDelay });
+                await haredo.queue('test').subscribe(() => {});
+                adapter.createQueue.onSecondCall().rejects(new Error('channel closed'));
+                adapter.createQueue.onThirdCall().rejects(new Error('channel closed'));
+                const { onClose } = adapter.subscribe.firstCall.args[1];
+                await onClose(new Error('test'));
+                expect(reconnectDelay).to.have.been.calledTwice();
+                expect(reconnectDelay.firstCall.args[0]).to.eq(1);
+                expect(reconnectDelay.secondCall.args[0]).to.eq(2);
+                expect(adapter.subscribe).to.have.been.calledTwice();
+            });
+
+            it('should stop reestablishing when connection has been closed', async () => {
+                await haredo.queue('test').subscribe(() => {});
+                adapter.createQueue.rejects(new NotConnectedError());
+                const { onClose } = adapter.subscribe.firstCall.args[1];
+                await onClose(new Error('test'));
+                expect(adapter.createQueue).to.have.been.calledTwice();
+                expect(adapter.subscribe).to.have.been.calledOnce();
             });
 
             it('should call cancel on consumer', async () => {

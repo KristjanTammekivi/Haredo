@@ -13,7 +13,8 @@ describe('mergeState', () => {
                     adapter: {} as any,
                     queue: {} as any,
                     middleware: [f1],
-                    reestablish: true
+                    reestablish: true,
+                    reconnectDelay: 500
                 },
                 { middleware: [f2] }
             ).middleware
