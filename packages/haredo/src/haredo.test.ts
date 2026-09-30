@@ -526,6 +526,16 @@ describe('haredo', () => {
                 expect(adapter.subscribe).to.have.been.calledTwice();
             });
 
+            it('should retry reestablishing with a numeric reconnectDelay when it fails', async () => {
+                haredo = Haredo({ url: rabbitURL + '/test', adapter, log: logSpy, reconnectDelay: 1 });
+                await haredo.queue('test').subscribe(() => {});
+                adapter.createQueue.onSecondCall().rejects(new Error('channel closed'));
+                const { onClose } = adapter.subscribe.firstCall.args[1];
+                await onClose(new Error('test'));
+                expect(adapter.createQueue).to.have.been.calledThrice();
+                expect(adapter.subscribe).to.have.been.calledTwice();
+            });
+
             it('should stop reestablishing when connection has been closed', async () => {
                 await haredo.queue('test').subscribe(() => {});
                 adapter.createQueue.rejects(new NotConnectedError());
