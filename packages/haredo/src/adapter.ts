@@ -46,8 +46,12 @@ export const createAdapter = (
                 return c;
             } catch (error) {
                 emitter.emit('connectingFailed', { attempt: attempt + 1, error });
-                logger.setError(error as Error).error('Error connecting to RabbitMQ, retrying in 5 seconds');
-                await delay(typeof reconnectDelay === 'number' ? reconnectDelay : reconnectDelay(++attempt));
+                const delayMilliseconds =
+                    typeof reconnectDelay === 'number' ? reconnectDelay : reconnectDelay(++attempt);
+                logger
+                    .setError(error as Error)
+                    .error(`Error connecting to RabbitMQ, retrying in ${ delayMilliseconds } milliseconds`);
+                await delay(delayMilliseconds);
             }
         }
     };
