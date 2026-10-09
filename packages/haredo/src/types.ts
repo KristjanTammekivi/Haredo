@@ -100,7 +100,7 @@ export interface HaredoOptions {
     tlsOptions?: AMQPTlsOptions;
     /**
      * Delay in milliseconds before trying to reconnect to the broker
-     * after a connection failure.
+     * after a connection failure, or to reestablish a consumer after a failed attempt.
      * @default 500
      */
     reconnectDelay?: number | ((attempt: number) => number);
@@ -426,6 +426,7 @@ export interface QueueChainState<T> extends ChainState {
     queue: QueueInterface;
     middleware: Middleware<T>[];
     reestablish: boolean;
+    reconnectDelay: number | ReconnectDelayFunction;
     prefetch?: number;
     backoff?: FailureBackoff;
     subscribeArguments?: SubscribeArguments;

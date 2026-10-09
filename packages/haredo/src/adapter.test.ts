@@ -44,7 +44,8 @@ describe('adapter', () => {
             confirmSelect: () => Promise.resolve(),
             exchangeBind: () => Promise.resolve(),
             exchangeUnbind: () => Promise.resolve(),
-            queuePurge: () => Promise.resolve()
+            queuePurge: () => Promise.resolve(),
+            setClosed: () => {}
         }) as any;
         mockClient = stub({
             connect: () => Promise.resolve(),
@@ -567,6 +568,22 @@ describe('adapter', () => {
             internalCallback({ bodyString: () => '"Hello, world"', properties: {} });
             expect(cbSpy).to.have.been.calledOnce();
             expect(cbSpy.firstCall.firstArg.data).to.eq('"Hello, world"');
+        });
+
+        it('should close consumer channels after reconnecting when connection is lost', async () => {
+            mockChannel.setClosed.callsFake(() => {
+                expect(mockClient.connect).to.have.been.calledTwice();
+            });
+            await adapter.subscribe('test', { onClose: stub() }, asyncNoop);
+            const error = new AMQPError('Socket closed', mockClient as any);
+            mockClient.onerror(error);
+            expect(mockChannel.setClosed).to.have.been.calledOnce().and.to.have.been.calledWith(error);
+        });
+
+        it('should not treat consumer channel being closed by server as a connection error', async () => {
+            await adapter.subscribe('test', { onClose: stub() }, asyncNoop);
+            mockChannel.onerror('NOT_FOUND - no queue');
+            expect(mockClient.connect).to.have.been.calledOnce();
         });
     });
 

@@ -93,6 +93,9 @@ export const createAdapter = (
             client = undefined;
             logger.setError(error).warning('Disconnected');
             void connect();
+            for (const { channel } of consumers) {
+                channel.setClosed(error);
+            }
         };
     };
     return {
@@ -230,6 +233,9 @@ export const createAdapter = (
         ) => {
             await waitForClient();
             const channel = await client!.channel();
+            channel.onerror = (reason) => {
+                logger.warning('Consumer channel closed:', reason);
+            };
             try {
                 if (prefetch) {
                     await channel.prefetch(prefetch);

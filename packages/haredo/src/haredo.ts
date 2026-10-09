@@ -1,6 +1,6 @@
 import { AMQPClient, AMQPProperties, AMQPQueue, ExchangeParams, QueueParams } from '@cloudamqp/amqp-client';
 import { createAdapter } from './adapter';
-import { MissingQueueNameError } from './errors';
+import { MissingQueueNameError, NotConnectedError } from './errors';
 import { InternalExchange } from './exchange';
 import { HaredoMessage, BindingArguments, Consumer, SubscribeArguments } from './types';
 import { Queue } from './queue';
@@ -28,11 +28,12 @@ import { castArray } from './utils/cast-array';
 import { mergeState } from './utils/merge-state';
 import { Logger, createLogger } from './utils/logger';
 import { TypedEventEmitter } from './utils/typed-event-emitter';
+import { delay } from './utils/delay';
 
 export const Haredo = <E extends ExtensionInterface = object>({
     url,
     tlsOptions,
-    reconnectDelay,
+    reconnectDelay = 500,
     defaults = {},
     extensions = [],
     globalMiddleware = [],
@@ -99,7 +100,8 @@ export const Haredo = <E extends ExtensionInterface = object>({
                     middleware: [...globalMiddleware],
                     appId: defaults.appId,
                     prefetch: defaults.concurrency,
-                    reestablish: true
+                    reestablish: true,
+                    reconnectDelay
                 },
                 logger,
                 extensions
@@ -444,10 +446,32 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
         },
         subscribe: async (callback) => {
             const subscribeLogger = logger.component('subscribe');
+            const requestedQueueName = state.queue.name;
             await setup();
             let isCancelled = false;
             let consumer: Consumer;
             const emitter: ConsumerEmitter = new TypedEventEmitter();
+            const reestablish = async () => {
+                let attempt = 0;
+                while (!isCancelled) {
+                    try {
+                        state.queue.name = requestedQueueName;
+                        await setup();
+                        await subscribe();
+                        return;
+                    } catch (error) {
+                        if (error instanceof NotConnectedError) {
+                            return;
+                        }
+                        subscribeLogger.setError(error as Error).error('Error reestablishing consumer, retrying');
+                        await delay(
+                            typeof state.reconnectDelay === 'number'
+                                ? state.reconnectDelay
+                                : state.reconnectDelay(++attempt)
+                        );
+                    }
+                }
+            };
             const subscribe = async () => {
                 if (!state.queue.name) {
                     throw new MissingQueueNameError();
@@ -465,7 +489,7 @@ const queueChain = <T = unknown>(state: QueueChainState<T>, logger: Logger, exte
                                 emitter.emit('finish', reason);
                                 return;
                             }
-                            await subscribe();
+                            await reestablish();
                         },
                         prefetch: state.prefetch,
                         args: state.subscribeArguments,
